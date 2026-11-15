@@ -1,6 +1,6 @@
 # Contributing
 
-This page is the whole process; nothing else is required reading before your first pull request.
+Thank you for working on first-bite, part of [goat](https://github.com/USAREUR-AF/goatcore). This page is the whole process; nothing else is required reading before your first pull request.
 
 ## The short version
 
@@ -87,6 +87,10 @@ A change to behaviour comes with a test of that behaviour in the same pull reque
 ## Review
 
 Reviewers look for: the change does what its subject says and nothing else; the gates pass; the document moved with the code; status words are honest; nothing from "What does not belong" entered the tree. Review comments are about the change, not the author.
+
+## Merging
+
+Development happens in this repository. A pull request merged to `main` is the change; there is no other upstream.
 
 ## Reporting a bug or proposing a feature
 

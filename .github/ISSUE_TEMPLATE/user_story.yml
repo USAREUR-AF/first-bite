@@ -1,13 +1,13 @@
 name: User story
 description: A new capability or behaviour change, described from the point of view of whoever benefits.
 title: "feat(<scope>): <what changes, in plain language>"
-labels: ["enhancement", "needs-triage"]
+labels: ["enhancement", "needs-triage", "needs-estimate"]
 body:
   - type: markdown
     attributes:
       value: |
         If you cannot write the "so that" clause, the work may not be worth doing yet -
-        file it as a Discussion instead.
+        raise it in [goat's Discussions](https://github.com/USAREUR-AF/goatcore/discussions) instead.
 
         Use this form for new capability. Something broken is a **Bug report**;
         maintenance, infrastructure, docs or process work is a **Chore**.
@@ -15,6 +15,23 @@ body:
         Security-impacting? Use
         [private vulnerability reporting](https://github.com/USAREUR-AF/first-bite/security/advisories/new),
         not this form.
+
+  - type: dropdown
+    id: points
+    attributes:
+      label: Estimate (story points)
+      description: >-
+        Leave "Not yet estimated" if you are filing rather than planning.
+        8 means "too big" - split it first.
+      options:
+        - Not yet estimated
+        - "1"
+        - "2"
+        - "3"
+        - "5"
+        - "8 - too big, split it"
+    validations:
+      required: true
 
   - type: input
     id: as-a

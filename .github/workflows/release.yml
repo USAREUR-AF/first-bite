@@ -1,6 +1,7 @@
-# Builds the release for a v* tag and publishes it as a GitHub release.
+# Builds the release for a v* tag and publishes it: a GitHub release and a
+# container image.
 #
-# Assets:
+# Release assets:
 #   first-bite-<version>-x86_64-linux-gnu.tar.gz
 #   first-bite-<version>-aarch64-linux-gnu.tar.gz
 #       the standard Linux build: needs glibc 2.31 (Ubuntu 20.04) or later
@@ -19,16 +20,34 @@
 #       statement (a Sigstore bundle) whose subjects are the lines of
 #       SHA256SUMS. Published while the repository is public
 #
+# Container image, the Dockerfile built for linux/amd64 and linux/arm64:
+#   ghcr.io/<owner>/<repository>:<version>          both platforms
+#   ghcr.io/<owner>/<repository>:<version>-amd64    one platform each
+#   ghcr.io/<owner>/<repository>:<version>-arm64
+#   ghcr.io/<owner>/<repository>:latest             moved by a release that is
+#                                                   not a pre-release
+#       with signed build provenance and the SPDX SBOM attested to the digest
+#       of <version>, stored in the registry beside the image and as GitHub
+#       artifact attestations, while the repository is public
+#
+# <version> is the tag without its `v` (tools/release-version.sh). The tag
+# must be v<version of the mind crate>, or a pre-release of it such as
+# v1.0.1-rc.1. A tag with a hyphen is a pre-release: its GitHub release is
+# marked so, and it does not move `latest`.
+#
 # tools/package-release.sh lays out each archive; docs/deployment.md says which
 # to choose. The build steps are make targets and scripts in tools/, the same
 # ones a developer runs.
 #
 # The provenance is also recorded as a GitHub artifact attestation. Verify an
-# asset against either copy:
+# asset against either copy, and the image:
 #   gh attestation verify <file> --repo <owner>/<repo>
 #   gh attestation verify <file> --repo <owner>/<repo> --bundle first-bite-<version>.intoto.jsonl
+#   gh attestation verify oci://ghcr.io/<owner>/<repository>:<version> --repo <owner>/<repo>
 #
-# workflow_dispatch builds and packages without publishing.
+# workflow_dispatch is the dry run: it builds, runs and packages everything,
+# the image included, and publishes nothing, whatever ref it is run on.
+#   gh workflow run release.yml --ref main -f static=true
 name: release
 
 on:
@@ -219,6 +238,38 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # The container image, built and run on a runner of each CPU. It is kept as
+  # a workflow artifact; image-publish pushes it.
+  image:
+    name: build image linux/${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      ARCH: ${{ matrix.arch }}
+      IMAGE_NAME: first-bite:${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make image
+      - run: make image-check
+      - name: Save
+        run: docker save "$IMAGE_NAME" | gzip > "first-bite-image-$ARCH.tar.gz"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-linux-${{ matrix.arch }}
+          path: first-bite-image-*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
   sbom:
     name: SPDX SBOM
     runs-on: ubuntu-22.04
@@ -236,7 +287,7 @@ jobs:
       - name: Generate the SBOM
         run: |
           set -euo pipefail
-          version=$(cargo metadata --no-deps --locked --format-version 1 | jq -r '.packages[] | select(.name == "mind") | .version')
+          version="$(tools/release-version.sh)"
           mkdir -p dist
           cargo sbom --output-format spdx_json_2_3 > "dist/first-bite-$version.spdx.json"
           jq -e '.spdxVersion == "SPDX-2.3" and (.packages | length > 0)' "dist/first-bite-$version.spdx.json"
@@ -247,13 +298,82 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # Pushes the images the `image` job built and joins them under one tag.
+  # Runs no code from the repository, and waits for every build: nothing is
+  # published unless all of the release was built and run.
+  image-publish:
+    name: publish the container image
+    needs: [linux, linux-static, macos, windows, sbom, image]
+    # linux-static is skipped for most tags; a skipped job must not skip this one.
+    if: ${{ !cancelled() && !failure() && github.event_name == 'push' && github.ref_type == 'tag' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: image-linux-*
+          path: images
+          merge-multiple: true
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: first-bite-sbom
+          path: sbom
+      - name: Push
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          sources=()
+          for arch in amd64 arm64; do
+            docker load --input "images/first-bite-image-$arch.tar.gz"
+            docker tag "first-bite:$arch" "$repository:$version-$arch"
+            docker push "$repository:$version-$arch"
+            sources+=("$repository:$version-$arch")
+          done
+          tags=(--tag "$repository:$version")
+          case "$version" in *-*) ;; *) tags+=(--tag "$repository:latest") ;; esac
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+          docker buildx imagetools inspect "$repository:$version"
+          digest="$(docker buildx imagetools inspect "$repository:$version" --format '{{json .Manifest}}' | jq -r .digest)"
+          case "$digest" in sha256:*) ;; *) echo "::error::no digest for $repository:$version"; exit 1 ;; esac
+          {
+            echo "repository=$repository"
+            echo "digest=$digest"
+            echo "sbom=sbom/first-bite-$version.spdx.json"
+          } >> "$GITHUB_OUTPUT"
+          echo "\`$repository:$version\` is \`$repository@$digest\`" >> "$GITHUB_STEP_SUMMARY"
+      # Artifact attestations on a private repository need GitHub Enterprise Cloud.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-name: ${{ steps.push.outputs.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          # A storage record needs a further permission, artifact-metadata.
+          create-storage-record: false
+      - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-name: ${{ steps.push.outputs.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: ${{ steps.push.outputs.sbom }}
+          push-to-registry: true
+
   # Runs no code from the repository: it only checksums, attests and uploads
-  # what the jobs above built.
+  # what the jobs above built. Last, so that a release is announced only when
+  # its image is published.
   publish:
     name: publish the GitHub release
-    needs: [linux, linux-static, macos, windows, sbom]
-    # linux-static is skipped for most tags; a skipped job must not skip this one.
-    if: ${{ !cancelled() && !failure() && github.ref_type == 'tag' }}
+    needs: [linux, linux-static, macos, windows, sbom, image-publish]
+    if: ${{ !cancelled() && !failure() && github.event_name == 'push' && github.ref_type == 'tag' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:

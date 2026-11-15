@@ -17,12 +17,17 @@ STATIC_DIR = target/alpine-3.24/$(shell uname -m | sed s/arm64/aarch64/)-unknown
 # Bare images the release binaries are run in after the build.
 PORTABLE_RUNS_IN ?= ubuntu:20.04 ubuntu:22.04 ubuntu:24.04 ubuntu:26.04
 STATIC_RUNS_IN ?= busybox:musl alpine:3.24 ubuntu:20.04
+# Name the container image is built under, and its platform (default: this
+# machine's), for `make image`.
+IMAGE_NAME ?= first-bite:local
+IMAGE_PLATFORM ?=
+IMAGE_REVISION ?= $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
 # Targets the decoder library must compile for; `make decoder-targets`.
 DECODER_TARGETS ?= aarch64-apple-ios aarch64-linux-android x86_64-pc-windows-msvc wasm32-unknown-unknown aarch64-unknown-linux-gnu
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build release portable portable-check portable-dir static static-check static-dir decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
+.PHONY: help build release portable portable-check portable-dir static static-check static-dir image image-check decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
 
 help: ## list the targets
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -50,6 +55,19 @@ static-check: ## run the `static` binaries in bare busybox, Alpine and Ubuntu co
 
 static-dir: # where `static` leaves mind and bite
 	@echo $(STATIC_DIR)
+
+# The build's own attestations are off: the release workflow attests the
+# published image, and a single-platform image stays a plain manifest.
+image: ## the container image of the Dockerfile, as IMAGE_NAME (needs docker)
+	version=$$(tools/release-version.sh) && docker build \
+		$(if $(IMAGE_PLATFORM),--platform $(IMAGE_PLATFORM)) \
+		--provenance=false --sbom=false \
+		$(if $(CARGO_BUILD_JOBS),--build-arg CARGO_BUILD_JOBS=$(CARGO_BUILD_JOBS)) \
+		--build-arg VERSION=$$version --build-arg REVISION=$(IMAGE_REVISION) \
+		--tag $(IMAGE_NAME) .
+
+image-check: ## run the `image` container: usage, user, bite check, a replay, labels
+	tools/image-check.sh $(IMAGE_NAME)
 
 decoder-targets: ## check that the bite library compiles for each of DECODER_TARGETS
 	rustup target add $(DECODER_TARGETS)

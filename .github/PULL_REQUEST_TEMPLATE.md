@@ -1,3 +1,9 @@
+<!--
+PR title MUST follow Conventional Commits:
+  <type>(<scope>): <subject>
+The PR title becomes the squash-merge commit message on `main`. See CONTRIBUTING.md.
+-->
+
 ## What changes
 
 <!-- One or two sentences. The title is a Conventional Commits subject. -->

@@ -56,6 +56,12 @@ updates:
     groups:
       mocks:
         patterns: ["*"]
+    # The Elasticsearch mock stands in for the server the Filebeat example
+    # ships to, and stays on the major version of FILEBEAT_VERSION in
+    # deployment/filebeat/install.sh. Move both together, by hand.
+    ignore:
+      - dependency-name: "elasticsearch/elasticsearch"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 5

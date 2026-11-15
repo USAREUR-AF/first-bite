@@ -55,6 +55,12 @@ ABOUT = {
 GROUP = {"goat": "goat network", "security": "Security"}
 
 
+def read_text(path):
+    """The text of the file at `path`."""
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
 def fail(message):
     raise SystemExit(f"build-site: {message}")
 
@@ -82,7 +88,7 @@ def discover():
 
 
 def figure_alt(name):
-    svg = open(os.path.join(DOCS, "img", f"{name}.svg"), encoding="utf-8").read()
+    svg = read_text(os.path.join(DOCS, "img", f"{name}.svg"))
     found = re.search(r"<desc[^>]*>(.*?)</desc>", svg, re.S)
     if not found:
         fail(f"docs/img/{name}.svg has no <desc>")
@@ -303,16 +309,16 @@ def build(out_dir):
         shutil.copy(brief, out_dir)
 
     index_path = os.path.join(out_dir, "index.html")
-    index = open(index_path, encoding="utf-8").read()
+    index = read_text(index_path)
     header, footer = block(index, "header"), block(index, "footer")
-    template = open(os.path.join(site, "_page.html"), encoding="utf-8").read()
+    template = read_text(os.path.join(site, "_page.html"))
 
     keys = discover()
     known = set(keys)
     parsed = {}
     for key in keys:
         page = Page(key, known)
-        source = open(os.path.join(DOCS, key + ".md"), encoding="utf-8").read()
+        source = read_text(os.path.join(DOCS, key + ".md"))
         body, title, toc = page.markdown(source)
         parsed[key] = (page, body, title, toc)
     label = {key: LABEL.get(key, parsed[key][2]) for key in keys}
@@ -363,7 +369,7 @@ def build(out_dir):
     for folder, _, names in os.walk(out_dir):
         for name in names:
             if name.endswith(".html"):
-                text = open(os.path.join(folder, name), encoding="utf-8").read()
+                text = read_text(os.path.join(folder, name))
                 remote = re.findall(r'<(?:script|link|img|source|iframe)\b[^>]*(?:src|href|srcset)="(https?:[^"]+)"', text)
                 if remote:
                     fail(f"{os.path.relpath(os.path.join(folder, name), out_dir)} loads from another host: {remote[0]}")
