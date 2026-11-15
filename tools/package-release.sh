@@ -70,7 +70,7 @@ case "$platform" in
 esac
 
 mkdir -p "$stage/dictionaries"
-for dictionary in weather-station vehicle-can glasshouse toot; do
+for dictionary in ntp weather-station vehicle-can glasshouse; do
   cp -R "dictionaries/$dictionary" "$stage/dictionaries/$dictionary"
 done
 cp LICENSE NOTICE INTENT.md "$stage/"

@@ -609,7 +609,7 @@ def beyond_ip():
     # one decoder across the first two rows
     f.rect(c2, rows[0], 246, 132, "bxa", 8)
     f.line([(c2 + 14, 156), (c2 + 232, 156)], "lnr")
-    f.rich(c2 + 14, 116, [("Built", True, "g"), (": weather-station, toot", False, "t")], 13, maxw=218)
+    f.rich(c2 + 14, 116, [("Built", True, "g"), (": weather-station, ntp", False, "t")], 13, maxw=218)
     f.text(c2 + 14, 135, "measured 1.45 million messages/s", 13, False, "q", maxw=218)
     f.rich(c2 + 14, 188, [("Built", True, "g"), (": vehicle-can", False, "t")], 13, maxw=218)
     f.text(c2 + 14, 207, "measured 1.40 million frames/s", 13, False, "q", maxw=218)

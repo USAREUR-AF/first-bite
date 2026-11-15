@@ -1,0 +1,164 @@
+{
+    "description": "A client synchronizes to one or more upstream servers, but does not provide synchronization to dependent clients.",
+    "source": {
+        "section": "7.3",
+        "table": "Figure 8"
+    },
+    "note": "The description is from section 2. The fields are the header of Figure 8, the same in the five message files of this interface.",
+    "declared_bits": 384,
+    "fields": {
+        "leap_indicator": {
+            "start": 0,
+            "stop": 2,
+            "values": {
+                "0": "no warning",
+                "1": "last minute of the day has 61 seconds",
+                "2": "last minute of the day has 59 seconds",
+                "3": "unknown (clock unsynchronized)"
+            },
+            "description": "2-bit integer warning of an impending leap second to be inserted or deleted in the last minute of the current month.",
+            "source": {
+                "section": "7.3",
+                "table": "Figure 9"
+            }
+        },
+        "version_number": {
+            "start": 2,
+            "stop": 5,
+            "unit": "1",
+            "description": "3-bit integer representing the NTP version number, currently 4."
+        },
+        "mode": {
+            "start": 5,
+            "stop": 8,
+            "values": {
+                "1": "symmetric active",
+                "2": "symmetric passive",
+                "3": "client",
+                "4": "server",
+                "5": "broadcast",
+                "6": "NTP control message"
+            },
+            "description": "3-bit integer representing the mode.",
+            "source": {
+                "section": "7.3",
+                "table": "Figure 10"
+            },
+            "note": "Values 0 (reserved) and 7 (reserved for private use) have no label."
+        },
+        "stratum": {
+            "start": 8,
+            "stop": 16,
+            "values": {
+                "0": "unspecified or invalid",
+                "1": "primary server (e.g., equipped with a GPS receiver)",
+                "16": "unsynchronized"
+            },
+            "description": "8-bit integer representing the stratum.",
+            "source": {
+                "section": "7.3",
+                "table": "Figure 11"
+            },
+            "note": "Values 2 to 15 are secondary server (via NTP) and decode to the number: a label names one value, not a range. Values 17 to 255 are reserved."
+        },
+        "poll": {
+            "start": 16,
+            "stop": 24,
+            "type": "int",
+            "unit": "log2(s)",
+            "description": "8-bit signed integer representing the maximum interval between successive messages, in log2 seconds.",
+            "note": "The interval is 2^poll seconds: 6 is 64 s."
+        },
+        "precision": {
+            "start": 24,
+            "stop": 32,
+            "type": "int",
+            "unit": "log2(s)",
+            "description": "8-bit signed integer representing the precision of the system clock, in log2 seconds.",
+            "note": "The precision is 2^precision seconds: -18 is about one microsecond."
+        },
+        "root_delay": {
+            "start": 32,
+            "stop": 64,
+            "scale": 0.0000152587890625,
+            "unit": "s",
+            "description": "Total round-trip delay to the reference clock, in NTP short format.",
+            "note": "NTP short format (section 6, Figure 3): a 16-bit unsigned seconds field and a 16-bit fraction field, read here as one 32-bit integer scaled by 2^-16, which is exact."
+        },
+        "root_dispersion": {
+            "start": 64,
+            "stop": 96,
+            "scale": 0.0000152587890625,
+            "unit": "s",
+            "description": "Total dispersion to the reference clock, in NTP short format.",
+            "note": "NTP short format (section 6, Figure 3): a 16-bit unsigned seconds field and a 16-bit fraction field, read here as one 32-bit integer scaled by 2^-16, which is exact."
+        },
+        "reference_id": {
+            "start": 96,
+            "stop": 128,
+            "type": "bytes",
+            "description": "32-bit code identifying the particular server or reference clock.",
+            "note": "The interpretation depends on the value in the stratum field, which the format cannot express, so the four octets are given as hex. At stratum 0 they are a four-character ASCII kiss code (section 7.4, Figure 13) and at stratum 1 the ASCII identifier of the reference clock (Figure 12): 47505300 is GPS. Above stratum 1 they are the server's IPv4 address, or the first four octets of the MD5 hash of its IPv6 address: c0000201 is 192.0.2.1."
+        },
+        "reference_timestamp_seconds": {
+            "start": 128,
+            "stop": 160,
+            "unit": "s",
+            "description": "Time when the system clock was last set or corrected, in NTP timestamp format.",
+            "note": "The Seconds half of the NTP timestamp format (section 6, Figure 3): seconds since 0 h 1 January 1900 UTC. Subtract 2208988800 for Unix time. The count wraps in 2036; the era is not in the packet."
+        },
+        "reference_timestamp_fraction": {
+            "start": 160,
+            "stop": 192,
+            "scale": 2.3283064365386963e-10,
+            "unit": "s",
+            "description": "Time when the system clock was last set or corrected, in NTP timestamp format.",
+            "note": "The Fraction half of the NTP timestamp format (section 6, Figure 3), scaled by 2^-32, which is exact. Add it to the seconds field."
+        },
+        "origin_timestamp_seconds": {
+            "start": 192,
+            "stop": 224,
+            "unit": "s",
+            "description": "Time at the client when the request departed for the server, in NTP timestamp format.",
+            "note": "The Seconds half of the NTP timestamp format (section 6, Figure 3): seconds since 0 h 1 January 1900 UTC. Subtract 2208988800 for Unix time. The count wraps in 2036; the era is not in the packet."
+        },
+        "origin_timestamp_fraction": {
+            "start": 224,
+            "stop": 256,
+            "scale": 2.3283064365386963e-10,
+            "unit": "s",
+            "description": "Time at the client when the request departed for the server, in NTP timestamp format.",
+            "note": "The Fraction half of the NTP timestamp format (section 6, Figure 3), scaled by 2^-32, which is exact. Add it to the seconds field."
+        },
+        "receive_timestamp_seconds": {
+            "start": 256,
+            "stop": 288,
+            "unit": "s",
+            "description": "Time at the server when the request arrived from the client, in NTP timestamp format.",
+            "note": "The Seconds half of the NTP timestamp format (section 6, Figure 3): seconds since 0 h 1 January 1900 UTC. Subtract 2208988800 for Unix time. The count wraps in 2036; the era is not in the packet."
+        },
+        "receive_timestamp_fraction": {
+            "start": 288,
+            "stop": 320,
+            "scale": 2.3283064365386963e-10,
+            "unit": "s",
+            "description": "Time at the server when the request arrived from the client, in NTP timestamp format.",
+            "note": "The Fraction half of the NTP timestamp format (section 6, Figure 3), scaled by 2^-32, which is exact. Add it to the seconds field."
+        },
+        "transmit_timestamp_seconds": {
+            "start": 320,
+            "stop": 352,
+            "unit": "s",
+            "description": "Time at the server when the response left for the client, in NTP timestamp format.",
+            "note": "The Seconds half of the NTP timestamp format (section 6, Figure 3): seconds since 0 h 1 January 1900 UTC. Subtract 2208988800 for Unix time. The count wraps in 2036; the era is not in the packet."
+        },
+        "transmit_timestamp_fraction": {
+            "start": 352,
+            "stop": 384,
+            "scale": 2.3283064365386963e-10,
+            "unit": "s",
+            "description": "Time at the server when the response left for the client, in NTP timestamp format.",
+            "note": "The Fraction half of the NTP timestamp format (section 6, Figure 3), scaled by 2^-32, which is exact. Add it to the seconds field."
+        }
+    }
+}

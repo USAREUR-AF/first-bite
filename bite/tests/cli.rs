@@ -338,7 +338,7 @@ fn lint_lists_its_rules_and_fails_on_a_finding() {
     );
     assert_eq!(rules.lines().count(), bite::authoring::rules::RULES.len());
     assert!(ok(&["lint", "--units"]).contains("degC    degree Celsius"));
-    for name in ["glasshouse", "toot", "vehicle-can", "weather-station"] {
+    for name in ["glasshouse", "ntp", "vehicle-can", "weather-station"] {
         ok(&["lint", &shipped(name)]);
         ok(&["check", "--strict", &shipped(name)]);
         ok(&["fmt", "--check", &shipped(name)]);
@@ -371,9 +371,9 @@ fn lint_lists_its_rules_and_fails_on_a_finding() {
 
 #[test]
 fn check_strict_honours_an_allowance_and_nothing_else() {
-    let out = ok(&["check", "--strict", &shipped("toot")]);
+    let out = ok(&["check", "--strict", &shipped("ntp")]);
     assert!(
-        out.contains("allowed: FAE/None: named by message_type but has no file"),
+        out.contains("allowed: NTP/NTP control message: named by message_type but has no file"),
         "{out}"
     );
     assert!(
@@ -381,11 +381,11 @@ fn check_strict_honours_an_allowance_and_nothing_else() {
         "{out}"
     );
     let dir = scratch("strict");
-    copy_dir(Path::new(&shipped("toot")), &dir);
+    copy_dir(Path::new(&shipped("ntp")), &dir);
     fs::remove_file(dir.join("dictionary.json")).unwrap();
     let out = fails(&["check", "--strict", dir.to_str().unwrap()]);
     assert!(
-        out.contains("1 interfaces, 1 messages, 0 errors, 1 warnings, 1/1 vectors passed"),
+        out.contains("1 interfaces, 5 messages, 0 errors, 1 warnings, 10/10 vectors passed"),
         "{out}"
     );
     ok(&["check", dir.to_str().unwrap()]);

@@ -1,0 +1,29 @@
+{
+    "description": "The NTP packet header consists of an integral number of 32-bit (4 octet) words in network byte order.",
+    "source": {
+        "section": "7.3"
+    },
+    "note": "The message is identified by the Mode field. Modes 1 to 5 share the header of Figure 8 and each has a message file with the same fields. Extension fields (section 7.5) and the message authentication code that may follow the header are variable in number and length and are not transcribed.",
+    "protocol": {
+        "network": "ip",
+        "transport": "udp"
+    },
+    "port": 123,
+    "icd_numbering": {
+        "word_bits": 32,
+        "bit0": "msb",
+        "first_word": 0
+    },
+    "message_type": {
+        "start": 5,
+        "stop": 8,
+        "values": {
+            "1": "symmetric active",
+            "2": "symmetric passive",
+            "3": "client",
+            "4": "server",
+            "5": "broadcast",
+            "6": "NTP control message"
+        }
+    }
+}

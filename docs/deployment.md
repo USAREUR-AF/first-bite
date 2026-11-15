@@ -68,7 +68,7 @@ A Linux archive unpacks to:
 | `deployment/first-bite.logrotate` | logrotate rule |
 | `deployment/config/` | example `publishers.yml`, `subscribers.yml`, `subpubs.yml` |
 | `deployment/filebeat/`, `deployment/telegraf/` | optional log and metric shipping examples |
-| `dictionaries/` | the example dictionaries `weather-station`, `vehicle-can`, `toot` |
+| `dictionaries/` | the example dictionaries `ntp`, `weather-station`, `vehicle-can`, `glasshouse` |
 | `LICENSE`, `NOTICE`, `INTENT.md`, `INSTALL.md` | licence files and a copy of this page |
 
 A macOS archive holds `bin/mind`, `bin/bite`, `config/`, `dictionaries/` and

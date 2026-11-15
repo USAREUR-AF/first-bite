@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "250306ea0000123400002345c6336407ed1352e81234567800000000000000000000000000000000ed13555000000001",
+    "expect": {
+        "message_type": "broadcast",
+        "fields": {
+            "leap_indicator": "no warning",
+            "version_number": "4",
+            "mode": "broadcast",
+            "stratum": "3",
+            "poll": "6",
+            "precision": "-22",
+            "root_delay": "0.07110595703125",
+            "root_dispersion": "0.1377716064453125",
+            "reference_id": "c6336407",
+            "reference_timestamp_seconds": "3977466600",
+            "reference_timestamp_fraction": "0.07111111097037792",
+            "origin_timestamp_seconds": "0",
+            "origin_timestamp_fraction": "0",
+            "receive_timestamp_seconds": "0",
+            "receive_timestamp_fraction": "0",
+            "transmit_timestamp_seconds": "3977467216",
+            "transmit_timestamp_fraction": "2.3283064365386963e-10"
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. A broadcast from a stratum 3 server; the transmit fraction is one unit, 2^-32 s."
+}

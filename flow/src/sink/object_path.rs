@@ -79,10 +79,7 @@ mod tests {
     #[test]
     fn a_topic_cannot_step_out_of_its_prefix() {
         assert_eq!(topic_path("WX/Observation"), "WX/Observation");
-        assert_eq!(
-            topic_path("FAE/FOMO Report Message"),
-            "FAE/FOMO Report Message"
-        );
+        assert_eq!(topic_path("ZONE/Climate Report"), "ZONE/Climate Report");
         assert_eq!(topic_path("../../other-bucket/x"), "__/__/other-bucket/x");
         assert_eq!(topic_path("/a//./b/"), "a/_/b");
         assert_eq!(topic_path("a\\..\\b\n\u{7}"), "a_.._b__");

@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "e40006e90000000000000000524154450000000000000000ed1355404000000000000000000000000000000000000000",
+    "expect": {
+        "message_type": "server",
+        "fields": {
+            "leap_indicator": "unknown (clock unsynchronized)",
+            "version_number": "4",
+            "mode": "server",
+            "stratum": "unspecified or invalid",
+            "poll": "6",
+            "precision": "-23",
+            "root_delay": "0",
+            "root_dispersion": "0",
+            "reference_id": "52415445",
+            "reference_timestamp_seconds": "0",
+            "reference_timestamp_fraction": "0",
+            "origin_timestamp_seconds": "3977467200",
+            "origin_timestamp_fraction": "0.25",
+            "receive_timestamp_seconds": "0",
+            "receive_timestamp_fraction": "0",
+            "transmit_timestamp_seconds": "0",
+            "transmit_timestamp_fraction": "0"
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. A kiss-o'-death packet (section 7.4): stratum 0 with the kiss code RATE of Figure 13 in the reference ID."
+}

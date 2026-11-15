@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "23000000000000000000000000000000000000000000000000000000000000000000000000000000ed13554040000000",
+    "expect": {
+        "message_type": "client",
+        "fields": {
+            "leap_indicator": "no warning",
+            "version_number": "4",
+            "mode": "client",
+            "stratum": "unspecified or invalid",
+            "poll": "0",
+            "precision": "0",
+            "root_delay": "0",
+            "root_dispersion": "0",
+            "reference_id": "00000000",
+            "reference_timestamp_seconds": "0",
+            "reference_timestamp_fraction": "0",
+            "origin_timestamp_seconds": "0",
+            "origin_timestamp_fraction": "0",
+            "receive_timestamp_seconds": "0",
+            "receive_timestamp_fraction": "0",
+            "transmit_timestamp_seconds": "3977467200",
+            "transmit_timestamp_fraction": "0.25"
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. A request as an SNTP client sends it: only the version, the mode and the transmit timestamp are set."
+}

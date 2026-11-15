@@ -13,12 +13,12 @@ by [icd-to-dictionary](icd-to-dictionary/README.md).
 
 Four dictionaries ship in [`dictionaries/`](../dictionaries):
 
-| Dictionary | Shows |
+| Dictionary | What it is for |
 |---|---|
-| `weather-station` | UDP messages identified by a payload field; signed, scaled, float, boolean, text, little-endian and non-byte-aligned fields |
-| `vehicle-can` | CAN frames identified by the frame identifier; little-endian signals in `lsb0` numbering |
-| `toot` | the minimal form: integer fields with value labels |
-| `glasshouse` | two interfaces transcribed from a synthetic interface document, with a source for every field, a declared length for every message and a vector for each: the [worked example](icd-to-dictionary/06-worked-example/README.md) |
+| [`ntp`](../dictionaries/ntp/README.md) | real traffic you already have: the Network Time Protocol header of RFC 5905 on UDP port 123, to capture on your own network. Messages identified by three bits of the first byte, exact fixed-point scaling, an identifier named and not defined |
+| `weather-station` | every field type: UDP messages identified by a payload field, with signed, scaled, float, boolean, text, little-endian and non-byte-aligned fields. The one to start a dictionary from |
+| `vehicle-can` | the frame identifier as discriminator: CAN frames with little-endian signals in `lsb0` numbering |
+| `glasshouse` | transcribed from a document: two interfaces from a synthetic interface document, with a source for every field, a declared length for every message and a vector for each. The [worked example](icd-to-dictionary/06-worked-example/README.md) |
 
 ## Layout
 
