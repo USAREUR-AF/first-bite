@@ -6,6 +6,16 @@ depend on goat. A `mind` built with the cargo feature `goat` can also join a
 goat network ("goatnet") and publish decoded records on its Zenoh fabric the
 way goat expects.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/on-a-goat-fabric-dark.svg">
+  <img src="img/on-a-goat-fabric.svg" width="100%" alt="With the optional goat feature, first-bite reads a copy of a link from a tap or mirror port, decodes it from a dictionary and publishes records as a Zenoh client holding a certificate the goatnet issued. The goat data fabric owns identity, access rules, routing and delivery, and consumers read from the fabric, not from first-bite. Records land on &lt;prefix&gt;/telemetry/&lt;format&gt;/&lt;site&gt;/&lt;interface&gt;/&lt;message&gt;, with a schema declared at attest/schema/&lt;record key&gt; and an announcement under &lt;prefix&gt;/services/shims. Without goat, which is the default build, the same decoder publishes on a ZeroMQ socket to object storage, HTTP, a file or any Zenoh router.">
+</picture>
+
+goat is the data fabric: the mesh, the certificate authority, the Zenoh
+routers and their access rules. first-bite is not another fabric and not
+another way to manage data; it is one of the ways data gets onto a goat
+fabric, under the identity and the rules the goatnet gives it.
+
 | Page | For |
 |---|---|
 | [goat/joining.md](goat/joining.md) | an operator with a goatnet and an onboarding archive: build, configure, check, start, confirm, troubleshoot |

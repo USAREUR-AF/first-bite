@@ -2,6 +2,10 @@
 # and private/ must never reach an image layer.
 private/
 target/
+fuzz/target/
+fuzz/corpus/
+fuzz/artifacts/
+fuzz/coverage/
 vendor/
 .git
 .github

@@ -125,7 +125,7 @@ impl Numbering {
         if self.first_word > 1 || self.first_bit > 1 {
             return Err("words and bits are numbered from 0 or from 1".to_string());
         }
-        if self.word_order == WordOrder::Little && !self.word_bits.is_multiple_of(8) {
+        if self.word_order == WordOrder::Little && self.word_bits % 8 != 0 {
             return Err(format!(
                 "a little-endian word is whole bytes, and {} bits is not",
                 self.word_bits
@@ -250,7 +250,7 @@ impl Numbering {
         let last = (span.stop - 1) / self.word_bits;
         for word in first..=last {
             let base = word * self.word_bits;
-            let bytes = if self.word_bits.is_multiple_of(8) {
+            let bytes = if self.word_bits % 8 == 0 {
                 let from = base / 8;
                 let to = from + self.word_bits / 8 - 1;
                 if from == to {

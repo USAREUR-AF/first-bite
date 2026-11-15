@@ -15,7 +15,8 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 | `beyond-ip` | what is built, designed and not built for IP, CAN and other buses |
 | `record-flow` | publishers, subscribers with topic filters, sinks, and a subpub republishing on its own socket |
 | `loss-counters` | the stages a frame passes through and the three counters that say where one was lost |
-| `three-projects` | first-bite beside Open Billie and octo-pod, from [`../related-projects.md`](../related-projects.md) |
+| `ways-onto-the-fabric` | a native Zenoh publisher, Open Billie, octo-pod and first-bite as four ways onto one fabric, from [`../related-projects.md`](../related-projects.md) |
+| `on-a-goat-fabric` | first-bite as a publisher on a goat data fabric, what each is responsible for, and the same decoder without goat |
 | `icd-to-dictionary` | an interface document transcribed into a dictionary, and the four things that run from it |
 | `platforms` | which archive runs where, from [`../deployment.md`](../deployment.md) |
 | `icd-pipeline` | the nine steps from an interface document to a versioned dictionary, each with the `bite` command that does or checks it |
@@ -24,7 +25,7 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 
 ## Regenerate and preview
 
-`build.py` writes all thirty files. It needs Python 3 and nothing else.
+`build.py` writes every file. It needs Python 3 and nothing else.
 
 ```bash
 python3 docs/img/build.py            # write the figures

@@ -14,13 +14,19 @@
 #   first-bite-<version>-x86_64-pc-windows-msvc.zip     bite.exe only
 #   first-bite-<version>.spdx.json   SPDX 2.3 SBOM of the workspace
 #   SHA256SUMS                       digest of every asset above
+#   first-bite-<version>.intoto.jsonl
+#       SLSA build provenance for every asset above: one signed in-toto
+#       statement (a Sigstore bundle) whose subjects are the lines of
+#       SHA256SUMS. Published while the repository is public
 #
 # tools/package-release.sh lays out each archive; docs/deployment.md says which
 # to choose. The build steps are make targets and scripts in tools/, the same
 # ones a developer runs.
 #
-# Every asset carries a build provenance attestation; verify one with
-# `gh attestation verify <file> --repo <owner>/<repo>`.
+# The provenance is also recorded as a GitHub artifact attestation. Verify an
+# asset against either copy:
+#   gh attestation verify <file> --repo <owner>/<repo>
+#   gh attestation verify <file> --repo <owner>/<repo> --bundle first-bite-<version>.intoto.jsonl
 #
 # workflow_dispatch builds and packages without publishing.
 name: release
@@ -268,9 +274,22 @@ jobs:
           { echo '```'; cat SHA256SUMS; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # Artifact attestations on a private repository need GitHub Enterprise Cloud.
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        id: attest
         if: ${{ !github.event.repository.private }}
         with:
           subject-checksums: dist/SHA256SUMS
+      # The same attestation as a release asset, so it can be checked with the
+      # file alone, and found by tools that look for provenance beside a
+      # release (OpenSSF Scorecard's Signed-Releases check).
+      - name: Provenance as a release asset
+        if: ${{ steps.attest.outputs.bundle-path != '' }}
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          jq -e -s 'length > 0 and all(.[]; .dsseEnvelope.payloadType == "application/vnd.in-toto+json")' "$BUNDLE" > /dev/null
+          cp "$BUNDLE" "dist/first-bite-$version.intoto.jsonl"
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}

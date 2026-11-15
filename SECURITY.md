@@ -35,16 +35,18 @@ A dictionary describes a message set. Do not attach a dictionary or a capture th
 | leak check self-test | `tools/check-public-tree.test.sh`, `scripts` job of `ci.yml` | every pull request and push to `main` | a leak check that has stopped catching one of its classes |
 | pre-commit hook | `tools/git-hooks/pre-commit`, installed with `make hooks` | each commit, on the contributor's machine | the same shapes as the leak gate, in the staged files, before they enter history |
 | pin check | `tools/check-pins.py`, `scripts` job of `ci.yml` | every pull request and push to `main` | a GitHub Action not pinned to a full commit SHA; a container image in a workflow, `Dockerfile`, compose file or the `Makefile` without a digest; a pinned image no Dependabot entry updates |
-| advisory audit | `.github/workflows/rust-audit.yml` (`cargo audit`) | pull requests that change `Cargo.lock` or a `Cargo.toml`; weekly | a dependency with a RustSec vulnerability advisory. Each ignored advisory is listed with its reason in `.cargo/audit.toml` |
+| advisory audit | `.github/workflows/rust-audit.yml` (`cargo audit`) | pull requests that change a `Cargo.lock` or a `Cargo.toml`; weekly | a dependency with a RustSec vulnerability advisory, in the workspace or in the fuzz targets. Each ignored advisory is listed with its reason in `.cargo/audit.toml`, and for OSV-based scanners in `osv-scanner.toml` |
 | dependency policy | `.github/workflows/cargo-deny.yml` (`deny.toml`) | pull requests that change `Cargo.lock`, a `Cargo.toml` or `deny.toml` | a licence outside the allowed list; a wildcard version; a crate from outside crates.io |
-| CodeQL | `.github/workflows/codeql.yml` | pull requests and pushes that change Rust, Python or a workflow; weekly | code-scanning findings in the Rust and Python sources and in the workflows |
-| Scorecard | `.github/workflows/scorecard.yml` | pushes to `main`; weekly | regressions in supply-chain posture: unpinned dependencies, workflow token permissions, branch protection |
+| CodeQL | `.github/workflows/codeql.yml` | every pull request and push to `main`; weekly | code-scanning findings in the Rust and Python sources and in the workflows |
+| Scorecard | `.github/workflows/scorecard.yml` | pushes to `main`; weekly; when a branch rule changes | regressions in supply-chain posture: unpinned dependencies, workflow token permissions, branch protection. [docs/security/scorecard.md](docs/security/scorecard.md) goes through it check by check |
 | Dependabot | `.github/dependabot.yml` | weekly | newer versions of crates, GitHub Actions, the `Dockerfile` base images and the mock images, as pull requests |
 | tests of hostile input | `bite/tests/robustness.rs`, `bite/tests/hostile_dictionary.rs`, `test` job of `ci.yml` | pull requests that change code | a decoder or dictionary loader that panics on a malformed payload or dictionary, or exceeds a limit of `bite/src/limits.rs` |
+| fuzzing | `fuzz/` (three libFuzzer targets), `.github/workflows/cflite_pr.yml` and `cflite_batch.yml` (ClusterFuzzLite) | pull requests that change code, for 5 minutes; every night and pushes to `main` that change code, for 30 minutes | a panic, an arithmetic overflow, a memory error, a hang or runaway memory use in the decoder, the dictionary loader or the frame pipeline, on an input no test thought of |
+| release provenance | `publish` job of `.github/workflows/release.yml` | every release | a release asset that was not built by this repository's release workflow: each asset's digest is in a signed SLSA provenance statement, published as a GitHub artifact attestation and as the release asset `first-bite-<version>.intoto.jsonl`. Check one with `gh attestation verify <file> --repo USAREUR-AF/first-bite` |
 | script lint | `shellcheck` and `yamllint` in the `scripts` job of `ci.yml` | every pull request and push to `main` | mistakes in shell scripts and workflow files |
 
 CodeQL and Scorecard run only while the repository is public; both workflows
-skip on a private repository. [docs/security/threat-model.md](docs/security/threat-model.md)
+skip on a private repository, and a release made then has no provenance. [docs/security/threat-model.md](docs/security/threat-model.md)
 states what the design protects and what it does not;
 [docs/security/](docs/security/) holds the assessments.
 

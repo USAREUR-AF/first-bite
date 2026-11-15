@@ -6,7 +6,9 @@ on:
   pull_request:
     paths:
       - 'Cargo.lock'
+      - 'fuzz/Cargo.lock'
       - '**/Cargo.toml'
+      - '.cargo/audit.toml'
       - '.github/workflows/rust-audit.yml'
   schedule:
     - cron: '0 3 * * 0'
@@ -30,6 +32,8 @@ jobs:
           persist-credentials: false
       - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
         with:
-          tool: cargo-audit
+          tool: cargo-audit@0.23.0
       # Fails on vulnerabilities; unmaintained-crate warnings are reported only.
       - run: cargo audit
+      # The fuzz targets are their own workspace with their own lock file.
+      - run: cargo audit --file fuzz/Cargo.lock

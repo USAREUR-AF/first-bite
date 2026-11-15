@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 428" width="760" height="428" role="img" aria-labelledby="ways-onto-the-fabric-title ways-onto-the-fabric-desc" aria-label="One data fabric, four ways onto it, each for a different situation">
+<title id="ways-onto-the-fabric-title">One data fabric, four ways onto it, each for a different situation</title>
+<desc id="ways-onto-the-fabric-desc">A sensor on the left and one Zenoh data fabric, such as a goatnet, on the right, with four routes between them. A native Zenoh publisher: the equipment publishes on the fabric itself, when it can speak Zenoh. Open Billie: an endpoint the sensor sends to, publishing its tracks as Cursor-on-Target, ASTERIX CAT062 or SAPIENT, when you want normalised tracks. octo-pod: a boundary appliance the sensor sends to, carrying bytes unchanged under a certificate, a release gate and an audit record, when a feed must leave a site under those controls. first-bite: listens on a tap or mirror port and publishes every field of every message, when you want everything two systems say without touching either.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="427" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">One data fabric, four ways onto it, each for a different situation</text>
+<rect x="24" y="64" width="100" height="344" rx="8" class="bx"/>
+<text x="74" y="222.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Sensor</text>
+<text x="74" y="240.9" font-size="13" text-anchor="middle" class="q">its own</text>
+<text x="74" y="258.9" font-size="13" text-anchor="middle" class="q">binary format</text>
+<rect x="636" y="64" width="100" height="344" rx="8" class="bx"/>
+<text x="686" y="213.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Zenoh</text>
+<text x="686" y="231.9" font-size="13" text-anchor="middle" class="q">data fabric,</text>
+<text x="686" y="249.9" font-size="13" text-anchor="middle" class="q">such as</text>
+<text x="686" y="267.9" font-size="13" text-anchor="middle" class="q">a goatnet</text>
+<rect x="204" y="64" width="382" height="80" rx="8" class="bx"/>
+<text x="395" y="90.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Native Zenoh publisher</text>
+<text x="395" y="108.9" font-size="13" text-anchor="middle" class="t">the equipment publishes on the fabric itself</text>
+<text x="395" y="126.9" font-size="13" text-anchor="middle" class="q">Choose when the equipment can speak Zenoh</text>
+<path d="M124 104L204 104" class="ln" data-lint="nohead"/>
+<text x="164" y="94" font-size="13" text-anchor="middle" class="q">itself</text>
+<path d="M586 104L627 104" class="ln"/><path d="M636 104L626 109L626 99z" class="fl"/>
+<text x="611" y="94" font-size="13" text-anchor="middle" class="q">data</text>
+<rect x="204" y="152" width="382" height="80" rx="8" class="bx"/>
+<text x="395" y="178.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Open Billie</text>
+<text x="395" y="196.9" font-size="13" text-anchor="middle" class="t">tracks as Cursor-on-Target, ASTERIX CAT062, SAPIENT</text>
+<text x="395" y="214.9" font-size="13" text-anchor="middle" class="q">Choose for one sensor&#x27;s tracks in standard formats</text>
+<path d="M124 192L195 192" class="ln"/><path d="M204 192L194 197L194 187z" class="fl"/>
+<text x="164" y="182" font-size="13" text-anchor="middle" class="q">sends</text>
+<path d="M586 192L627 192" class="ln"/><path d="M636 192L626 197L626 187z" class="fl"/>
+<text x="611" y="182" font-size="13" text-anchor="middle" class="q">tracks</text>
+<rect x="204" y="240" width="382" height="80" rx="8" class="bx"/>
+<text x="395" y="266.5" font-size="15" font-weight="700" text-anchor="middle" class="t">octo-pod</text>
+<text x="395" y="284.9" font-size="13" text-anchor="middle" class="t">bytes unchanged: certificate, release gate, audit record</text>
+<text x="395" y="302.9" font-size="13" text-anchor="middle" class="q">Choose to carry a feed off a site under those controls</text>
+<path d="M124 280L195 280" class="ln"/><path d="M204 280L194 285L194 275z" class="fl"/>
+<text x="164" y="270" font-size="13" text-anchor="middle" class="q">sends</text>
+<path d="M586 280L627 280" class="ln"/><path d="M636 280L626 285L626 275z" class="fl"/>
+<text x="611" y="270" font-size="13" text-anchor="middle" class="q">bytes</text>
+<rect x="204" y="328" width="382" height="80" rx="8" class="bx"/>
+<text x="395" y="354.5" font-size="15" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="395" y="372.9" font-size="13" text-anchor="middle" class="t">every field of every message, read from a copy</text>
+<text x="395" y="390.9" font-size="13" text-anchor="middle" class="q">Choose to see all two systems say, touching neither</text>
+<path d="M124 368L142 368" class="lna" data-lint="nohead"/>
+<rect x="142" y="352" width="44" height="32" rx="6" class="bx"/>
+<text x="164" y="371.9" font-size="13" font-weight="700" text-anchor="middle" class="t">tap</text>
+<path d="M186 368L195 368" class="lna"/><path d="M204 368L194 373L194 363z" class="fa"/>
+<text x="164" y="342" font-size="13" text-anchor="middle" class="q">copy</text>
+<path d="M586 368L627 368" class="lna"/><path d="M636 368L626 373L626 363z" class="fa"/>
+<text x="611" y="358" font-size="13" text-anchor="middle" class="q">fields</text>
+</svg>

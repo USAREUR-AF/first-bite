@@ -738,39 +738,98 @@ def loss_counters():
 
 
 # ---------------------------------------------------------------------------
-# 11. three-projects
+# 11. ways-onto-the-fabric
 # ---------------------------------------------------------------------------
-def three_projects():
-    f = Fig("three-projects", "Three ways from a sensor's own format to a Zenoh data fabric",
-            "A sensor that speaks its own binary format on the left and a Zenoh data fabric on the right, with "
-            "three projects between them. Open Billie is an endpoint the sensor sends to: it decodes one "
-            "sensor's tracks and publishes them as Cursor-on-Target, ASTERIX CAT062 or SAPIENT. octo-pod is "
-            "a boundary appliance the sensor sends to: it carries the bytes unchanged under a certificate, a "
-            "release gate and an audit record. first-bite listens on a tap beside the link, without the "
-            "sensor knowing, decodes every message and publishes every field as the source defined it.", 372)
-    f.box(24, 64, 100, 284, [("Sensor", 15, True, "t"), ("its own", 13, False, "q"), ("binary format", 13, False, "q")], pad=6)
-    f.box(636, 64, 100, 284, [("Zenoh", 15, True, "t"), ("data fabric", 13, False, "q")], pad=6)
+def ways_onto_the_fabric():
+    f = Fig("ways-onto-the-fabric", "One data fabric, four ways onto it, each for a different situation",
+            "A sensor on the left and one Zenoh data fabric, such as a goatnet, on the right, with four routes "
+            "between them. A native Zenoh publisher: the equipment publishes on the fabric itself, when it "
+            "can speak Zenoh. Open Billie: an endpoint the sensor sends to, publishing its tracks as "
+            "Cursor-on-Target, ASTERIX CAT062 or SAPIENT, when you want normalised tracks. octo-pod: a "
+            "boundary appliance the sensor sends to, carrying bytes unchanged under a certificate, a release "
+            "gate and an audit record, when a feed must leave a site under those controls. first-bite: "
+            "listens on a tap or mirror port and publishes every field of every message, when you want "
+            "everything two systems say without touching either.", 428)
+    f.box(24, 64, 100, 344, [("Sensor", 15, True, "t"), ("its own", 13, False, "q"), ("binary format", 13, False, "q")], pad=6)
+    f.box(636, 64, 100, 344, [("Zenoh", 15, True, "t"), ("data fabric,", 13, False, "q"), ("such as", 13, False, "q"),
+                              ("a goatnet", 13, False, "q")], pad=6)
     lanes = [
-        (64, "bx", "t", "Open Billie", "an endpoint: turns one sensor's tracks into",
-         "Cursor-on-Target, ASTERIX CAT062 or SAPIENT", "sends", "tracks"),
-        (164, "bx", "t", "octo-pod", "a boundary appliance: carries bytes unchanged,",
-         "under a certificate, a release gate, an audit record", "sends", "bytes"),
-        (264, "bxa", "a", "first-bite", "a passive listener: decodes every message,",
-         "every field named as the source defined it", None, "records"),
+        ("bx", "t", "Native Zenoh publisher", "the equipment publishes on the fabric itself",
+         "Choose when the equipment can speak Zenoh", "is", "data"),
+        ("bx", "t", "Open Billie", "tracks as Cursor-on-Target, ASTERIX CAT062, SAPIENT",
+         "Choose for one sensor's tracks in standard formats", "sends", "tracks"),
+        ("bx", "t", "octo-pod", "bytes unchanged: certificate, release gate, audit record",
+         "Choose to carry a feed off a site under those controls", "sends", "bytes"),
+        ("bxa", "a", "first-bite", "every field of every message, read from a copy",
+         "Choose to see all two systems say, touching neither", None, "fields"),
     ]
-    for y, cls, hcls, head, l1, l2, inlabel, outlabel in lanes:
-        cy = y + 42
-        f.box(220, y, 350, 84, [(head, 15, True, hcls), (l1, 13, False, "t"), (l2, 13, False, "q")])
-        if inlabel:
-            f.line([(124, cy), (220, cy)], "ln", head="fl")
-            f.text(170, cy - 10, inlabel, 13, False, "q", "middle")
+    for k, (cls, hcls, head, what, when, inlabel, outlabel) in enumerate(lanes):
+        y = 64 + k * 88
+        cy = y + 40
+        f.box(204, y, 382, 80, [(head, 15, True, hcls), (what, 13, False, "t"), (when, 13, False, "q")])
+        if inlabel == "is":
+            f.line([(124, cy), (204, cy)], "ln", nohead=True)
+            f.text(164, cy - 10, "itself", 13, False, "q", "middle")
+        elif inlabel:
+            f.line([(124, cy), (204, cy)], "ln", head="fl")
+            f.text(164, cy - 10, inlabel, 13, False, "q", "middle")
         else:
-            f.line([(124, cy), (150, cy)], "lna", nohead=True)
-            f.box(150, cy - 16, 44, 32, [("tap", 13, True, "t")], rx=6, pad=4)
-            f.line([(194, cy), (220, cy)], "lna", head="fa")
-            f.text(172, cy - 26, "copy", 13, False, "q", "middle")
-        f.line([(570, cy), (636, cy)], "lna" if cls == "bxa" else "ln", head="fa" if cls == "bxa" else "fl")
-        f.text(602, cy - 10, outlabel, 13, False, "q", "middle")
+            f.line([(124, cy), (142, cy)], "lna", nohead=True)
+            f.box(142, cy - 16, 44, 32, [("tap", 13, True, "t")], rx=6, pad=4)
+            f.line([(186, cy), (204, cy)], "lna", head="fa")
+            f.text(164, cy - 26, "copy", 13, False, "q", "middle")
+        f.line([(586, cy), (636, cy)], "lna" if cls == "bxa" else "ln", head="fa" if cls == "bxa" else "fl")
+        f.text(611, cy - 10, outlabel, 13, False, "q", "middle")
+    return f
+
+
+# ---------------------------------------------------------------------------
+# 11b. on-a-goat-fabric
+# ---------------------------------------------------------------------------
+def on_a_goat_fabric():
+    f = Fig("on-a-goat-fabric", "first-bite is a way onto a goat data fabric, not another fabric",
+            "With the optional goat feature, first-bite reads a copy of a link from a tap or mirror port, "
+            "decodes it from a dictionary and publishes records as a Zenoh client holding a certificate the "
+            "goatnet issued. The goat data fabric owns identity, access rules, routing and delivery, and "
+            "consumers read from the fabric, not from first-bite. Records land on "
+            "<prefix>/telemetry/<format>/<site>/<interface>/<message>, with a schema declared at "
+            "attest/schema/<record key> and an announcement under <prefix>/services/shims. Without goat, "
+            "which is the default build, the same decoder publishes on a ZeroMQ socket to object storage, "
+            "HTTP, a file or any Zenoh router.", 470)
+    f.text(24, 74, "With the goat feature: optional, off by default", 13, True, "q", role="note")
+    f.box(24, 86, 110, 118, [("Equipment", 14, True, "t"), ("its own binary", 13, False, "q"), ("format, on a link", 13, False, "q")], pad=5)
+    f.line([(134, 145), (186, 145)], "lna", head="fa")
+    f.text(158, 135, "copy", 13, False, "q", "middle")
+    f.rect(186, 86, 214, 118, "bxa", 8)
+    f.text(202, 110, "first-bite", 15, True, "a")
+    for k, ln in enumerate(("capture: tap or mirror port", "decode: from a dictionary", "publish: as a Zenoh client",
+                            "certificate: from the goatnet")):
+        f.text(202, 132 + k * 19, ln, 13, False, "t" if k < 3 else "q", maxw=186)
+    f.line([(400, 145), (470, 145)], "lna", head="fa")
+    f.text(434, 135, "records", 13, False, "q", "middle")
+    f.rect(470, 86, 266, 118, "bx", 8)
+    f.text(486, 110, "goat data fabric", 15, True, "t")
+    for k, ln in enumerate(("identity: its certificate authority", "access: only under a granted prefix",
+                            "routing: Zenoh routers on its mesh", "delivery: to subscribers")):
+        f.text(486, 132 + k * 19, ln, 13, False, "t", maxw=238)
+    f.line([(603, 204), (603, 228)], "ln", head="fl")
+    f.box(470, 228, 266, 50, [("Consumers", 13, True, "t"), ("read from the fabric, not from first-bite", 13, False, "q")], pad=6)
+    f.rich(24, 240, [("first-bite: ", True, "a"), ("from the wire to a record", False, "t")], 13, maxw=420)
+    f.rich(24, 262, [("goat: ", True, "t"), ("who may publish, under which keys, and where it goes", False, "t")], 13, maxw=430)
+    f.rect(24, 288, 712, 74, "bxp", 8)
+    rows = [("Records", "<prefix>/telemetry/<format>/<site>/<interface>/<message>"),
+            ("Schema", "attest/schema/<record key>"),
+            ("Announcement", "<prefix>/services/shims/<format>/<instance>/announce")]
+    for k, (label, key) in enumerate(rows):
+        f.text(40, 310 + k * 20, label, 13, True, "q")
+        f.text(150, 310 + k * 20, key, 13, False, "t", mono=True)
+    f.text(720, 330, "<prefix> is the granted identity", 13, False, "q", "end")
+    f.text(24, 392, "Without goat: the default build", 13, True, "q", role="note")
+    f.box(24, 404, 130, 48, [("first-bite", 14, True, "a"), ("the same decoder", 13, False, "q")], "bxa", pad=6)
+    f.line([(154, 428), (190, 428)], "lna", head="fa")
+    f.box(190, 404, 170, 48, [("ZeroMQ PUB socket", 14, True, "t"), ("on this host", 13, False, "q")], pad=6)
+    f.line([(360, 428), (396, 428)], "lna", head="fa")
+    f.box(396, 404, 340, 48, [("Sinks", 14, True, "t"), ("object storage, HTTP, a file, any Zenoh router", 13, False, "q")], pad=6)
     return f
 
 
@@ -783,7 +842,7 @@ def icd_to_dictionary():
             "dictionary: one JSON file per message giving bit ranges, types, scale, units and labels, kept "
             "under version control and reviewed like code. Four things run from that one source: the decoder, "
             "bite check with the test vectors, a generated JSON Schema, and the bit view in a browser. All "
-            "four and the dictionary format are built. A documented method and tooling for the transcription step are in progress.", 286)
+            "four, the dictionary format, and the method and commands for the transcription are built.", 286)
     f.box(24, 86, 160, 120, [("Interface document", 14, True, "t"), ("hundreds of pages", 13, False, "q"),
                              ("of tables, in a PDF", 13, False, "q")], pad=6)
     f.rect(254, 60, 208, 172, "bxa", 8)
@@ -791,7 +850,7 @@ def icd_to_dictionary():
     for k, ln in enumerate(("one JSON file per message", "bit ranges and types", "scale, units and labels",
                             "test vectors", "versioned, reviewed, diffed")):
         f.text(270, 112 + k * 20, ln, 13, False, "t" if k < 4 else "q", maxw=176)
-    f.line([(184, 146), (254, 146)], "lnd", head="fl")
+    f.line([(184, 146), (254, 146)], "ln", head="fl")
     f.text(219, 136, "transcribe", 13, False, "q", "middle")
     outs = [("Decoder", "mind and bite decode"), ("bite check", "validates, runs the vectors"),
             ("JSON Schema", "generated per message"), ("Bit view in a browser", "the same decoder")]
@@ -803,8 +862,7 @@ def icd_to_dictionary():
         f.rect(516, y, 220, 44, "bx", 8)
         f.text(528, y + 19, head, 13, True, "t")
         f.text(528, y + 36, sub, 13, False, "q", maxw=200)
-    f.rich(24, 268, [("Built: ", True, "g"), ("the format and all that runs from it.  ", False, "t"),
-                     ("In progress: ", True, "w"), ("a documented method and tooling to transcribe.", False, "t")], 13)
+    f.rich(24, 268, [("Built: ", True, "g"), ("the format, all that runs from it, and the method and commands to transcribe.", False, "t")], 13)
     return f
 
 
@@ -938,11 +996,7 @@ def quality_gates():
 
 
 FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
-           icd_pipeline, bit_numbering, quality_gates]
-
-
-FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
-           record_flow, loss_counters, three_projects, icd_to_dictionary,
+           record_flow, loss_counters, ways_onto_the_fabric, on_a_goat_fabric, icd_to_dictionary,
            icd_pipeline, bit_numbering, quality_gates]
 
 

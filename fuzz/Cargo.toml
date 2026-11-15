@@ -1,0 +1,52 @@
+# Fuzz targets for the code that reads untrusted input: payloads, dictionaries
+# and captured frames. See fuzz/README.md.
+#
+# This crate is its own workspace, so the root workspace does not build it and
+# `cargo deny`, `cargo clippy --workspace` and `cargo test --workspace` do not
+# see it. It needs a nightly toolchain (the sanitizer flags are unstable).
+[package]
+name = "first-bite-fuzz"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+bite = { path = "../bite", default-features = false }
+libfuzzer-sys = "0.4"
+# Without the object-storage sinks: the pipeline does not use them.
+mind = { path = "../mind", default-features = false }
+serde_json = "1"
+
+[[bin]]
+name = "decode_payload"
+path = "fuzz_targets/decode_payload.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "load_dictionary"
+path = "fuzz_targets/load_dictionary.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "frame_pipeline"
+path = "fuzz_targets/frame_pipeline.rs"
+test = false
+doc = false
+bench = false
+
+# Debug assertions and overflow checks stay on in the optimised fuzz build, so
+# an arithmetic overflow is a crash and not a silent wrap.
+[profile.release]
+debug = "line-tables-only"
+debug-assertions = true
+overflow-checks = true

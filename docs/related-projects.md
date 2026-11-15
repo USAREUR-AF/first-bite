@@ -11,8 +11,8 @@ identity, a release gate and an audit record. This page says where they
 overlap, what each publishes, and what to configure when they run together.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="img/three-projects-dark.svg">
-  <img src="img/three-projects.svg" width="100%" alt="A sensor that speaks its own binary format on the left and a Zenoh data fabric on the right, with three projects between them. Open Billie is an endpoint the sensor sends to: it decodes one sensor's tracks and publishes them as Cursor-on-Target, ASTERIX CAT062 or SAPIENT. octo-pod is a boundary appliance the sensor sends to: it carries the bytes unchanged under a certificate, a release gate and an audit record. first-bite listens on a tap beside the link, without the sensor knowing, decodes every message and publishes every field as the source defined it.">
+  <source media="(prefers-color-scheme: dark)" srcset="img/ways-onto-the-fabric-dark.svg">
+  <img src="img/ways-onto-the-fabric.svg" width="100%" alt="A sensor on the left and one Zenoh data fabric, such as a goatnet, on the right, with four routes between them. A native Zenoh publisher: the equipment publishes on the fabric itself, when it can speak Zenoh. Open Billie: an endpoint the sensor sends to, publishing its tracks as Cursor-on-Target, ASTERIX CAT062 or SAPIENT, when you want normalised tracks. octo-pod: a boundary appliance the sensor sends to, carrying bytes unchanged under a certificate, a release gate and an audit record, when a feed must leave a site under those controls. first-bite: listens on a tap or mirror port and publishes every field of every message, when you want everything two systems say without touching either.">
 </picture>
 
 Statements about the other two name the file in their repository that they

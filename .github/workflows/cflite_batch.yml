@@ -1,0 +1,53 @@
+# ClusterFuzzLite batch run: fuzzes every target of fuzz/ for half an hour,
+# every night and after each push to main that changes code, and keeps the
+# corpus it grows as a workflow artifact for the next run and for pull
+# requests (cflite_pr.yml). A crash fails the job; the input is an artifact.
+name: cflite-batch
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '**.rs'
+      - '**/Cargo.toml'
+      - 'Cargo.lock'
+      - 'fuzz/**'
+      - 'dictionaries/**'
+      - '.clusterfuzzlite/**'
+      - '.github/workflows/cflite_batch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  fuzz:
+    name: fuzz (address)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      # Read the corpus stored by the previous run.
+      actions: read
+    steps:
+      # The action clones the repository itself; there is no checkout step.
+      - name: Build the fuzz targets
+        uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: rust
+          sanitizer: address
+          github-token: ${{ github.token }}
+      - name: Fuzz every target
+        uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: rust
+          sanitizer: address
+          mode: batch
+          fuzz-seconds: 1800
+          github-token: ${{ github.token }}

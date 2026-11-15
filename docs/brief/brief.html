@@ -137,7 +137,7 @@
         <li><strong>A schema for consumers.</strong> <code>bite schema</code> generates a JSON Schema per message, with bounds, labels and units.</li>
       </ul>
       <h2>Status</h2>
-      <p><span class="st b">Built:</span> the format, <code>bite check</code>, test vectors, JSON Schema export, the bit view in a browser. <span class="st d">In progress:</span> a documented method for going from a document to a dictionary, with tooling for the error-prone steps and a worked example.</p>
+      <p><span class="st b">Built:</span> the format, <code>bite check</code>, test vectors, JSON Schema export and the bit view in a browser; and the method for going from a document to a dictionary, with <code>bite</code> commands for the error-prone steps and a worked example (<code>docs/icd-to-dictionary/</code>).</p>
     </div>
     <div>
       <h2>What <code>bite check</code> catches</h2>
@@ -190,32 +190,26 @@
   <p class="kicker">6. One decode, many consumers</p>
   <h1>Decoded once, delivered wherever it is needed</h1>
   <p class="lede">Records leave first-bite on a ZeroMQ PUB socket. A consumer subscribes to the topics it wants, or reads what a sink forwarded. Adding a consumer changes nothing on the tapped link and nothing in the decoder.</p>
-  <figure><img src="../img/components.svg" alt="The six crates and what crosses each boundary."><figcaption><b>The parts.</b> <code>mind</code> is the process; <code>bite</code> is the decoder and knows nothing about networks; <code>flow</code> publishes and forwards.</figcaption></figure>
-  <div class="cols c32">
+  <div class="cols c2">
     <div>
       <h2>Where records can go</h2>
       <table>
         <tr><th>Destination</th><th>How</th><th>Status</th></tr>
         <tr><td>Any ZeroMQ subscriber</td><td>SUB socket with a topic filter</td><td class="st b">built</td></tr>
-        <tr><td>S3-compatible storage</td><td>sink</td><td class="st b">built</td></tr>
-        <tr><td>Azure Blob Storage</td><td>sink</td><td class="st b">built</td></tr>
+        <tr><td>S3-compatible or Azure Blob storage</td><td>sink</td><td class="st b">built</td></tr>
         <tr><td>HTTP endpoint</td><td>sink, one POST per record</td><td class="st b">built</td></tr>
-        <tr><td>Zenoh data fabric</td><td>sink, one key per interface and message</td><td class="st b">built</td></tr>
+        <tr><td>Any Zenoh router</td><td>sink, one key per interface and message</td><td class="st b">built</td></tr>
         <tr><td>Local file</td><td>sink</td><td class="st b">built</td></tr>
-        <tr><td>Cursor-on-Target</td><td>transform, republished on its own socket</td><td class="st b">built</td></tr>
+        <tr><td>Cursor-on-Target</td><td>transform from a field mapping, on its own socket</td><td class="st b">built</td></tr>
       </table>
     </div>
     <div>
-      <h2>On a Zenoh fabric</h2>
-      <p>Each record is put under a key built from the deployment and the dictionary, with every part sanitised so a value cannot add a level or a wildcard:</p>
-<pre><code>telemetry/&lt;system&gt;/&lt;location&gt;/
-          &lt;interface&gt;/&lt;message&gt;</code></pre>
-      <h2>Cursor-on-Target</h2>
-      <p>A mapping in the configuration says which decoded fields give the identifier, the type and the position; the transform emits one event per record.</p>
-      <h2>A schema for consumers</h2>
-      <p><code>bite schema</code> prints a JSON Schema per message, with bounds, labels and units.</p>
+      <h2>On a goat data fabric (optional, off by default)</h2>
+      <p>goat is the data fabric: the network, the certificate authority, the Zenoh routers and their access rules. first-bite is not another fabric or another way to manage data. Built with the <code>goat</code> feature, it is one of the ways data gets onto a goat fabric, under a certificate the goatnet issued. Without goat it runs as the rest of this brief describes.</p>
+      <p><span class="st b">Built:</span> configuration from an onboarding archive, certificate checks, records, a schema declaration per key, an announcement and a heartbeat. <span class="st b">Measured:</span> the whole path against a stock Zenoh 1.9.0 router configured as goat configures one. <span class="st n">Not built:</span> a run against a real goatnet.</p>
     </div>
   </div>
+  <figure><img src="../img/on-a-goat-fabric.svg" alt="first-bite as a publisher on a goat data fabric, what each is responsible for, and the same decoder without goat."></figure>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
 

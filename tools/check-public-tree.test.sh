@@ -2,7 +2,8 @@
 # Self-test of tools/check-public-tree.sh: plants one of each thing it must
 # refuse in a throwaway git repository and checks that each is caught, by its
 # class, without the planted text appearing in the output; then checks that
-# clean input, documentation addresses and annotated lines pass.
+# clean input, documentation addresses and annotated lines pass; then does the
+# same for a commit that is scanned with --tree and never checked out.
 #
 #   tools/check-public-tree.test.sh
 #
@@ -130,6 +131,90 @@ passes "annotated line" "bind 10"".0.0.1 # opsec-allow: address in a parser test
 passes "assistant reference in AGENTS.md" "https://claude"".ai/code/session_0123" "AGENTS.md"
 passes "assistant reference under .claude/" "Claude""-Session: abc" ".claude/notes.md"
 passes "capture file in examples/" "x" "examples/sample.pcap"
+
+# 5. --tree: a commit is read from the object store and never checked out.
+# This is how the leak gate reads a pull request.
+
+# planted_commit <mode> <path> <text>: print the id of a commit that holds the
+# check itself and one more entry. It is built in a scratch index, so the
+# working tree never holds what is planted.
+planted_commit() {
+  local mode=$1 path=$2 text=$3 blob gate tree
+  (
+    export GIT_INDEX_FILE="$work/.git/scratch-index"
+    rm -f "$GIT_INDEX_FILE"
+    if [ "$mode" = 120000 ]; then
+      blob="$(printf '%s' "$text" | git -C "$work" hash-object -w --stdin)"
+    else
+      blob="$(printf 'first line\n%s\n' "$text" | git -C "$work" hash-object -w --stdin)"
+    fi
+    gate="$(git -C "$work" hash-object -w "$work/tools/check-public-tree.sh")"
+    git -C "$work" update-index --add --cacheinfo "100755,$gate,tools/check-public-tree.sh"
+    git -C "$work" update-index --add --cacheinfo "$mode,$blob,$path"
+    tree="$(git -C "$work" write-tree)"
+    git -C "$work" -c user.name=test -c "user.email=test${at}example.org" commit-tree -m planted "$tree"
+  )
+}
+
+# tree_caught <name> <expected output line> <mode> <path> <planted text> [needles]
+tree_caught() {
+  local name=$1 expected=$2 mode=$3 path=$4 planted=$5 needles=${6:-} commit output status=0
+  cases=$((cases + 1))
+  commit="$(planted_commit "$mode" "$path" "$planted")"
+  output="$(check "$needles" --tree "$commit")" || status=$?
+  if [ "$status" -eq 0 ]; then
+    echo "FAIL --tree, $name: the check passed"
+  elif ! grep -qxF -e "$expected" <<<"$output"; then
+    echo "FAIL --tree, $name: expected the line '$expected'"
+  elif grep -qF -e "$planted" <<<"$output"; then
+    echo "FAIL --tree, $name: the output repeats what was planted"
+  elif [ -e "$work/$path" ] && [ "$path" != tools/check-public-tree.sh ]; then
+    echo "FAIL --tree, $name: the commit's file is in the working tree"
+  else
+    return 0
+  fi
+  failures=$((failures + 1))
+}
+
+# tree_passes <name> <path> <text>
+tree_passes() {
+  local name=$1 path=$2 text=$3 commit output status=0
+  cases=$((cases + 1))
+  commit="$(planted_commit 100644 "$path" "$text")"
+  output="$(check "" --tree "$commit")" || status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "FAIL --tree, $name: the check refused it"
+    printf '    %s\n' "${output//$'\n'/$'\n'    }"
+    failures=$((failures + 1))
+  fi
+}
+
+needle_id="$(printf '%s' 'Fort Example' | shasum -a 256 2>/dev/null | cut -c1-12 || true)"
+tree_caught "private key" "credential shape: planted:2" 100644 planted "-----BEGIN EC PRIVATE"" KEY-----"
+tree_caught "private address" "private-ipv4: sub dir/planted:2" 100644 "sub dir/planted" "host 10"".20.30.40 is up"
+tree_caught "e-mail address" "email-address: planted:2" 100644 planted "contact first.last${at}army.example.com"
+tree_caught "attribution trailer" "assistant-reference: planted:2" 100644 planted \
+  "Co-Authored""-By: Claude <noreply${at}example.org>"
+tree_caught "needle in a file" "needle $needle_id: planted:2" 100644 planted \
+  "deployed at fort example today" "Fort Example"
+tree_caught "needle in a path" "needle $needle_id: path of notes/fort example.md" 100644 \
+  "notes/fort example.md" "nothing" "Fort Example"
+tree_caught "needle in the target of a symbolic link" "needle $needle_id: link:1" 120000 link \
+  "../fort example/notes" "Fort Example"
+tree_caught "capture file" "capture file outside examples/: trace.pcap" 100644 trace.pcap "0123456789"
+# A pull request cannot exempt its own copy of the check: it is scanned too.
+tree_caught "the check itself, changed" "private-ipv4: tools/check-public-tree.sh:2" 100755 \
+  tools/check-public-tree.sh "10"".20.30.40"
+tree_passes "plain text" clean "nothing to see: version 1.10.20, 203.0.113.5"
+tree_passes "annotated line" clean "bind 10"".0.0.1 # opsec-allow: address in a parser test, no host has it"
+tree_passes "assistant reference in AGENTS.md" AGENTS.md "https://claude"".ai/code/session_0123"
+tree_passes "capture file in examples/" examples/sample.pcap "x"
+
+cases=$((cases + 1))
+if output="$(check "" --tree no-such-revision)"; then
+  echo "FAIL --tree, unknown revision: the check passed"
+  failures=$((failures + 1))
+fi
 
 if [ "$failures" -ne 0 ]; then
   echo "check-public-tree self-test: $failures of $cases cases FAILED" >&2

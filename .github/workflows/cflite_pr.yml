@@ -1,0 +1,52 @@
+# ClusterFuzzLite on pull requests: builds the fuzz targets of fuzz/ and fuzzes
+# the code the pull request changes for five minutes. A crash fails the job and
+# the input that caused it is kept as a workflow artifact.
+#
+# .clusterfuzzlite/ holds the build: Dockerfile, build.sh, project.yaml.
+name: cflite-pr
+
+on:
+  pull_request:
+    paths:
+      - '**.rs'
+      - '**/Cargo.toml'
+      - 'Cargo.lock'
+      - 'fuzz/**'
+      - 'dictionaries/**'
+      - 'examples/**'
+      - 'tools/libpcap-static.sh'
+      - '.clusterfuzzlite/**'
+      - '.github/workflows/cflite_pr.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: fuzz (address)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      # Read the corpus that the batch run stored as a workflow artifact.
+      actions: read
+    steps:
+      # The action clones the repository itself; there is no checkout step.
+      - name: Build the fuzz targets
+        uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: rust
+          sanitizer: address
+          github-token: ${{ github.token }}
+      - name: Fuzz the changed code
+        uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
+        with:
+          language: rust
+          sanitizer: address
+          mode: code-change
+          fuzz-seconds: 300
+          github-token: ${{ github.token }}

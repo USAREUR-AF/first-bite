@@ -9,6 +9,14 @@ on:
       - '**/Cargo.toml'
       - 'deny.toml'
       - '.github/workflows/cargo-deny.yml'
+  # main keeps its own result, which is what the badge in the README shows.
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.lock'
+      - '**/Cargo.toml'
+      - 'deny.toml'
+      - '.github/workflows/cargo-deny.yml'
   workflow_dispatch:
 
 permissions:
