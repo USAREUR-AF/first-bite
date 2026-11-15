@@ -2,6 +2,7 @@
 //! lets through.
 
 use crate::config::SubscriberConfig;
+use crate::encoding::payload_to_json;
 use crate::error::{Error, Problem};
 use crate::publish::TOPIC_DELIMITER;
 use log::{debug, error, warn};
@@ -119,18 +120,12 @@ impl Feed {
     }
 
     /// Block until a message on a wanted topic arrives and return its topic
-    /// and payload. `None` means the ZeroMQ context was shut down.
+    /// and its payload as JSON text, whether the publisher sent JSON or
+    /// CBOR. `None` means the ZeroMQ context was shut down.
     pub(crate) fn next(&self) -> Option<(String, String)> {
         loop {
-            let message = match self.socket.recv_string(0) {
-                Ok(Ok(message)) => message,
-                Ok(Err(_)) => {
-                    warn!(
-                        "subscriber {}: dropped a message that is not UTF-8",
-                        self.name
-                    );
-                    continue;
-                }
+            let message = match self.socket.recv_bytes(0) {
+                Ok(message) => message,
                 Err(zmq::Error::ETERM) => return None,
                 Err(e) => {
                     error!("subscriber {}: receive failed: {e}", self.name);
@@ -138,19 +133,35 @@ impl Feed {
                     continue;
                 }
             };
-            let Some((topic, payload)) = message.split_once(TOPIC_DELIMITER) else {
+            let Some((topic, payload)) = split_message(&message) else {
                 warn!(
-                    "subscriber {}: dropped a message with no topic delimiter",
+                    "subscriber {}: dropped a message with no topic delimiter or a topic that is not UTF-8",
                     self.name
                 );
                 continue;
             };
             // The socket filters by prefix; forward exact matches only.
-            if self.filter.matches(topic) {
-                return Some((topic.to_string(), payload.trim_start().to_string()));
+            if !self.filter.matches(topic) {
+                continue;
+            }
+            match payload_to_json(payload) {
+                Ok(record) => return Some((topic.to_string(), record.into_owned())),
+                Err(e) => warn!(
+                    "subscriber {}: dropped a message on {topic}: {e}",
+                    self.name
+                ),
             }
         }
     }
+}
+
+/// The topic and the payload of a wire message.
+fn split_message(message: &[u8]) -> Option<(&str, &[u8])> {
+    let delimiter = message
+        .iter()
+        .position(|byte| *byte == TOPIC_DELIMITER as u8)?;
+    let topic = std::str::from_utf8(&message[..delimiter]).ok()?;
+    Some((topic, &message[delimiter + 1..]))
 }
 
 #[cfg(test)]
@@ -212,6 +223,21 @@ mod tests {
                 assert_eq!(length, "t|small".len(), "the oversized message arrived");
             }
         }
+    }
+
+    #[test]
+    fn a_message_splits_at_the_first_delimiter() {
+        assert_eq!(
+            split_message(b"WX/Observation| {\"a\":\"x|y\"}"),
+            Some(("WX/Observation", &b" {\"a\":\"x|y\"}"[..]))
+        );
+        // The payload need not be text.
+        assert_eq!(
+            split_message(&[b't', b'|', 0xa0, 0xff]),
+            Some(("t", &[0xa0, 0xff][..]))
+        );
+        assert_eq!(split_message(b"no delimiter"), None);
+        assert_eq!(split_message(&[0xff, b'|', b'{', b'}']), None);
     }
 
     #[test]

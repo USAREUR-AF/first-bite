@@ -104,6 +104,10 @@ One decode serves every consumer the owner allows. A consumer subscribes to the 
 or reads what a sink wrote; it does not implement the binary interface and
 holds no connection to the systems on the link.
 
+A record carries each decoded value with its type: a number, a boolean, a
+label. The socket and each sink write it as JSON, or as CBOR where a smaller
+record matters. [docs/record.md](docs/record.md) lists every field.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/one-decode-many-consumers-dark.svg">
   <img src="docs/img/one-decode-many-consumers.svg" width="100%" alt="Left, point to point: each of four consumers implements the binary interface and holds its own connection to native system A, so there are four parsers and four connections for A to serve. Right, with a tap: first-bite decodes once and publishes, the four consumers subscribe and read JSON, and there is one decoder and no connection to A or B.">
@@ -214,6 +218,7 @@ Configuration read from the environment:
 | Variable | Meaning |
 |---|---|
 | `BITE_DICT_PATH` | dictionary directory |
+| `FIRST_BITE_RECORD_VERSION` | `2` (default): typed values in the record. `1`: every value as text. [docs/record.md](docs/record.md) |
 | `PUBLISHER_CONFIG_PATH` | ZeroMQ publishers; default is one PUB socket on `tcp://*:12000` |
 | `SUBSCRIBER_CONFIG_PATH` | sinks; none when unset |
 | `SUBPUB_CONFIG_PATH` | transforms, used with `--activate-subpubs` |
@@ -306,7 +311,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`flow/`](flow) | ZeroMQ publishers, sinks and transforms |
 | [`cotify/`](cotify) | Cursor-on-Target output |
 | [`dictionaries/`](dictionaries) | example dictionaries with vectors: [`ntp`](dictionaries/ntp) (real traffic you already have), [`weather-station`](dictionaries/weather-station) (every field type), [`vehicle-can`](dictionaries/vehicle-can) (frame identifier as discriminator, little-endian), [`glasshouse`](dictionaries/glasshouse) (transcribed from a document; the worked example) |
-| [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [from an ICD to a dictionary](docs/icd-to-dictionary/README.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
+| [`docs/`](docs) | [architecture](docs/architecture.md), [the record](docs/record.md), [dictionary format](docs/dictionary-format.md), [from an ICD to a dictionary](docs/icd-to-dictionary/README.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
 | [`site/`](site) | the documentation site; `make site` builds it |
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |
 | [`mocks/`](mocks) | local stand-ins for the sinks |

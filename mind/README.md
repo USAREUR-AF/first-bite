@@ -27,7 +27,9 @@ make mockplay    # in a second terminal: sends examples/weather-station.pcap
 capture file on an interface with `tcpreplay`, for `make run` to capture.
 
 Records leave on the ZeroMQ PUB socket `tcp://127.0.0.1:12000` under the topic
-`<interface>/<message>`. Log lines go to stderr; at level `info` there is one
+`<interface>/<message>`, as JSON unless the publisher is configured with
+`encoding: cbor`. [docs/record.md](../docs/record.md) lists the record's
+fields. Log lines go to stderr; at level `info` there is one
 line per record, and the last line of a capture-file run is a count:
 
 ```text
@@ -53,6 +55,8 @@ line per record, and the last line of a capture-file run is a count:
 | [`src/run.rs`](src/run.rs) | the loop from source through pipeline to publish; `--output` file |
 | [`src/dictionary.rs`](src/dictionary.rs) | loads the dictionary from `--dictionary` or `BITE_DICT_PATH` |
 | [`tests/replay.rs`](tests/replay.rs) | writes a capture file, replays it through the file source and the pipeline, checks the records |
+| [`tests/encodings.rs`](tests/encodings.rs) | every vector of the example dictionaries as a record: typed values against the vector, `message` against `bite schema`, CBOR read back against JSON |
+| [`examples/encodings.rs`](examples/encodings.rs) | prints record sizes and encode times per encoding for a dictionary's vectors |
 
 At run time the binary needs libpcap (`libpcap0.8` on Debian and Ubuntu) and
 glibc. [docs/deployment.md](../docs/deployment.md) covers running it as a

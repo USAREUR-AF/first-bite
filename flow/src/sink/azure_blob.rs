@@ -6,6 +6,7 @@
 use super::object_path::{time_then_topic, topic_then_time};
 use super::{quoted, read_body, required, required_secret, Sink, SinkError};
 use crate::config::SubscriberConfig;
+use crate::encoding::Encoding;
 use crate::error::Problem;
 use async_trait::async_trait;
 use base64::engine::general_purpose::STANDARD;
@@ -32,6 +33,7 @@ pub struct AzureBlobSink {
     container_url: Url,
     container: String,
     api_version: String,
+    encoding: Encoding,
 }
 
 impl AzureBlobSink {
@@ -76,6 +78,7 @@ impl AzureBlobSink {
                 .as_deref()
                 .unwrap_or(DEFAULT_API_VERSION)
                 .to_string(),
+            encoding: Encoding::from_config(config.encoding.as_deref())?,
         })
     }
 
@@ -104,7 +107,7 @@ impl AzureBlobSink {
         if let Some(blob_type) = blob_type {
             headers.push(("x-ms-blob-type".to_string(), blob_type.to_string()));
         }
-        let content_type = body.map(|_| "application/json");
+        let content_type = body.map(|_| self.encoding.media_type());
         let content_length = body.map_or(0, <[u8]>::len);
         let to_sign = string_to_sign(
             method.as_str(),
@@ -253,16 +256,18 @@ impl Sink for AzureBlobSink {
 
     async fn send(&self, topic: &str, record: &str) -> Result<(), SinkError> {
         let now = Utc::now();
+        let encoded = self.encoding.encode(record)?;
+        let extension = self.encoding.extension();
         for blob in [
-            time_then_topic(topic, record, now),
-            topic_then_time(topic, record, now),
+            time_then_topic(topic, &encoded, extension, now),
+            topic_then_time(topic, &encoded, extension, now),
         ] {
             let (status, body) = self
                 .request(
                     Method::PUT,
                     self.blob_url(&blob),
                     Some("BlockBlob"),
-                    Some(record.as_bytes()),
+                    Some(&encoded),
                 )
                 .await?;
             if status != StatusCode::CREATED {
@@ -455,6 +460,25 @@ mod tests {
                 .header("authorization")
                 .is_some_and(|value| value.starts_with("SharedKey devstoreaccount1:")));
             assert_eq!(request.body, record.as_bytes());
+        }
+    }
+
+    #[tokio::test]
+    async fn a_cbor_sink_stores_cbor_blobs_and_signs_their_content_type() {
+        let stub = HttpStub::answering(&[201, 201]);
+        let sink = AzureBlobSink::from_config(&subscriber(&format!(
+            "{}    cloud_location_type: Emulator\n    cloud_address: \"127.0.0.1\"\n    cloud_port: {}\n    encoding: cbor\n",
+            account(),
+            stub.port()
+        )))
+        .unwrap();
+        sink.send("WX/Heartbeat", r#"{"n":1}"#).await.unwrap();
+        let requests = stub.requests();
+        assert_eq!(requests.len(), 2);
+        for request in &requests {
+            assert!(request.path.ends_with(".cbor"), "{}", request.path);
+            assert_eq!(request.header("content-type"), Some("application/cbor"));
+            assert_eq!(request.body, [0xa1, 0x61, b'n', 0x01]);
         }
     }
 

@@ -61,7 +61,7 @@ or `NTP/server`. A query gives two records: the request, with
 reads (values from a reply captured this way):
 
 ```json
-{"leap_indicator":"no warning","mode":"server","origin_timestamp_fraction":"0","origin_timestamp_seconds":"4003728096","poll":"0","precision":"-24","receive_timestamp_fraction":"0.14186147297732532","receive_timestamp_seconds":"4003728096","reference_id":"a2dd2504","reference_timestamp_fraction":"0.6533022378571332","reference_timestamp_seconds":"4003727893","root_delay":"0.0180511474609375","root_dispersion":"0.0196533203125","stratum":"2","transmit_timestamp_fraction":"0.14189041079953313","transmit_timestamp_seconds":"4003728096","version_number":"4"}
+{"leap_indicator":"no warning","mode":"server","origin_timestamp_fraction":0.0,"origin_timestamp_seconds":4003728096,"poll":0,"precision":-24,"receive_timestamp_fraction":0.14186147297732532,"receive_timestamp_seconds":4003728096,"reference_id":"a2dd2504","reference_timestamp_fraction":0.6533022378571332,"reference_timestamp_seconds":4003727893,"root_delay":0.0180511474609375,"root_dispersion":0.0196533203125,"stratum":2,"transmit_timestamp_fraction":0.14189041079953313,"transmit_timestamp_seconds":4003728096,"version_number":4}
 ```
 
 Ctrl-C stops the capture. With `--output` the records are also written,

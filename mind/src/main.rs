@@ -1,5 +1,7 @@
 use clap::Parser;
-use datamodels::packets::{get_log_metadata, PacketInfoWithParsedMessage};
+use datamodels::packets::{
+    get_log_metadata, PacketInfoWithParsedMessage, RecordVersion, RECORD_VERSION_ENV,
+};
 use flow::{Publishers, SubPubs, Subscribers};
 use log::{error, info};
 use logger::loggers::setup_logger;
@@ -61,11 +63,19 @@ enum StartError {
 
 fn start(opt: Opt) -> Result<(), StartError> {
     let dictionary = mind::dictionary::load(opt.dictionary.clone()).map_err(Error::from)?;
-    mind::goat::register(dictionary.as_deref());
-    let pipeline = Pipeline::new(dictionary).with_decapsulation(Decapsulation {
-        keep_gre: opt.no_gre_decap,
-        vxlan_ports: opt.vxlan_port.clone(),
-    });
+    let version = RecordVersion::from_env().map_err(Error::RecordVersion)?;
+    mind::goat::register(dictionary.as_deref(), version);
+    if version == RecordVersion::Text {
+        info!(
+            "publishing version 1 records ({RECORD_VERSION_ENV}=1): field values and ports are text"
+        );
+    }
+    let pipeline = Pipeline::new(dictionary)
+        .with_record_version(version)
+        .with_decapsulation(Decapsulation {
+            keep_gre: opt.no_gre_decap,
+            vxlan_ports: opt.vxlan_port.clone(),
+        });
     let mut output = if opt.output {
         Some(OutputFile::create()?)
     } else {

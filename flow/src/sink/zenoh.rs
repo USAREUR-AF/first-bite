@@ -2,10 +2,12 @@
 //!
 //! Endpoints, mode and TLS identity come from a standard Zenoh JSON5
 //! configuration file (`zenoh_config`); without one the session uses Zenoh's
-//! defaults. The payload is the record JSON, encoded `application/json`.
+//! defaults. The payload is the record as JSON, tagged `application/json`,
+//! or with `encoding: cbor` as CBOR, tagged `application/cbor`.
 
 use super::{Sink, SinkError};
 use crate::config::SubscriberConfig;
+use crate::encoding::Encoding as RecordEncoding;
 use crate::error::Problem;
 use async_trait::async_trait;
 use log::{debug, info};
@@ -174,7 +176,16 @@ fn zenoh_error(error: zenoh::Error) -> SinkError {
 pub struct ZenohSink {
     config_path: Option<PathBuf>,
     template: KeyTemplate,
+    encoding: RecordEncoding,
     session: OnceCell<zenoh::Session>,
+}
+
+/// The Zenoh encoding that names a record encoding.
+pub fn zenoh_encoding(encoding: RecordEncoding) -> Encoding {
+    match encoding {
+        RecordEncoding::Json => Encoding::APPLICATION_JSON,
+        RecordEncoding::Cbor => Encoding::APPLICATION_CBOR,
+    }
 }
 
 impl ZenohSink {
@@ -198,6 +209,7 @@ impl ZenohSink {
         Ok(ZenohSink {
             config_path,
             template,
+            encoding: RecordEncoding::from_config(config.encoding.as_deref())?,
             session: OnceCell::new(),
         })
     }
@@ -229,8 +241,8 @@ impl Sink for ZenohSink {
         let key = render_key(&self.template, record)?;
         self.session()
             .await?
-            .put(&key, record)
-            .encoding(Encoding::APPLICATION_JSON)
+            .put(&key, self.encoding.encode(record)?.into_owned())
+            .encoding(zenoh_encoding(self.encoding))
             .await
             .map_err(zenoh_error)?;
         debug!("put a record on {key}");
@@ -380,33 +392,54 @@ mod tests {
             ),
         )
         .unwrap();
-        let sink = ZenohSink::from_config(&subscriber(&format!(
-            "    subscriber_type: zenoh\n    zenoh_config: \"{}\"\n",
-            config_path.display()
-        )))
-        .unwrap();
-        sink.prepare().await.unwrap();
+        let record = r#"{"subsystem":"WX","message_type":"Position","data_source_system_type":"Weather Station","data_source_geo_location":"Hilltop-7","message":{"station_id":"KX7","altitude":136.5}}"#;
+        for (setting, encoding) in [
+            ("", Encoding::APPLICATION_JSON),
+            ("    encoding: json\n", Encoding::APPLICATION_JSON),
+            ("    encoding: cbor\n", Encoding::APPLICATION_CBOR),
+        ] {
+            let sink = ZenohSink::from_config(&subscriber(&format!(
+                "    subscriber_type: zenoh\n    zenoh_config: \"{}\"\n{setting}",
+                config_path.display()
+            )))
+            .unwrap();
+            sink.prepare().await.unwrap();
 
-        let record = r#"{"subsystem":"WX","message_type":"Position","data_source_system_type":"Weather Station","data_source_geo_location":"Hilltop-7","message":{"station_id":"KX7"}}"#;
-        // The subscription takes a moment to reach the sink's session, and a
-        // put before then goes nowhere; put until one arrives.
-        let mut sample = None;
-        for _ in 0..100 {
-            sink.send("WX/Position", record).await.unwrap();
-            if let Ok(Ok(received)) =
-                tokio::time::timeout(Duration::from_millis(100), receiver.recv_async()).await
-            {
-                sample = Some(received);
-                break;
+            // The subscription takes a moment to reach the sink's session,
+            // and a put before then goes nowhere; put until one arrives.
+            let mut sample = None;
+            for _ in 0..100 {
+                sink.send("WX/Position", record).await.unwrap();
+                if let Ok(Ok(received)) =
+                    tokio::time::timeout(Duration::from_millis(100), receiver.recv_async()).await
+                {
+                    sample = Some(received);
+                    break;
+                }
             }
+            let sample = sample.expect("no sample arrived within ten seconds");
+            assert_eq!(
+                sample.key_expr().as_str(),
+                "telemetry/weather_station/hilltop-7/wx/position"
+            );
+            assert_eq!(sample.encoding(), &encoding, "{setting:?}");
+            let payload = sample.payload().to_bytes();
+            if encoding == Encoding::APPLICATION_CBOR {
+                assert_eq!(payload.first(), Some(&0xa5));
+                let back: serde_json::Value =
+                    serde_json::from_str(&crate::encoding::cbor_to_json(&payload).unwrap())
+                        .unwrap();
+                let sent: serde_json::Value = serde_json::from_str(record).unwrap();
+                assert_eq!(back, sent);
+            } else {
+                assert_eq!(payload.as_ref(), record.as_bytes());
+            }
+            // Samples the retry loop put after the one that arrived.
+            while tokio::time::timeout(Duration::from_millis(200), receiver.recv_async())
+                .await
+                .is_ok()
+            {}
         }
-        let sample = sample.expect("no sample arrived within ten seconds");
-        assert_eq!(
-            sample.key_expr().as_str(),
-            "telemetry/weather_station/hilltop-7/wx/position"
-        );
-        assert_eq!(sample.payload().to_bytes().as_ref(), record.as_bytes());
-        assert_eq!(sample.encoding(), &Encoding::APPLICATION_JSON);
         let _ = std::fs::remove_file(&config_path);
     }
 }

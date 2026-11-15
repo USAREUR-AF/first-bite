@@ -243,6 +243,7 @@ mod tests {
             address: format!("tcp://127.0.0.1:{input_port}"),
             topic: "subsystem/message_type".into(),
             topic_suffix: None,
+            encoding: None,
         }])
         .unwrap();
         let subpubs = SubPubs::from_configs(&subpubs(input_port, output_port, COT)).unwrap();

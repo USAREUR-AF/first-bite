@@ -137,9 +137,69 @@ pub struct Field {
     pub unit: Option<String>,
     pub description: Option<String>,
     labels: HashMap<i128, String>,
+    /// Decimal places of a scaled integer, when `scale` and `offset` are
+    /// short decimals; see [`decimal_places`].
+    decimals: Option<u32>,
+}
+
+/// Most decimal places a scaled value is rounded to. A double carries 15
+/// significant decimal digits.
+const MAX_DECIMALS: u32 = 15;
+
+/// The decimal places `raw * scale + offset` can have for an integer `raw`:
+/// the larger of the decimal places `scale` and `offset` are written with.
+/// `None` when either needs more than [`MAX_DECIMALS`], which is the case for
+/// a number that is not a short decimal, such as 2^-32 or 1/3.
+fn decimal_places(scale: Option<f64>, offset: Option<f64>) -> Option<u32> {
+    let places = |number: Option<f64>| -> Option<u32> {
+        let Some(number) = number else { return Some(0) };
+        if !number.is_finite() {
+            return None;
+        }
+        // The shortest decimal that reads back as the same double.
+        let text = number.to_string();
+        let places = text
+            .split_once('.')
+            .map_or(0, |(_, fraction)| fraction.len());
+        u32::try_from(places)
+            .ok()
+            .filter(|places| *places <= MAX_DECIMALS)
+    };
+    Some(places(scale)?.max(places(offset)?))
 }
 
 impl Field {
+    /// A raw integer with the field's scale and offset applied.
+    ///
+    /// A document gives a scale as a decimal, such as 0.01 or 1e-7, which a
+    /// double holds only approximately, so the product carries an error in
+    /// its last digits: 35 * 0.01 is 0.35000000000000003. The result is
+    /// therefore rounded to the decimal places the scale and offset have,
+    /// which gives the double nearest the exact decimal: 0.35. A scale that
+    /// is not a short decimal (a power of two such as 2^-32, or 1/3) and a
+    /// value with more than 15 significant digits are left as computed.
+    pub fn scaled(&self, raw: f64) -> f64 {
+        let value = self.scaled_float(raw);
+        let Some(decimals) = self.decimals else {
+            return value;
+        };
+        let power = 10f64.powi(decimals as i32);
+        let shifted = (value * power).round();
+        // Below 10^15 the shifted value is a whole number a double holds
+        // exactly, and dividing it by a power of ten is correctly rounded.
+        if shifted.abs() < 1e15 {
+            shifted / power
+        } else {
+            value
+        }
+    }
+
+    /// A `float` field's value with the scale and offset applied. The value
+    /// on the wire is already a binary fraction, so nothing is rounded.
+    pub fn scaled_float(&self, value: f64) -> f64 {
+        value * self.scale.unwrap_or(1.0) + self.offset.unwrap_or(0.0)
+    }
+
     pub fn width(&self) -> usize {
         self.stop - self.start
     }
@@ -838,6 +898,9 @@ fn build_field(
             unit: spec.unit,
             description: spec.description,
             labels,
+            decimals: (spec.scale.is_some() || spec.offset.is_some())
+                .then(|| decimal_places(spec.scale, spec.offset))
+                .flatten(),
         },
         warnings,
     ))

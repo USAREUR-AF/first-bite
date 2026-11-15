@@ -44,8 +44,8 @@ The two forms, for the same message:
 the message. `ce` and `le` are always `9999999`, the CoT value for an error
 that is not known.
 
-Field values may be decimal strings (the form `mind` publishes) or JSON
-numbers. A field that is missing, null or not a number where a number is needed
+Field values may be JSON numbers (the form `mind` publishes) or decimal
+strings (a version 1 record). A field that is missing, null or not a number where a number is needed
 is an error that names the field.
 
 ## Use

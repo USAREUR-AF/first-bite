@@ -3,6 +3,9 @@
 //! Every destination implements [`Sink`]; [`build_sink`] is the one place
 //! that turns a subscriber's configuration into a sink.
 //!
+//! A sink is handed each record as JSON text and writes it in the encoding
+//! its `encoding` key names; [`crate::encoding`] describes the two.
+//!
 //! | `subscriber_type` | `subtype` | Sink | Cargo feature |
 //! |---|---|---|---|
 //! | `objectstorage` | `azureobject` | Azure Blob Storage | `azure` |
@@ -26,6 +29,7 @@ pub mod rest;
 pub mod zenoh;
 
 use crate::config::SubscriberConfig;
+use crate::encoding::Encoding;
 use crate::error::{ConfigError, Problem};
 use crate::secret::{reference, Reference, Secret};
 use async_trait::async_trait;
@@ -35,6 +39,8 @@ use async_trait::async_trait;
 pub enum SinkError {
     #[error("record is not valid JSON: {0}")]
     Record(#[from] serde_json::Error),
+    #[error("{0}")]
+    Encoding(#[from] crate::encoding::EncodingError),
     #[error("{0}")]
     Io(#[from] std::io::Error),
     #[error("HTTP request failed: {}", causes(.0))]
@@ -113,7 +119,7 @@ pub trait Sink: Send + Sync {
         Ok(())
     }
 
-    /// Deliver one record that arrived on `topic`.
+    /// Deliver one record that arrived on `topic`. `record` is JSON text.
     async fn send(&self, topic: &str, record: &str) -> Result<(), SinkError>;
 }
 
@@ -128,6 +134,9 @@ pub fn build_sink(config: &SubscriberConfig) -> Result<Box<dyn Sink>, ConfigErro
 }
 
 fn select(config: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
+    // Checked for every sink, so a mistyped encoding is reported even where
+    // the sink's feature is off.
+    Encoding::from_config(config.encoding.as_deref())?;
     match (config.subscriber_type.as_str(), config.subtype.as_deref()) {
         ("objectstorage", Some("azureobject")) => azure_blob(config),
         ("objectstorage", Some("awsobject")) => aws_s3(config),
@@ -135,9 +144,12 @@ fn select(config: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
         ("local", None | Some("locallog")) => {
             Ok(Box::new(local_log::LocalLogSink::from_config(config)?))
         }
-        ("stateful", None | Some("messagerates")) => Ok(Box::new(
-            message_rates::MessageRatesSink::from_config(config),
-        )),
+        ("stateful", None | Some("messagerates")) => {
+            json_only(config, "it counts records and stores none")?;
+            Ok(Box::new(message_rates::MessageRatesSink::from_config(
+                config,
+            )))
+        }
         ("zenoh", None) => zenoh(config),
         ("goat", None) => goat(config),
         _ => Err(Problem::UnknownSink {
@@ -211,6 +223,21 @@ pub(crate) fn record_file_options() -> std::fs::OpenOptions {
         options.mode(0o640);
     }
     options
+}
+
+/// The encoding of a sink that writes JSON only. `why` completes "this sink
+/// writes JSON only: ".
+pub(crate) fn json_only(config: &SubscriberConfig, why: &str) -> Result<(), Problem> {
+    match Encoding::from_config(config.encoding.as_deref())? {
+        Encoding::Json => Ok(()),
+        other => Err(Problem::InvalidValue {
+            key: "encoding",
+            reason: format!(
+                "{:?} cannot be used here; this sink writes JSON only: {why}",
+                other.name()
+            ),
+        }),
+    }
 }
 
 /// The value of a key the sink cannot work without.
@@ -305,6 +332,35 @@ mod tests {
     }
 
     #[test]
+    fn an_unknown_encoding_names_the_subscriber_and_the_choices() {
+        assert_eq!(
+            refusal("    subscriber_type: local\n    local_logfile: records.log\n    encoding: msgpack\n"),
+            "subscriber Example: `encoding`: \"msgpack\" is not one of json, cbor"
+        );
+        // Also where the sink itself is not compiled in or not known.
+        assert_eq!(
+            refusal("    subscriber_type: carrierpigeon\n    encoding: xml\n"),
+            "subscriber Example: `encoding`: \"xml\" is not one of json, cbor"
+        );
+    }
+
+    #[test]
+    fn sinks_that_count_or_declare_json_refuse_cbor() {
+        let error = refusal("    subscriber_type: stateful\n    encoding: cbor\n");
+        assert!(
+            error.starts_with("subscriber Example: `encoding`: \"cbor\" cannot be used here; this sink writes JSON only: "),
+            "{error}"
+        );
+        for body in [
+            "    subscriber_type: rest\n    endpoint_url: \"127.0.0.1\"\n    endpoint_port: 5001\n    encoding: cbor\n",
+            "    subscriber_type: local\n    local_logfile: records.cborseq\n    encoding: cbor\n",
+            "    subscriber_type: local\n    local_logfile: records.log\n    encoding: json\n",
+        ] {
+            assert!(build_sink(&subscriber(body)).is_ok(), "{body}");
+        }
+    }
+
+    #[test]
     fn unknown_types_name_the_subscriber() {
         assert_eq!(
             refusal("    subscriber_type: carrierpigeon\n"),
@@ -352,6 +408,17 @@ mod tests {
                 "objectstorage/awsobject is not compiled in; rebuild with the cargo feature `aws`"
             ),
             "{error}"
+        );
+    }
+
+    #[cfg(feature = "goat")]
+    #[test]
+    fn the_goat_sink_refuses_cbor() {
+        let error = refusal("    subscriber_type: goat\n    encoding: cbor\n");
+        assert_eq!(
+            error,
+            "subscriber Example: `encoding`: \"cbor\" cannot be used here; this sink writes \
+             JSON only: the schema declared for each record on a goat fabric is a JSON Schema"
         );
     }
 

@@ -4,6 +4,7 @@
 use super::object_path::{time_then_topic, topic_then_time};
 use super::{required, required_secret, Sink, SinkError};
 use crate::config::SubscriberConfig;
+use crate::encoding::Encoding;
 use crate::error::Problem;
 use crate::secret::scrub;
 use async_trait::async_trait;
@@ -22,6 +23,7 @@ pub struct S3Sink {
     client: Client,
     bucket: String,
     region: String,
+    encoding: Encoding,
     /// The access key id and the secret, kept to take them out of error text.
     credentials: [String; 2],
 }
@@ -51,6 +53,7 @@ impl S3Sink {
             client: Client::from_conf(sdk_config),
             bucket: bucket.to_string(),
             region: region.to_string(),
+            encoding: Encoding::from_config(config.encoding.as_deref())?,
             credentials: [
                 access_key_id.trim().to_string(),
                 secret_access_key.trim().to_string(),
@@ -98,15 +101,18 @@ impl Sink for S3Sink {
 
     async fn send(&self, topic: &str, record: &str) -> Result<(), SinkError> {
         let now = Utc::now();
+        let body = self.encoding.encode(record)?;
+        let extension = self.encoding.extension();
         for key in [
-            topic_then_time(topic, record, now),
-            time_then_topic(topic, record, now),
+            topic_then_time(topic, &body, extension, now),
+            time_then_topic(topic, &body, extension, now),
         ] {
             self.client
                 .put_object()
                 .bucket(&self.bucket)
                 .key(&key)
-                .body(ByteStream::from(record.as_bytes().to_vec()))
+                .content_type(self.encoding.media_type())
+                .body(ByteStream::from(body.to_vec()))
                 .send()
                 .await
                 .map_err(|e| self.error(e))?;
@@ -166,6 +172,8 @@ mod tests {
         );
         for request in &requests {
             assert_eq!(request.method, "PUT");
+            assert!(request.path.contains(".json?"), "{}", request.path);
+            assert_eq!(request.header("content-type"), Some("application/json"));
             assert_eq!(request.body, record.as_bytes());
             assert!(request
                 .header("authorization")
@@ -188,6 +196,24 @@ mod tests {
         assert!(error.contains("InvalidAccessKeyId"), "{error}");
         assert!(!error.contains("exampleaccesskey"), "{error}");
         assert!(!error.contains("examplesecretkey"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn a_cbor_sink_stores_cbor_objects() {
+        let stub = HttpStub::answering(&[200, 200]);
+        let sink = S3Sink::from_config(&subscriber(&format!(
+            "    subscriber_type: objectstorage\n    subtype: awsobject\n    aws_access_key_id: exampleaccesskey\n    aws_secret_access_key: examplesecretkey\n    aws_default_region: us-east-1\n    aws_s3_endpoint: \"http://127.0.0.1:{}\"\n    aws_bucket_name: records\n    encoding: cbor\n",
+            stub.port()
+        )))
+        .unwrap();
+        sink.send("WX/Heartbeat", r#"{"n":1}"#).await.unwrap();
+        let requests = stub.requests();
+        assert_eq!(requests.len(), 2);
+        for request in &requests {
+            assert!(request.path.contains(".cbor?"), "{}", request.path);
+            assert_eq!(request.header("content-type"), Some("application/cbor"));
+            assert_eq!(request.body, [0xa1, 0x61, b'n', 0x01]);
+        }
     }
 
     #[tokio::test]

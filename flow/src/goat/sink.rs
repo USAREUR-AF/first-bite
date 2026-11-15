@@ -57,7 +57,13 @@ impl GoatSink {
     /// Build the sink from the file `GOAT_CONFIG_PATH` names. The
     /// configuration and the certificates are checked here, so a mistake
     /// stops startup before anything connects.
-    pub fn from_config(_: &SubscriberConfig) -> Result<Self, Problem> {
+    pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
+        // docs/goat/contract.md: the record goes out as `application/json`
+        // and its declaration is a JSON Schema.
+        crate::sink::json_only(
+            config,
+            "the schema declared for each record on a goat fabric is a JSON Schema",
+        )?;
         Self::from_env().map_err(|e| Problem::InvalidValue {
             key: "subscriber_type",
             reason: format!("goat: {e}"),
@@ -164,7 +170,7 @@ pub fn announcement(
 ) -> Value {
     json!({
         "class": config.publish.format,
-        "version": env!("CARGO_PKG_VERSION"),
+        "version": declarations.version(),
         "instance": config.publish.instance,
         "site": config.publish.site,
         "capabilities": ["publish"],
@@ -177,13 +183,18 @@ pub fn announcement(
     })
 }
 
-fn heartbeat(config: &GoatConfig, started: DateTime<Utc>, counters: &Counters) -> Value {
+fn heartbeat(
+    config: &GoatConfig,
+    version: &str,
+    started: DateTime<Utc>,
+    counters: &Counters,
+) -> Value {
     json!({
         "status": "ok",
         "class": config.publish.format,
         "instance": config.publish.instance,
         "site": config.publish.site,
-        "version": env!("CARGO_PKG_VERSION"),
+        "version": version,
         "started": started.to_rfc3339(),
         "time": Utc::now().to_rfc3339(),
         "records_published": counters.published.load(Ordering::Relaxed),
@@ -233,7 +244,13 @@ impl Sink for GoatSink {
 
         if self.config.publish.self_check {
             let key = self.layout.health_key();
-            let first = heartbeat(&self.config, self.started, &self.counters).to_string();
+            let first = heartbeat(
+                &self.config,
+                self.declarations.version(),
+                self.started,
+                &self.counters,
+            )
+            .to_string();
             match probe_with(&self.config, &session, &key, &first).await {
                 Ok(Delivery::Delivered { after, .. }) => info!(
                     "goat: the router delivers this publisher's samples (read back on {key} after {} ms)",
@@ -250,13 +267,14 @@ impl Sink for GoatSink {
         let config = self.config.clone();
         let key = self.layout.health_key();
         let started = self.started;
+        let version = self.declarations.version().to_string();
         let counters = Arc::clone(&self.counters);
         let period = Duration::from_secs(config.publish.health_interval_seconds);
         tokio::spawn(async move {
             let mut ticks = tokio::time::interval(period);
             loop {
                 ticks.tick().await;
-                let beat = heartbeat(&config, started, &counters).to_string();
+                let beat = heartbeat(&config, &version, started, &counters).to_string();
                 if let Err(e) = session
                     .put(&key, beat)
                     .encoding(Encoding::APPLICATION_JSON)
@@ -306,6 +324,7 @@ mod tests {
 
     fn declarations() -> Declarations {
         Declarations {
+            application_version: Some("9.8.7".to_string()),
             dictionary: Some("weather-station 1.0".to_string()),
             messages: vec![MessageDeclaration {
                 interface: "WX".to_string(),
@@ -401,12 +420,32 @@ mod tests {
     }
 
     #[test]
+    fn announcement_and_heartbeat_report_the_application_version() {
+        let sink = GoatSink::new(fixture_config(), declarations()).unwrap();
+        let announce = announcement(
+            &sink.config,
+            &sink.layout,
+            &sink.declarations,
+            &sink.config_digest,
+        );
+        assert_eq!(announce["version"], "9.8.7");
+        // With no application registered, this crate's own version.
+        assert_eq!(Declarations::default().version(), env!("CARGO_PKG_VERSION"));
+    }
+
+    #[test]
     fn the_heartbeat_reports_the_counts() {
         let sink = GoatSink::new(fixture_config(), declarations()).unwrap();
         sink.counters.published.store(7, Ordering::Relaxed);
         sink.counters.undecoded.store(2, Ordering::Relaxed);
-        let beat = heartbeat(&sink.config, sink.started, &sink.counters);
+        let beat = heartbeat(
+            &sink.config,
+            sink.declarations.version(),
+            sink.started,
+            &sink.counters,
+        );
         assert_eq!(beat["status"], "ok");
+        assert_eq!(beat["version"], "9.8.7");
         assert_eq!(beat["records_published"], 7);
         assert_eq!(beat["records_not_decoded"], 2);
         assert_eq!(beat["instance"], "tap-1");

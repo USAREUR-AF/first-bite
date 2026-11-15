@@ -95,10 +95,10 @@ fn integer_bits(field: &Field, text: &str, label: Option<i128>) -> Result<u64, S
         let offset = field.offset.unwrap_or(0.0);
         let exact = (value - offset) / scale;
         let raw = exact.round();
-        let back = raw * scale + offset;
+        let back = field.scaled(raw);
         if !raw.is_finite() || (back - value).abs() > 1e-9 * value.abs().max(1.0) {
-            let below = exact.floor() * scale + offset;
-            let above = exact.ceil() * scale + offset;
+            let below = field.scaled(exact.floor());
+            let above = field.scaled(exact.ceil());
             return Err(format!(
                 "{text} is not a value the field can hold: the nearest are {below} and {above}"
             ));

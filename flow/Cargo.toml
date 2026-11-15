@@ -38,3 +38,6 @@ tokio.workspace = true
 x509-parser = { workspace = true, optional = true }
 zenoh = { workspace = true, optional = true }
 zmq.workspace = true
+
+[dev-dependencies]
+ciborium.workspace = true

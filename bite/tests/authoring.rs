@@ -394,7 +394,7 @@ fn encode_refuses_what_a_field_cannot_hold() {
         [
             "no_such_field: no such field in Climate Report",
             "air_temperature: \"warm\" is not a number or a label of the field",
-            "relative_humidity: 81.35 is not a value the field can hold: the nearest are 81.30000000000001 and 81.4",
+            "relative_humidity: 81.35 is not a value the field can hold: the nearest are 81.3 and 81.4",
             "leaf_wetness: raw value 64 does not fit an unsigned 6-bit field",
             "outside_temperature: raw value 6048 does not fit an unsigned 12-bit field",
         ],

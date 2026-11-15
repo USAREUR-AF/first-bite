@@ -213,6 +213,7 @@ mod tests {
             address: format!("tcp://127.0.0.1:{port}"),
             topic: "subsystem/message_type".into(),
             topic_suffix: None,
+            encoding: None,
         }])
         .unwrap();
         let subscribers = Subscribers::from_configs(&configs(&format!(
@@ -239,5 +240,55 @@ mod tests {
         assert!(!lines.is_empty(), "nothing reached the file");
         assert!(lines.iter().all(|line| *line == wanted), "{written}");
         let _ = std::fs::remove_file(&log);
+    }
+
+    /// A publisher that sends CBOR, read by two subscribers: one stores JSON
+    /// lines, one stores a CBOR sequence. Neither is told what the publisher
+    /// sends.
+    #[test]
+    fn subscribers_read_a_cbor_publisher_and_write_their_own_encoding() {
+        let port = free_port();
+        let (lines, sequence) = (temp_path("from-cbor.log"), temp_path("from-cbor.cborseq"));
+        let publishers = Publishers::bind(&[PublisherConfig {
+            name: "records".into(),
+            publisher_type: "PUB".into(),
+            address: format!("tcp://127.0.0.1:{port}"),
+            topic: "subsystem/message_type".into(),
+            topic_suffix: None,
+            encoding: Some("cbor".into()),
+        }])
+        .unwrap();
+        let subscribers = Subscribers::from_configs(&configs(&format!(
+            "subscribers:\n  \
+             - {{ name: Lines, subscriber_type: local, zmq_url: \"127.0.0.1\", zmq_port: {port}, \
+             local_logfile: \"{}\", topics: [\"WX/Heartbeat\"] }}\n  \
+             - {{ name: Sequence, subscriber_type: local, zmq_url: \"127.0.0.1\", zmq_port: {port}, \
+             local_logfile: \"{}\", topics: [\"*\"], encoding: cbor }}\n",
+            lines.display(),
+            sequence.display()
+        )))
+        .unwrap();
+        thread::spawn(move || subscribers.run());
+
+        let record = r#"{"subsystem":"WX","message_type":"Heartbeat","message":{"uptime":86400,"battery_low":false}}"#;
+        let sent: serde_json::Value = serde_json::from_str(record).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let read = |path: &std::path::Path| std::fs::read(path).unwrap_or_default();
+        while (read(&lines).is_empty() || read(&sequence).is_empty()) && Instant::now() < deadline {
+            publishers.publish(record);
+            thread::sleep(Duration::from_millis(50));
+        }
+        let written = String::from_utf8(read(&lines)).unwrap();
+        let first: serde_json::Value =
+            serde_json::from_str(written.lines().next().expect("no JSON line arrived")).unwrap();
+        assert_eq!(first, sent);
+
+        let stored = read(&sequence);
+        let expected = crate::encoding::json_to_cbor(record).unwrap();
+        assert!(!stored.is_empty(), "no CBOR item arrived");
+        assert_eq!(stored.len() % expected.len(), 0);
+        assert!(stored.chunks(expected.len()).all(|item| item == expected));
+        let _ = std::fs::remove_file(&lines);
+        let _ = std::fs::remove_file(&sequence);
     }
 }

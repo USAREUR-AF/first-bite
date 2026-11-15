@@ -41,6 +41,9 @@ pub struct PublisherConfig {
     pub topic: String,
     /// In a subpub, appended to the incoming topic as `<topic>/<suffix>`.
     pub topic_suffix: Option<String>,
+    /// How each record is written on the socket: `json` (the default) or
+    /// `cbor`.
+    pub encoding: Option<String>,
 }
 
 /// A reader of the local ZeroMQ feed and the sink (or, in a subpub, the
@@ -56,6 +59,8 @@ pub struct SubscriberConfig {
     pub zmq_port: Option<String>,
     /// Topics to forward; `*` or `all` forwards everything.
     pub topics: Vec<String>,
+    /// How the sink writes each record: `json` (the default) or `cbor`.
+    pub encoding: Option<String>,
     // REST
     pub endpoint_url: Option<String>,
     pub endpoint_port: Option<String>,

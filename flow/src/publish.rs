@@ -1,9 +1,11 @@
 //! The local ZeroMQ sockets that records are published on.
 //!
 //! A message on the wire is `<topic>|<payload>`. The delimiter is a pipe
-//! because topics contain spaces and slashes.
+//! because topics contain spaces and slashes. The payload is the record as
+//! JSON text or, for a publisher with `encoding: cbor`, as one CBOR item.
 
 use crate::config::{load_publisher_configs, PublisherConfig};
+use crate::encoding::{Encoding, EncodingError};
 use crate::error::{ConfigError, Error, Problem};
 use log::{debug, info, warn};
 use serde::Deserialize;
@@ -15,6 +17,8 @@ pub(crate) const TOPIC_DELIMITER: char = '|';
 pub enum PublishError {
     #[error("record is not valid JSON: {0}")]
     Record(#[from] serde_json::Error),
+    #[error("{0}")]
+    Encoding(#[from] EncodingError),
     #[error("ZeroMQ send failed: {0}")]
     Zmq(#[from] zmq::Error),
 }
@@ -62,6 +66,16 @@ pub struct Publisher {
     socket: zmq::Socket,
     rule: TopicRule,
     topic_suffix: Option<String>,
+    encoding: Encoding,
+}
+
+/// `<topic>|<payload>`.
+fn wire_message(topic: &str, payload: &[u8]) -> Vec<u8> {
+    let mut message = Vec::with_capacity(topic.len() + 1 + payload.len());
+    message.extend_from_slice(topic.as_bytes());
+    message.push(TOPIC_DELIMITER as u8);
+    message.extend_from_slice(payload);
+    message
 }
 
 impl Publisher {
@@ -82,6 +96,12 @@ impl Publisher {
                 .into())
             }
         };
+        let encoding = Encoding::from_config(config.encoding.as_deref()).map_err(|problem| {
+            ConfigError::Publisher {
+                publisher: config.name.clone(),
+                problem,
+            }
+        })?;
         let rule = TopicRule::parse(&config.topic).ok_or_else(|| {
             invalid(
                 "topic",
@@ -123,32 +143,41 @@ impl Publisher {
             socket,
             rule,
             topic_suffix: config.topic_suffix.clone(),
+            encoding,
         })
+    }
+
+    pub fn encoding(&self) -> Encoding {
+        self.encoding
     }
 
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    /// Publish one record on the topic this publisher derives from it.
+    /// Publish one record, given as JSON text, on the topic this publisher
+    /// derives from it.
     pub fn publish(&self, record: &str) -> Result<(), PublishError> {
-        let message = match self.rule {
-            TopicRule::Catchall => format!("catchall{TOPIC_DELIMITER}{record}"),
+        self.publish_encoded(record, &self.encoding.encode(record)?)
+    }
+
+    /// Publish a record whose bytes in this publisher's encoding are already
+    /// at hand. `record` is the same record as JSON text; the topic is read
+    /// from it.
+    fn publish_encoded(&self, record: &str, payload: &[u8]) -> Result<(), PublishError> {
+        let topic = match self.rule {
+            TopicRule::Catchall => "catchall".to_string(),
             TopicRule::Location => {
                 let fields: TopicFields = serde_json::from_str(record)?;
-                let location = fields
+                fields
                     .data_source_geo_location
-                    .as_deref()
-                    .unwrap_or("unknown_location");
-                format!("{location}{TOPIC_DELIMITER}{record}")
+                    .unwrap_or_else(|| "unknown_location".to_string())
             }
             TopicRule::MessageType => {
                 let fields: TopicFields = serde_json::from_str(record)?;
-                let message_type = fields
+                fields
                     .message_type
-                    .as_deref()
-                    .unwrap_or("unknown_message_type");
-                format!("{message_type}{TOPIC_DELIMITER}{record}")
+                    .unwrap_or_else(|| "unknown_message_type".to_string())
             }
             TopicRule::SubsystemMessageType => {
                 let fields: TopicFields = serde_json::from_str(record)?;
@@ -157,21 +186,31 @@ impl Publisher {
                     .message_type
                     .as_deref()
                     .unwrap_or("unknown_message_type");
-                format!("{subsystem}/{message_type}{TOPIC_DELIMITER} {record}")
+                format!("{subsystem}/{message_type}")
             }
         };
+        let mut message = Vec::with_capacity(topic.len() + 2 + payload.len());
+        message.extend_from_slice(topic.as_bytes());
+        message.push(TOPIC_DELIMITER as u8);
+        // JSON on a subsystem/message_type topic has always followed the
+        // delimiter after one space. A CBOR item begins at the delimiter.
+        if self.rule == TopicRule::SubsystemMessageType && self.encoding == Encoding::Json {
+            message.push(b' ');
+        }
+        message.extend_from_slice(payload);
         debug!("publisher {} sending on {}", self.name, self.address);
-        Ok(self.socket.send(&message, 0)?)
+        Ok(self.socket.send(message, 0)?)
     }
 
-    /// Publish `payload` on `topic`, extended by this publisher's
-    /// `topic_suffix` when it has one.
+    /// Publish `payload`, a JSON document, on `topic`, extended by this
+    /// publisher's `topic_suffix` when it has one.
     pub fn publish_on(&self, topic: &str, payload: &str) -> Result<(), PublishError> {
+        let payload = self.encoding.encode(payload)?;
         let message = match &self.topic_suffix {
-            Some(suffix) => format!("{topic}/{suffix}{TOPIC_DELIMITER}{payload}"),
-            None => format!("{topic}{TOPIC_DELIMITER}{payload}"),
+            Some(suffix) => wire_message(&format!("{topic}/{suffix}"), &payload),
+            None => wire_message(topic, &payload),
         };
-        Ok(self.socket.send(&message, 0)?)
+        Ok(self.socket.send(message, 0)?)
     }
 }
 
@@ -221,11 +260,31 @@ impl Publishers {
         self.publishers.is_empty()
     }
 
-    /// Publish one record on every publisher. A publisher that fails is
-    /// reported and the others still send.
+    /// Publish one record, given as JSON text, on every publisher. A
+    /// publisher that fails is reported and the others still send. The record
+    /// is transcoded once, however many publishers want CBOR.
     pub fn publish(&self, record: &str) {
+        let mut cbor: Option<Result<Vec<u8>, String>> = None;
         for publisher in &self.publishers {
-            if let Err(e) = publisher.publish(record) {
+            let sent = match publisher.encoding {
+                Encoding::Json => publisher.publish_encoded(record, record.as_bytes()),
+                Encoding::Cbor => {
+                    let cbor = cbor.get_or_insert_with(|| {
+                        Encoding::Cbor
+                            .encode(record)
+                            .map(|bytes| bytes.into_owned())
+                            .map_err(|e| e.to_string())
+                    });
+                    match cbor {
+                        Ok(bytes) => publisher.publish_encoded(record, bytes),
+                        Err(e) => {
+                            warn!("publisher {}: {e}", publisher.name);
+                            continue;
+                        }
+                    }
+                }
+            };
+            if let Err(e) = sent {
                 warn!("publisher {}: {e}", publisher.name);
             }
         }
@@ -235,7 +294,7 @@ impl Publishers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{free_port, receive};
+    use crate::test_support::{free_port, receive, receive_bytes};
 
     fn config(topic: &str, port: u16) -> PublisherConfig {
         PublisherConfig {
@@ -244,6 +303,7 @@ mod tests {
             address: format!("tcp://127.0.0.1:{port}"),
             topic: topic.into(),
             topic_suffix: None,
+            encoding: None,
         }
     }
 
@@ -274,6 +334,66 @@ mod tests {
         assert_eq!(
             round_trip("subsystem/message_type", RECORD),
             format!("WX/Observation| {RECORD}")
+        );
+    }
+
+    #[test]
+    fn a_cbor_publisher_sends_the_record_as_one_cbor_item() {
+        use crate::encoding::{cbor_to_json, json_to_cbor};
+        for (topic, prefix) in [
+            ("*", "catchall|"),
+            ("message_type", "Observation|"),
+            ("subsystem/message_type", "WX/Observation|"),
+        ] {
+            let port = free_port();
+            let mut config = config(topic, port);
+            config.encoding = Some("cbor".into());
+            let publishers = Publishers::bind(&[config]).unwrap();
+            let context = zmq::Context::new();
+            let subscriber = context.socket(zmq::SUB).unwrap();
+            subscriber.set_subscribe(b"").unwrap();
+            subscriber
+                .connect(&format!("tcp://127.0.0.1:{port}"))
+                .unwrap();
+            let message = receive_bytes(&subscriber, || publishers.publish(RECORD));
+            let payload = message.strip_prefix(prefix.as_bytes()).unwrap();
+            assert_eq!(payload, json_to_cbor(RECORD).unwrap());
+            let back: serde_json::Value =
+                serde_json::from_str(&cbor_to_json(payload).unwrap()).unwrap();
+            let sent: serde_json::Value = serde_json::from_str(RECORD).unwrap();
+            assert_eq!(back, sent);
+        }
+    }
+
+    #[test]
+    fn a_transform_output_is_published_in_the_publishers_encoding() {
+        let port = free_port();
+        let context = zmq::Context::new();
+        let mut config = config("subsystem/message_type", port);
+        config.topic_suffix = Some("CoT".into());
+        config.encoding = Some("cbor".into());
+        let publisher = Publisher::bind(&context, &config).unwrap();
+        let subscriber = context.socket(zmq::SUB).unwrap();
+        subscriber.set_subscribe(b"").unwrap();
+        subscriber
+            .connect(&format!("tcp://127.0.0.1:{port}"))
+            .unwrap();
+        let output = r#"{"cot_datetime":"t"}"#;
+        let message = receive_bytes(&subscriber, || {
+            publisher.publish_on("WX/Position", output).unwrap()
+        });
+        let payload = message.strip_prefix(b"WX/Position/CoT|").unwrap();
+        assert_eq!(payload, crate::encoding::json_to_cbor(output).unwrap());
+    }
+
+    #[test]
+    fn an_unknown_encoding_stops_startup() {
+        let mut config = config("*", free_port());
+        config.encoding = Some("protobuf".into());
+        let error = Publishers::bind(&[config]).err().unwrap();
+        assert_eq!(
+            error.to_string(),
+            "publisher test: `encoding`: \"protobuf\" is not one of json, cbor"
         );
     }
 

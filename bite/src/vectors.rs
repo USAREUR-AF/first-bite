@@ -98,8 +98,9 @@ pub fn check_vector(dictionary: &Dictionary, vector: &VectorSpec) -> Vec<String>
 }
 
 /// Whether two rendered values are the same number to nine significant
-/// digits. A scaled field decodes to a float, and `2300 * 0.05 - 102.4` is
-/// `12.599999999999994`; the document, and so the vector, says `12.6`.
+/// digits. A vector may write `21.0` where the decoder writes `21`, and
+/// `0.666666667` for a field whose scale is not a decimal, where the decoder
+/// computes `0.6666666666666666`.
 fn same_number(expected: Option<&str>, actual: Option<&str>) -> bool {
     let (Some(expected), Some(actual)) = (expected, actual) else {
         return false;
@@ -118,6 +119,7 @@ mod tests {
 
     #[test]
     fn floats_compare_by_value() {
+        assert!(same_number(Some("0.666666667"), Some("0.6666666666666666")));
         assert!(same_number(Some("12.6"), Some("12.599999999999994")));
         assert!(same_number(Some("21.0"), Some("21")));
         assert!(same_number(Some("0"), Some("0")));

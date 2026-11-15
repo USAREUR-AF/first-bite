@@ -6,7 +6,7 @@
         "message_type": "Wheel Speeds",
         "fields": {
             "front_left": "27.78",
-            "front_right": "27.810000000000002",
+            "front_right": "27.81",
             "rear_left": "27.7",
             "rear_right": "27.75"
         }

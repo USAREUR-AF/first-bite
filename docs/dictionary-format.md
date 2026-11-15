@@ -93,7 +93,7 @@ file in `messages/` is identified but not decoded; `bite check` warns about it.
 | `type` | string | `"uint"` | `uint`, `int`, `float`, `bool`, `bytes`, `ascii` |
 | `signed` | boolean | `false` | `true` is shorthand for `"type": "int"` |
 | `byte_order` | `"big"` or `"little"` | interface's | overrides the interface byte order |
-| `scale`, `offset` | number | `1`, `0` | value is `raw * scale + offset`, as a float |
+| `scale`, `offset` | number | `1`, `0` | value is `raw * scale + offset`, as a float. For an integer field the result is rounded to the decimal places `scale` and `offset` are written with, so raw 35 with scale `0.01` is `0.35` and not `0.35000000000000003`. A scale or offset that needs more than 15 decimal places (a power of two such as 2^-32, or 1/3) and a result of more than 15 significant digits are not rounded |
 | `values` | object | none | raw integer to label |
 | `unit` | string | none | informational |
 | `description` | string | none | informational |
@@ -161,8 +161,9 @@ Each file in `vectors/` is a payload and what it must decode to:
 
 An expected value is compared as text, except for a field that decodes to a
 float (type `float`, or any field with `scale` or `offset`): there the two are
-compared as numbers to nine significant digits, so a vector can say `12.6`, as
-the document does, where the decoder computes `12.599999999999994`.
+compared as numbers to nine significant digits, so a vector can say `21.0`
+where the decoder writes `21`, and `0.666666667` for a field whose scale is
+not a decimal, where the decoder computes `0.6666666666666666`.
 
 ## Keys for authoring
 

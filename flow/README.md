@@ -26,6 +26,11 @@ checked in full before anything runs. With no subscriber or subpub file there
 are no subscribers or subpubs; with no publisher file there is one PUB socket
 on `tcp://127.0.0.1:12000`.
 
+A record crosses `flow` as JSON text. Each publisher and each sink writes it
+as JSON or, with `encoding: cbor` in its configuration, as CBOR;
+[`src/encoding.rs`](src/encoding.rs) holds both directions and
+[docs/record.md](../docs/record.md#encodings) describes the result.
+
 Configuration is described in [`config/README.md`](config/README.md).
 
 ## Sinks
@@ -52,7 +57,7 @@ module in `src/sink/` and an arm there.
 | `sink::zenoh` | Zenoh put | `zenoh` |
 | `goat::sink` | Zenoh put on a goat data fabric, with goat's identity, key and announcement conventions; optional and off by default ([docs/goat/joining.md](../docs/goat/joining.md)) | `goat` |
 | `sink::rest` | HTTP POST | always built |
-| `sink::local_log` | local file, one record per line | always built |
+| `sink::local_log` | local file: one JSON record per line, or a CBOR sequence | always built |
 | `sink::message_rates` | per-topic counts | always built |
 
 `flow` enables no feature by default. `mind` forwards the four features and
