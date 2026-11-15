@@ -9,8 +9,18 @@
 # are read from the directory this script is in. It asks no questions and can
 # be run again: binaries, the unit and the logrotate rule are replaced; the
 # environment file and the files in /etc/first-bite/config are written only
-# when they do not exist.
+# when they do not exist. Ownership and mode of /etc/first-bite, its config
+# directory, the environment file and the configuration files are set on every
+# run: they hold or name credentials, and end up root:firstbite, directories
+# 0750 and files 0640.
 set -euo pipefail
+
+# The script runs as root: use the system's tools whatever PATH it was
+# started with, and a known umask. Every file that holds settings is given
+# its mode explicitly below.
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+umask 022
 
 usage() {
     cat <<'EOF'
@@ -77,6 +87,10 @@ done
 case "$prefix" in
     /*) ;;
     *) die "--prefix must be an absolute path" ;;
+esac
+# The prefix is written into the unit's ExecStart line.
+case "$prefix" in
+    *[!A-Za-z0-9._/-]*) die "--prefix may hold only letters, digits and . _ - /" ;;
 esac
 bin_dir="$prefix/bin"
 
@@ -150,6 +164,11 @@ else
 fi
 
 install -d -o root -g "$user" -m 0750 "$etc_dir" "$etc_dir/config"
+# install -d leaves a directory that already exists as it finds it.
+chown root:"$user" "$etc_dir" "$etc_dir/config"
+chmod 0750 "$etc_dir" "$etc_dir/config"
+# Files for the unit's LoadCredential= lines; systemd reads them as root.
+install -d -o root -g root -m 0700 "$etc_dir/credentials"
 install -d -o "$user" -g "$user" -m 0750 "$log_dir"
 if [ ! -e "$log_dir/mind.log" ]; then
     install -o "$user" -g "$user" -m 0640 /dev/null "$log_dir/mind.log"
@@ -173,12 +192,27 @@ if [ -d "$here/config" ]; then
         target="$etc_dir/config/$(basename "$source")"
         if [ -e "$target" ]; then
             say kept "$target"
+        elif [ -L "$target" ]; then
+            die "$target is a dangling symbolic link; remove it"
         else
             install -o root -g "$user" -m 0640 "$source" "$target"
             say installed "$target"
         fi
     done
 fi
+
+# Configuration kept from an earlier install, or put there by hand, gets the
+# same ownership and mode as a file installed now. A symbolic link is left
+# alone and reported: chown and chmod would act on what it points to.
+for kept in "$etc_dir"/config/*.yml "$etc_dir/first-bite.env"; do
+    [ -e "$kept" ] || continue
+    if [ -L "$kept" ] || [ ! -f "$kept" ]; then
+        say note "$kept is not a regular file; its ownership and mode were not set"
+        continue
+    fi
+    chown root:"$user" "$kept"
+    chmod 0640 "$kept"
+done
 
 env_file="$etc_dir/first-bite.env"
 if [ -e "$env_file" ]; then
@@ -206,8 +240,11 @@ else
     say installed "$env_file (interface $interface)"
 fi
 
-sed "s|^ExecStart=/usr/local/bin/mind |ExecStart=$bin_dir/mind |" "$here/first-bite.service" >"$unit_path"
-chmod 0644 "$unit_path"
+staged="$(mktemp "$unit_path.XXXXXX")"
+sed "s|^ExecStart=/usr/local/bin/mind |ExecStart=$bin_dir/mind |" "$here/first-bite.service" >"$staged"
+chown root:root "$staged"
+chmod 0644 "$staged"
+mv "$staged" "$unit_path"
 say installed "$unit_path"
 install -o root -g root -m 0644 "$here/first-bite.logrotate" "$logrotate_path"
 say installed "$logrotate_path"

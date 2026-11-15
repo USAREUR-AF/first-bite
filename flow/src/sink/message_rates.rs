@@ -1,13 +1,13 @@
 //! Count records per topic and write the counts to a local file at a fixed
 //! interval.
 
-use super::{Sink, SinkError};
+use super::{record_file_options, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use log::warn;
 use std::collections::BTreeMap;
-use std::fs::{self, File, OpenOptions};
+use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -50,7 +50,7 @@ fn append_counts(
     to: DateTime<Utc>,
     counts: &BTreeMap<String, usize>,
 ) -> std::io::Result<()> {
-    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+    let mut file = record_file_options().append(true).open(path)?;
     writeln!(file, "\"{from:?}::{to:?}\": {counts:?}")?;
     if file.metadata()?.len() > TRIM_ABOVE_BYTES {
         let text = fs::read_to_string(path)?;
@@ -68,7 +68,10 @@ fn append_counts(
 impl Sink for MessageRatesSink {
     /// Start the file afresh and begin writing counts every interval.
     async fn prepare(&self) -> Result<(), SinkError> {
-        File::create(&self.path)?;
+        record_file_options()
+            .write(true)
+            .truncate(true)
+            .open(&self.path)?;
         let path = self.path.clone();
         let counts = Arc::clone(&self.counts);
         tokio::spawn(async move {

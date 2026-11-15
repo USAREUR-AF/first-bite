@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>first-bite: binary messages off the wire, decoded and published</title>
-<meta name="description" content="first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary and publishes each as a JSON record, without touching the link it listens to.">
+<meta name="description" content="first-bite listens on a network tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary and publishes each as a JSON record, without touching the link it listens to.">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -32,7 +32,7 @@
     <picture><source media="(prefers-color-scheme: dark)" srcset="img/wordmark-dark.svg"><img class="wordmark" src="img/wordmark-light.svg" width="380" height="128" alt="first-bite: the first bite of every byte, before it reaches its addressee"></picture>
     <p class="eyebrow">Open source, Apache-2.0</p>
     <h1>Binary messages off the wire, decoded, for anyone who needs them</h1>
-    <p class="lede"><strong>first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record that any number of consumers can subscribe to.</strong> It never transmits on the capture interface, so the systems exchanging the messages are not delayed, blocked or altered, and one core handles 340,000 packets per second.</p>
+    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record that any number of consumers can subscribe to.</strong> It never transmits on the capture interface, and one core handles 340,000 packets per second.</p>
     <p class="actions">
       <a class="button primary" href="decoder/">Interactive decoder</a>
       <a class="button" href="architecture.html">Read the documentation</a>
@@ -55,10 +55,10 @@
   </section>
 
   <section class="section" id="how" aria-labelledby="how-h">
-    <h2 id="how-h">It listens, and the link cannot tell</h2>
+    <h2 id="how-h">It listens, and takes nothing from the link</h2>
     <p>first-bite opens the capture interface for reading and never sends on it. On a passive tap there is no path from the monitor ports back to the link, so nothing first-bite does can delay, block or alter the traffic between the native systems, and if it stops, the link is unaffected.</p>
-    <p>It was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it. A breakout tap gives each direction its own monitor port and loses nothing; a switch mirror port works where a tap cannot be fitted.</p>
-    <!-- figure: tap-placement | Three ways to take the copy. <a href="tap.html">Running on a tap</a> covers interface preparation and the loss counters. -->
+    <p>Where a tap cannot be fitted, a switch mirror port gives the same copy: forwarding is not affected, but the switch does the copying and drops mirrored frames first when it is busy. A remote mirror sends the copy in an ERSPAN, GRE or VXLAN tunnel to first-bite on another host, which unwraps it; that adds the mirrored traffic to the network carrying the tunnel. It was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it.</p>
+    <!-- figure: tap-placement | Four ways to take the copy, with the status of each. <a href="tap.html">Running on a tap or a mirror port</a> covers interface preparation and the loss counters. -->
   </section>
 
   <section class="section" aria-labelledby="dict-h">

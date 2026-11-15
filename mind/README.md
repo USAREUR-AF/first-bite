@@ -16,7 +16,7 @@ cargo run -p mind -- --pcap-file examples/weather-station.pcap \
 make run IFACE=eth0
 
 # A UDP socket, one Ethernet frame per datagram: no capture privileges.
-make mock        # mind --mock on 0.0.0.0:12345
+make mock        # mind --mock on 127.0.0.1:12345
 make mockplay    # in a second terminal: sends examples/weather-station.pcap
 ```
 

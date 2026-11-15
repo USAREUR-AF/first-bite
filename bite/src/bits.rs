@@ -45,17 +45,27 @@ fn mask(width: usize) -> u128 {
 }
 
 /// Interpret the low `width` bits of `raw` as a two's-complement integer.
+/// A width of zero has no bits and gives zero.
 pub fn sign_extend(raw: u64, width: usize) -> i64 {
     if width >= 64 {
         return raw as i64;
+    }
+    if width == 0 {
+        return 0;
     }
     let shift = 64 - width;
     ((raw << shift) as i64) >> shift
 }
 
 /// Reverse the byte order of a value that is `width / 8` whole bytes wide.
+/// Bits of a partial byte are dropped; a width of zero gives zero and a width
+/// over 64 is taken as 64.
 pub fn swap_bytes(raw: u64, width: usize) -> u64 {
-    raw.swap_bytes() >> (64 - width)
+    let bits = (width.min(64) / 8) * 8;
+    if bits == 0 {
+        return 0;
+    }
+    raw.swap_bytes() >> (64 - bits)
 }
 
 #[cfg(test)]
@@ -126,5 +136,26 @@ mod tests {
         assert_eq!(swap_bytes(0x1234, 16), 0x3412);
         assert_eq!(swap_bytes(0x1234_5678, 32), 0x7856_3412);
         assert_eq!(swap_bytes(0xAB, 8), 0xAB);
+    }
+
+    #[test]
+    fn widths_outside_a_field_do_not_overflow_a_shift() {
+        assert_eq!(sign_extend(0xFF, 0), 0);
+        assert_eq!(sign_extend(1, 1), -1);
+        assert_eq!(swap_bytes(0xAB, 0), 0);
+        assert_eq!(swap_bytes(0xAB, 7), 0);
+        assert_eq!(swap_bytes(0x0102_0304_0506_0708, 64), 0x0807_0605_0403_0201);
+        assert_eq!(
+            swap_bytes(0x0102_0304_0506_0708, 200),
+            0x0807_0605_0403_0201
+        );
+        assert_eq!(
+            extract(&[0xFF; 4], usize::MAX - 3, usize::MAX, BitOrder::Msb0),
+            None
+        );
+        assert_eq!(
+            extract(&[0xFF; 4], usize::MAX - 3, usize::MAX, BitOrder::Lsb0),
+            None
+        );
     }
 }

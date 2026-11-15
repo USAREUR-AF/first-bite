@@ -2,7 +2,7 @@
 
 use std::net::UdpSocket;
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, RecvTimeoutError, SyncSender, TrySendError};
 use std::sync::Arc;
 use std::thread;
@@ -184,6 +184,53 @@ impl FrameSource for LiveCapture {
 
 /// Frames waiting between the capture threads and the pipeline.
 const QUEUE_FRAMES: usize = 65_536;
+/// Bytes of frame data waiting between the capture threads and the pipeline.
+/// The frame count alone would let a burst of 64 KiB frames hold 4 GiB.
+const QUEUE_BYTES: usize = 256 * 1024 * 1024;
+
+/// The bytes of frame data in the queue, kept under a fixed budget.
+#[derive(Debug)]
+struct ByteBudget {
+    queued: AtomicUsize,
+    limit: usize,
+}
+
+impl ByteBudget {
+    fn new(limit: usize) -> Self {
+        ByteBudget {
+            queued: AtomicUsize::new(0),
+            limit,
+        }
+    }
+
+    /// Account for a frame of `bytes` about to be queued. `false` when it
+    /// does not fit; nothing is then accounted.
+    fn reserve(&self, bytes: usize) -> bool {
+        let mut queued = self.queued.load(Ordering::Relaxed);
+        loop {
+            let Some(total) = queued
+                .checked_add(bytes)
+                .filter(|total| *total <= self.limit)
+            else {
+                return false;
+            };
+            match self.queued.compare_exchange_weak(
+                queued,
+                total,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => return true,
+                Err(now) => queued = now,
+            }
+        }
+    }
+
+    /// Give back the bytes of a frame that left the queue or never entered.
+    fn release(&self, bytes: usize) {
+        self.queued.fetch_sub(bytes, Ordering::Relaxed);
+    }
+}
 /// How often a capture thread refreshes its kernel counters.
 const STATS_INTERVAL: Duration = Duration::from_secs(1);
 
@@ -205,11 +252,12 @@ struct SharedStats {
 ///
 /// A passive tap presents each direction of the tapped link on its own port,
 /// so seeing both directions means capturing on two interfaces. Each interface
-/// has a capture thread; frames meet in one bounded queue. If the pipeline
-/// falls behind, new frames are dropped and counted rather than held, so a
-/// stall never grows memory without bound.
+/// has a capture thread; frames meet in one queue bounded in frames and in
+/// bytes. If the pipeline falls behind, new frames are dropped and counted
+/// rather than held, so a stall never grows memory without bound.
 pub struct MultiCapture {
     receiver: Receiver<Result<QueuedFrame, SourceError>>,
+    budget: Arc<ByteBudget>,
     current: Option<QueuedFrame>,
     devices: Vec<String>,
     stats: Vec<Arc<SharedStats>>,
@@ -219,18 +267,21 @@ impl MultiCapture {
     /// Open every device. Fails if any one of them cannot be opened.
     pub fn open(devices: &[String], options: &CaptureOptions) -> Result<Self, SourceError> {
         let (sender, receiver) = sync_channel(QUEUE_FRAMES);
+        let budget = Arc::new(ByteBudget::new(QUEUE_BYTES));
         let mut stats = Vec::new();
         for device in devices {
             let capture = LiveCapture::open(device, options)?;
             let shared = Arc::new(SharedStats::default());
             stats.push(Arc::clone(&shared));
             let sender = sender.clone();
+            let budget = Arc::clone(&budget);
             thread::Builder::new()
                 .name(format!("capture-{device}"))
-                .spawn(move || capture_thread(capture, sender, shared))?;
+                .spawn(move || capture_thread(capture, sender, shared, budget))?;
         }
         Ok(MultiCapture {
             receiver,
+            budget,
             current: None,
             devices: devices.to_vec(),
             stats,
@@ -242,10 +293,16 @@ fn capture_thread(
     mut capture: LiveCapture,
     sender: SyncSender<Result<QueuedFrame, SourceError>>,
     shared: Arc<SharedStats>,
+    budget: Arc<ByteBudget>,
 ) {
     let mut refreshed = Instant::now();
     loop {
         let queued = match capture.next_frame() {
+            // The frame is copied only once it is known to fit.
+            Ok(Some(frame)) if !budget.reserve(frame.data.len()) => {
+                shared.queue_dropped.fetch_add(1, Ordering::Relaxed);
+                None
+            }
             Ok(Some(frame)) => Some(QueuedFrame {
                 timestamp: frame.timestamp,
                 link: frame.link,
@@ -263,9 +320,11 @@ fn capture_thread(
             }
         };
         if let Some(frame) = queued {
+            let bytes = frame.data.len();
             match sender.try_send(Ok(frame)) {
                 Ok(()) => {}
                 Err(TrySendError::Full(_)) => {
+                    budget.release(bytes);
                     shared.queue_dropped.fetch_add(1, Ordering::Relaxed);
                 }
                 Err(TrySendError::Disconnected(_)) => return,
@@ -289,6 +348,7 @@ impl FrameSource for MultiCapture {
     fn next_frame(&mut self) -> Result<Option<Frame<'_>>, SourceError> {
         match self.receiver.recv_timeout(POLL_INTERVAL) {
             Ok(Ok(frame)) => {
+                self.budget.release(frame.data.len());
                 let frame = self.current.insert(frame);
                 Ok(Some(Frame {
                     timestamp: frame.timestamp,
@@ -415,5 +475,30 @@ impl FrameSource for UdpFrames {
 
     fn describe(&self) -> String {
         format!("UDP socket {}", self.address)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_queue_holds_no_more_bytes_than_its_budget() {
+        let budget = ByteBudget::new(100);
+        assert!(budget.reserve(60));
+        assert!(!budget.reserve(41), "101 bytes fit a budget of 100");
+        assert!(budget.reserve(40));
+        assert!(!budget.reserve(1));
+        budget.release(60);
+        assert!(budget.reserve(60));
+        assert!(!budget.reserve(usize::MAX), "the count wrapped");
+    }
+
+    #[test]
+    fn a_full_queue_of_the_largest_frames_stays_within_the_budget() {
+        let budget = ByteBudget::new(QUEUE_BYTES);
+        let accepted = (0..QUEUE_FRAMES).filter(|_| budget.reserve(65_535)).count();
+        assert_eq!(accepted, QUEUE_BYTES / 65_535);
+        assert!(accepted < QUEUE_FRAMES);
     }
 }

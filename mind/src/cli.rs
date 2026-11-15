@@ -18,8 +18,9 @@ pub struct Opt {
     #[arg(long, conflicts_with = "device_name")]
     pub mock: bool,
 
-    /// Address the --mock socket binds.
-    #[arg(long, value_name = "ADDR", default_value = "0.0.0.0:12345")]
+    /// Address the --mock socket binds. Every datagram that reaches it is
+    /// taken as a frame, so the default accepts them from this machine only.
+    #[arg(long, value_name = "ADDR", default_value = "127.0.0.1:12345")]
     pub mock_address: String,
 
     /// Dictionary directory. Overrides BITE_DICT_PATH.
@@ -29,6 +30,17 @@ pub struct Opt {
     /// BPF filter applied to the capture, for example "udp port 40100".
     #[arg(long, value_name = "EXPR")]
     pub filter: Option<String>,
+
+    /// UDP destination port that carries VXLAN-wrapped mirrored traffic
+    /// (commonly 4789). May be given more than once. GRE and ERSPAN mirrors
+    /// need no option.
+    #[arg(long, value_name = "PORT")]
+    pub vxlan_port: Vec<u16>,
+
+    /// Do not unwrap GRE or ERSPAN; publish only packets that are UDP or TCP
+    /// as captured.
+    #[arg(long)]
+    pub no_gre_decap: bool,
 
     /// Capture only frames addressed to this host.
     #[arg(long)]

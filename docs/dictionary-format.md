@@ -146,14 +146,36 @@ Each file in `vectors/` is a payload and what it must decode to:
 | `expect.message_type` | expected message name |
 | `expect.fields` | field name to expected value as text: the label where the field has one, the value otherwise, `null` for a field beyond the payload. Fields not listed are not checked. |
 
+## Limits
+
+A dictionary may come from someone else, and in the browser decoder from any
+file a visitor is handed. The loader bounds what one can cost in memory and
+time. Each limit is a constant in `bite/src/limits.rs`.
+
+| Limit | Value | Constant | Over the limit |
+|---|---|---|---|
+| size of one dictionary file | 4 MiB (4,194,304 bytes) | `MAX_FILE_BYTES` | error; the file is not read |
+| files in one dictionary: `dictionary.json`, every `metadata.json`, message and vector together | 10,000 | `MAX_FILES` | the dictionary does not load |
+| fields in one message | 4,096 | `MAX_FIELDS_PER_MESSAGE` | error; the message is left out |
+| entries in one `values` object (labels of a field, names of `message_type`) | 65,536 | `MAX_VALUES` | error; the field is left out, or the interface identifies no message |
+| payload length considered | 65,535 bytes (bit 524,280) | `MAX_PAYLOAD_BYTES` | error; a field or `message_type` range whose `stop` is past it is left out |
+
+65,535 bytes is the largest UDP datagram or TCP segment, so no field of a
+captured packet lies beyond it. Because no loaded field reaches further,
+decoding reads at most that many bytes of a payload however long it is.
+
+JSON nested more than 128 levels deep is refused by the parser as not valid
+JSON. A key or label quoted in a finding is cut to 80 characters.
+
 ## What `bite check` reports
 
 | Severity | Finding | Effect on loading |
 |---|---|---|
 | error | file is not valid JSON or lacks a required key | file left out |
 | error | field range empty or inverted; integer wider than 64 bits; float not 32 or 64 bits; `bytes`/`ascii` not byte-aligned; little-endian field not byte-aligned under `msb0` | field left out |
-| error | `message_type` range not 1 to 64 bits; a `values` key or `mask` that is not an integer | value left out |
+| error | `message_type` range not 1 to 64 bits; a `values` key or `mask` that is not an integer (decimal or `0x` hexadecimal, at most one sign) | value left out |
 | error | two interfaces claim one port | the first, by name, keeps it |
+| error | a file, message, `values` object or bit range over a [limit](#limits) | as the limits table says |
 | warning | fields overlap | both kept |
 | warning | message file that no `message_type` value names | kept, never selected |
 | warning | `message_type` value with no message file | identified, not decoded |

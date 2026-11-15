@@ -13,6 +13,9 @@ default = []
 azure = ["dep:base64", "dep:hex", "dep:hmac", "dep:sha2"]
 aws = ["dep:aws-sdk-s3", "dep:hex", "dep:sha2"]
 zenoh = ["dep:zenoh"]
+# Joining a goat data fabric: the Zenoh sink plus goat's identity, key and
+# announcement conventions. Off unless asked for; see docs/goat/joining.md.
+goat = ["zenoh", "dep:hex", "dep:sha2", "dep:rustls-pki-types", "dep:rustls-webpki", "dep:x509-parser"]
 
 [dependencies]
 async-trait.workspace = true
@@ -24,11 +27,14 @@ hex = { workspace = true, optional = true }
 hmac = { workspace = true, optional = true }
 log.workspace = true
 reqwest.workspace = true
+rustls-pki-types = { workspace = true, optional = true }
+rustls-webpki = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 serde_norway.workspace = true
 sha2 = { workspace = true, optional = true }
 thiserror.workspace = true
 tokio.workspace = true
+x509-parser = { workspace = true, optional = true }
 zenoh = { workspace = true, optional = true }
 zmq.workspace = true

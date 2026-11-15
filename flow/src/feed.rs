@@ -10,6 +10,15 @@ use std::time::Duration;
 /// Pause after a failed receive, so a broken socket cannot spin a core.
 const RECEIVE_RETRY: Duration = Duration::from_millis(100);
 
+/// Largest message accepted from a publisher socket, in bytes. A record
+/// carries one frame twice in base64 and its decoded fields, well under
+/// 1 MiB, so nothing first-bite publishes comes near this. libzmq ends the
+/// session with a peer that sends more and does not reconnect to it: whatever
+/// is at the configured address cannot make this process hold a message of
+/// any size, and a subscriber that met one forwards nothing more until the
+/// process restarts.
+pub(crate) const MAX_MESSAGE_BYTES: i64 = 16 * 1024 * 1024;
+
 /// The topics a subscriber forwards.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TopicFilter {
@@ -68,6 +77,9 @@ impl FeedConfig {
         let socket = context
             .socket(zmq::SUB)
             .map_err(Error::zmq(describe("create a socket")))?;
+        socket
+            .set_maxmsgsize(MAX_MESSAGE_BYTES)
+            .map_err(Error::zmq(describe("limit the message size")))?;
         if self.filter.all {
             socket
                 .set_subscribe(b"")
@@ -155,6 +167,51 @@ mod tests {
         assert!(filter.matches("WX/Observation"));
         assert!(!filter.matches("WX/Observation/extra"));
         assert!(!filter.matches("WX/Position"));
+    }
+
+    #[test]
+    fn a_message_over_the_size_limit_is_not_received() {
+        use crate::test_support::free_port;
+        let port = free_port();
+        let context = zmq::Context::new();
+        let publisher = context.socket(zmq::PUB).unwrap();
+        publisher.set_linger(0).unwrap();
+        publisher.bind(&format!("tcp://127.0.0.1:{port}")).unwrap();
+        let feed = FeedConfig {
+            name: "test".to_string(),
+            endpoint: format!("tcp://127.0.0.1:{port}"),
+            port: port.to_string(),
+            filter: TopicFilter::new(&topics(&["*"])),
+        }
+        .connect(&context)
+        .unwrap();
+        feed.socket.set_rcvtimeo(100).unwrap();
+        let receive = |feed: &Feed| match feed.socket.recv_string(0) {
+            Ok(Ok(message)) => Some(message.len()),
+            _ => None,
+        };
+
+        // Wait for the subscription to take effect.
+        let mut connected = false;
+        for _ in 0..100 {
+            publisher.send("t|small", 0).unwrap();
+            if receive(&feed).is_some() {
+                connected = true;
+                break;
+            }
+        }
+        assert!(connected, "no message arrived within ten seconds");
+
+        let huge = format!("t|{}", "x".repeat(MAX_MESSAGE_BYTES as usize + 1));
+        publisher.send(huge.as_str(), 0).unwrap();
+        // libzmq ends the session with a peer that sends an oversized
+        // message; what must hold is that the message itself never arrives.
+        for _ in 0..20 {
+            publisher.send("t|small", 0).unwrap();
+            if let Some(length) = receive(&feed) {
+                assert_eq!(length, "t|small".len(), "the oversized message arrived");
+            }
+        }
     }
 
     #[test]

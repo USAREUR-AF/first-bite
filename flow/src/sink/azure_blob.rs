@@ -4,7 +4,7 @@
 //! `Create Container`, authorised with the account's Shared Key.
 
 use super::object_path::{time_then_topic, topic_then_time};
-use super::{required, Sink, SinkError};
+use super::{quoted, read_body, required, required_secret, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::error::Problem;
 use async_trait::async_trait;
@@ -37,13 +37,14 @@ pub struct AzureBlobSink {
 impl AzureBlobSink {
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
         let account = required(&config.cloud_account, "cloud_account")?;
-        let access_key = required(&config.cloud_access_key, "cloud_access_key")?;
+        let access_key = required_secret(&config.cloud_access_key, "cloud_access_key")?;
         let container = required(&config.cloud_container, "cloud_container")?;
         let key = STANDARD
             .decode(access_key.trim())
-            .map_err(|e| Problem::InvalidValue {
+            // The decoder's own error quotes a byte of the key; this does not.
+            .map_err(|_| Problem::InvalidValue {
                 key: "cloud_access_key",
-                reason: format!("not base64: {e}"),
+                reason: "is not base64".to_string(),
             })?;
         let (location_key, service_url) = service_url(config, account)?;
         let invalid_url = |reason: String| Problem::InvalidValue {
@@ -57,8 +58,11 @@ impl AzureBlobSink {
             .map_err(|()| invalid_url(format!("{service_url:?} cannot carry a path")))?
             .pop_if_empty()
             .push(container);
+        // A storage service answers a write itself. A redirect would carry
+        // the record, and on the same host the signed request, elsewhere.
         let client = reqwest::Client::builder()
             .timeout(REQUEST_TIMEOUT)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| invalid_url(format!("cannot build the HTTP client: {e}")))?;
         Ok(AzureBlobSink {
@@ -128,7 +132,7 @@ impl AzureBlobSink {
             .send()
             .await?;
         let status = response.status();
-        Ok((status, response.bytes().await?.to_vec()))
+        Ok((status, read_body(response).await))
     }
 }
 
@@ -228,7 +232,7 @@ fn sign(key: &[u8], text: &str) -> String {
 fn status_error(status: StatusCode, body: &[u8]) -> SinkError {
     SinkError::HttpStatus {
         status,
-        body: String::from_utf8_lossy(body).into_owned(),
+        body: quoted(body),
     }
 }
 
@@ -356,10 +360,8 @@ mod tests {
         .err()
         .unwrap()
         .to_string();
-        assert!(
-            error.starts_with("`cloud_access_key`: not base64"),
-            "{error}"
-        );
+        // The reason does not quote any part of the value.
+        assert_eq!(error, "`cloud_access_key`: is not base64");
     }
 
     #[test]

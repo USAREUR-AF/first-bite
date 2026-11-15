@@ -14,7 +14,10 @@
 pub mod config;
 pub mod error;
 mod feed;
+#[cfg(feature = "goat")]
+pub mod goat;
 pub mod publish;
+pub mod secret;
 pub mod sink;
 pub mod subpub;
 pub mod subscribe;
@@ -24,6 +27,7 @@ mod test_support;
 pub use crate::config::{PublisherConfig, SubPubConfig, SubscriberConfig};
 pub use crate::error::{ConfigError, Error, Problem};
 pub use crate::publish::{PublishError, Publisher, Publishers};
+pub use crate::secret::Secret;
 pub use crate::sink::{build_sink, Sink, SinkError};
 pub use crate::subpub::{SubPubs, Transform, TransformError};
 pub use crate::subscribe::Subscribers;

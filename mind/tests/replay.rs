@@ -49,6 +49,29 @@ fn vlan_udp_frame(source_port: u16, destination_port: u16, payload: &[u8]) -> Ve
     frame
 }
 
+/// Wrap `inner` (an Ethernet frame) in an outer Ethernet/IPv4 packet with the
+/// given IP protocol number and the given bytes between the IP header and it.
+fn tunnelled(protocol: u8, tunnel_header: &[u8], inner: &[u8]) -> Vec<u8> {
+    let mut payload = tunnel_header.to_vec();
+    payload.extend_from_slice(inner);
+    let builder = PacketBuilder::ethernet2([2, 0, 0, 0, 0, 9], [2, 0, 0, 0, 0, 8]).ipv4(
+        [198, 51, 100, 1],
+        [198, 51, 100, 2],
+        64,
+    );
+    let mut frame = Vec::with_capacity(builder.size(payload.len()));
+    builder
+        .write(&mut frame, etherparse::IpNumber(protocol), &payload)
+        .unwrap();
+    frame
+}
+
+fn vxlan_frame(inner: &[u8]) -> Vec<u8> {
+    let mut payload = vec![0x08, 0, 0, 0, 0, 0, 0x2A, 0];
+    payload.extend_from_slice(inner);
+    udp_frame(49152, 4789, &payload)
+}
+
 fn arp_frame() -> Vec<u8> {
     let mut frame = vec![0xff; 6];
     frame.extend_from_slice(&[2, 0, 0, 0, 0, 1]);
@@ -206,4 +229,72 @@ fn vlan_tagged_frames_are_decoded() {
     assert_eq!(stats.decoded, 1);
     assert_eq!(records[0].message_type.as_deref(), Some("Heartbeat"));
     assert_eq!(records[0].src_port, "40100");
+}
+
+#[test]
+fn mirrored_traffic_in_gre_and_erspan_is_unwrapped() {
+    let heartbeat = hex::decode(HEARTBEAT).unwrap();
+    let inner = udp_frame(40100, 50000, &heartbeat);
+    // ERSPAN type II: GRE with a sequence number, then an 8-byte ERSPAN header.
+    let erspan_ii = [
+        0x10, 0x00, 0x88, 0xBE, 0, 0, 0, 1, 0x10, 0x64, 0x00, 0x01, 0, 0, 0, 0,
+    ];
+    let file = CaptureFile::write(
+        "gre",
+        &[
+            tunnelled(47, &[0x00, 0x00, 0x65, 0x58], &inner),
+            tunnelled(47, &erspan_ii, &inner),
+            tunnelled(47, &[0x00, 0x00, 0x88, 0xBE], &inner),
+            // A GRE protocol the pipeline does not know stays a non-transport packet.
+            tunnelled(47, &[0x00, 0x00, 0x12, 0x34], &inner),
+        ],
+    );
+    let (stats, records) = replay(&file, None);
+    assert_eq!(stats.frames, 4);
+    assert_eq!(stats.decoded, 3);
+    assert_eq!(stats.skipped, 1);
+    for record in &records {
+        // The record describes the mirrored packet, not the tunnel.
+        assert_eq!(record.src_ip, [192, 0, 2, 1]);
+        assert_eq!(record.src_port, "40100");
+        assert_eq!(record.message_type.as_deref(), Some("Heartbeat"));
+    }
+}
+
+#[test]
+fn vxlan_is_unwrapped_only_on_a_named_port() {
+    let heartbeat = hex::decode(HEARTBEAT).unwrap();
+    let file = CaptureFile::write(
+        "vxlan",
+        &[vxlan_frame(&udp_frame(40100, 50000, &heartbeat))],
+    );
+
+    let mut source = FileCapture::open(&file.0, None).unwrap();
+    let pipeline = Pipeline::new(Some(dictionary())).with_decapsulation(mind::Decapsulation {
+        keep_gre: false,
+        vxlan_ports: vec![4789],
+    });
+    let mut ports = Vec::new();
+    let mut sink = |record: &PacketInfoWithParsedMessage, _: &str| {
+        ports.push((record.src_port.clone(), record.message_type.clone()));
+    };
+    mind::run(
+        &mut source,
+        &pipeline,
+        &mut sink,
+        None,
+        None,
+        &AtomicBool::new(false),
+    )
+    .unwrap();
+    assert_eq!(
+        ports,
+        [("40100".to_string(), Some("Heartbeat".to_string()))]
+    );
+    assert_eq!(pipeline.unwrapped(), 1);
+
+    // Without the option the outer UDP packet is published as it is.
+    let (stats, records) = replay(&file, None);
+    assert_eq!(stats.decoded, 0);
+    assert_eq!(records[0].dst_port, "4789");
 }

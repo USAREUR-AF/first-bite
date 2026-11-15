@@ -15,11 +15,13 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 | `beyond-ip` | what is built, designed and not built for IP, CAN and other buses |
 | `record-flow` | publishers, subscribers with topic filters, sinks, and a subpub republishing on its own socket |
 | `loss-counters` | the stages a frame passes through and the three counters that say where one was lost |
+| `three-projects` | first-bite beside Open Billie and octo-pod, from [`../related-projects.md`](../related-projects.md) |
+| `icd-to-dictionary` | an interface document transcribed into a dictionary, and the four things that run from it |
 | `platforms` | which archive runs where, from [`../deployment.md`](../deployment.md) |
 
 ## Regenerate and preview
 
-`build.py` writes all twenty files. It needs Python 3 and nothing else.
+`build.py` writes all twenty-four files. It needs Python 3 and nothing else.
 
 ```bash
 python3 docs/img/build.py            # write the figures

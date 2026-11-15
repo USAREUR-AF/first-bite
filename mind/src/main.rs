@@ -6,8 +6,8 @@ use logger::loggers::setup_logger;
 use mind::cli::Opt;
 use mind::splash::print_splash_screen;
 use mind::{
-    CaptureOptions, Error, FileCapture, FrameSource, LiveCapture, MultiCapture, OutputFile,
-    Pipeline, UdpFrames,
+    CaptureOptions, Decapsulation, Error, FileCapture, FrameSource, LiveCapture, MultiCapture,
+    OutputFile, Pipeline, UdpFrames,
 };
 use std::path::Path;
 use std::process::ExitCode;
@@ -22,6 +22,9 @@ use std::time::{Duration, Instant};
 const FILE_REPLAY_SETTLE: Duration = Duration::from_millis(500);
 
 fn main() -> ExitCode {
+    if let Some(code) = mind::goat::dispatch() {
+        return code;
+    }
     let opt = Opt::parse();
     // The env file may set values the logger reads, so it is loaded first and
     // its outcome reported once the logger exists.
@@ -58,7 +61,11 @@ enum StartError {
 
 fn start(opt: Opt) -> Result<(), StartError> {
     let dictionary = mind::dictionary::load(opt.dictionary.clone()).map_err(Error::from)?;
-    let pipeline = Pipeline::new(dictionary);
+    mind::goat::register(dictionary.as_deref());
+    let pipeline = Pipeline::new(dictionary).with_decapsulation(Decapsulation {
+        keep_gre: opt.no_gre_decap,
+        vxlan_ports: opt.vxlan_port.clone(),
+    });
     let mut output = if opt.output {
         Some(OutputFile::create()?)
     } else {
@@ -124,6 +131,12 @@ fn start(opt: Opt) -> Result<(), StartError> {
         "done: {} frames, {} records, {} decoded, {} not UDP or TCP, {} malformed",
         stats.frames, stats.records, stats.decoded, stats.skipped, stats.malformed
     );
+    if pipeline.unwrapped() > 0 {
+        info!(
+            "{} frames arrived inside a GRE, ERSPAN or VXLAN tunnel and were unwrapped",
+            pipeline.unwrapped()
+        );
+    }
     if replaying_file && elapsed.as_secs_f64() > 0.0 {
         info!(
             "replayed in {:.3} s: {:.0} frames per second",

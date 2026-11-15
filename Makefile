@@ -22,7 +22,7 @@ DECODER_TARGETS ?= aarch64-apple-ios aarch64-linux-android x86_64-pc-windows-msv
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build release portable portable-check portable-dir static static-check static-dir decoder-targets test wasm fmt lint deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
+.PHONY: help build release portable portable-check portable-dir static static-check static-dir decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
 
 help: ## list the targets
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -89,8 +89,20 @@ lint: ## what CI checks: rustfmt, clippy, workflow and shell lint, leak check
 	cargo clippy --workspace --all-targets --locked -- -D warnings
 	actionlint
 	yamllint .github
-	shellcheck tools/*.sh deployment/*.sh
-	tools/check-public-tree.sh
+	shellcheck tools/*.sh tools/git-hooks/pre-commit deployment/*.sh deployment/*/*.sh mocks/*/*.sh
+	$(MAKE) guards
+
+# The files that are published: everything tracked except private/ and the
+# two internal documents, which exist only in the maintainers' repository.
+guards: ## leak check of the published files, pin check, and both self-tests
+	git ls-files -z -- . ':!private' ':!docs/plan.md' ':!docs/decisions.md' | xargs -0 tools/check-public-tree.sh
+	tools/check-public-tree.test.sh
+	python3 tools/check-pins.py
+	python3 tools/check-pins.py --self-test
+
+hooks: ## install the pre-commit hook that runs the leak check on staged files
+	git config core.hooksPath tools/git-hooks
+	@echo "pre-commit hook installed (tools/git-hooks/pre-commit)"
 
 deny: ## licence, ban and source policy (needs cargo-deny)
 	cargo deny --locked check licenses bans sources

@@ -11,6 +11,7 @@
 //! | `local` | unset, `locallog` | append to a local file | always built |
 //! | `stateful` | unset, `messagerates` | per-topic counts to a local file | always built |
 //! | `zenoh` | unset | Zenoh put | `zenoh` |
+//! | `goat` | unset | Zenoh put on a goat data fabric | `goat` |
 
 #[cfg(feature = "aws")]
 pub mod aws_s3;
@@ -26,6 +27,7 @@ pub mod zenoh;
 
 use crate::config::SubscriberConfig;
 use crate::error::{ConfigError, Problem};
+use crate::secret::{reference, Reference, Secret};
 use async_trait::async_trait;
 
 /// Why a sink did not take a record, or could not be prepared.
@@ -35,8 +37,8 @@ pub enum SinkError {
     Record(#[from] serde_json::Error),
     #[error("{0}")]
     Io(#[from] std::io::Error),
-    #[error("HTTP request failed: {0}")]
-    Http(#[from] reqwest::Error),
+    #[error("HTTP request failed: {}", causes(.0))]
+    Http(reqwest::Error),
     #[error("endpoint answered {status}: {body}")]
     HttpStatus {
         status: reqwest::StatusCode,
@@ -48,6 +50,58 @@ pub enum SinkError {
     #[cfg(feature = "zenoh")]
     #[error("Zenoh: {0}")]
     Zenoh(String),
+}
+
+/// The URL is left out of the error: it can carry credentials, and the log
+/// line that reports the error names the endpoint in a form that cannot.
+impl From<reqwest::Error> for SinkError {
+    fn from(error: reqwest::Error) -> Self {
+        SinkError::Http(error.without_url())
+    }
+}
+
+/// An error and what caused it, on one line.
+fn causes(error: &dyn std::error::Error) -> String {
+    let mut text = error.to_string();
+    let mut source = error.source();
+    while let Some(cause) = source {
+        text.push_str(": ");
+        text.push_str(&cause.to_string());
+        source = cause.source();
+    }
+    text
+}
+
+/// Most bytes of an HTTP answer read into memory. An answer is read only to
+/// report an error, or by a test.
+pub(crate) const MAX_RESPONSE_BYTES: usize = 1024 * 1024;
+
+/// Most characters of an answer quoted in an error.
+pub(crate) const MAX_QUOTED_CHARS: usize = 512;
+
+/// The body of `response`, up to [`MAX_RESPONSE_BYTES`]; the rest is not
+/// read, so an endpoint cannot make the process hold an answer of any size.
+pub(crate) async fn read_body(mut response: reqwest::Response) -> Vec<u8> {
+    let mut body = Vec::new();
+    while body.len() < MAX_RESPONSE_BYTES {
+        match response.chunk().await {
+            Ok(Some(chunk)) => {
+                let room = MAX_RESPONSE_BYTES - body.len();
+                body.extend_from_slice(&chunk[..chunk.len().min(room)]);
+            }
+            Ok(None) | Err(_) => break,
+        }
+    }
+    body
+}
+
+/// The start of an answer's body, for an error message.
+pub(crate) fn quoted(body: &[u8]) -> String {
+    let text = String::from_utf8_lossy(body);
+    match text.char_indices().nth(MAX_QUOTED_CHARS) {
+        Some((end, _)) => format!("{}… ({} bytes read)", &text[..end], body.len()),
+        None => text.into_owned(),
+    }
 }
 
 /// A destination for records.
@@ -85,6 +139,7 @@ fn select(config: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
             message_rates::MessageRatesSink::from_config(config),
         )),
         ("zenoh", None) => zenoh(config),
+        ("goat", None) => goat(config),
         _ => Err(Problem::UnknownSink {
             subscriber_type: config.subscriber_type.clone(),
             subtype: config.subtype.clone(),
@@ -131,6 +186,33 @@ fn zenoh(_: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
     })
 }
 
+#[cfg(feature = "goat")]
+fn goat(config: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
+    Ok(Box::new(crate::goat::sink::GoatSink::from_config(config)?))
+}
+
+#[cfg(not(feature = "goat"))]
+fn goat(_: &SubscriberConfig) -> Result<Box<dyn Sink>, Problem> {
+    Err(Problem::FeatureOff {
+        sink: "goat",
+        feature: "goat",
+    })
+}
+
+/// Options for a file a sink writes records or counts to: created when
+/// missing and, on Unix, readable by its owner and group only, whatever the
+/// umask allows beyond that. An existing file keeps its mode.
+pub(crate) fn record_file_options() -> std::fs::OpenOptions {
+    let mut options = std::fs::OpenOptions::new();
+    options.create(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o640);
+    }
+    options
+}
+
 /// The value of a key the sink cannot work without.
 pub(crate) fn required<'a>(
     value: &'a Option<String>,
@@ -140,6 +222,28 @@ pub(crate) fn required<'a>(
         .as_deref()
         .filter(|value| !value.is_empty())
         .ok_or(Problem::MissingKey(key))
+}
+
+/// The credential in a key the sink cannot work without. A value that is
+/// still a reference was never resolved, and is refused here so that the
+/// text of a reference is not sent to a service as a credential.
+#[cfg_attr(not(any(feature = "aws", feature = "azure")), allow(dead_code))]
+pub(crate) fn required_secret<'a>(
+    value: &'a Option<Secret>,
+    key: &'static str,
+) -> Result<&'a str, Problem> {
+    let value = value
+        .as_ref()
+        .map(Secret::expose)
+        .filter(|value| !value.is_empty())
+        .ok_or(Problem::MissingKey(key))?;
+    match reference(value) {
+        Reference::None => Ok(value),
+        _ => Err(Problem::InvalidValue {
+            key,
+            reason: "is a reference that has not been resolved".to_string(),
+        }),
+    }
 }
 
 #[cfg(test)]
@@ -152,6 +256,40 @@ mod tests {
             Ok(_) => panic!("{body} built a sink"),
             Err(e) => e.to_string(),
         }
+    }
+
+    #[test]
+    fn a_long_answer_is_quoted_in_part() {
+        assert_eq!(quoted(b"short"), "short");
+        let long = "é".repeat(MAX_QUOTED_CHARS * 2);
+        let cut = quoted(long.as_bytes());
+        assert!(cut.starts_with(&"é".repeat(MAX_QUOTED_CHARS)));
+        assert!(
+            cut.ends_with(&format!("… ({} bytes read)", long.len())),
+            "{cut}"
+        );
+    }
+
+    #[test]
+    fn a_credential_that_is_still_a_reference_is_refused() {
+        use crate::secret::Secret;
+        let unresolved = Some(Secret::new("${BLOB_KEY}"));
+        assert_eq!(
+            required_secret(&unresolved, "cloud_access_key")
+                .unwrap_err()
+                .to_string(),
+            "`cloud_access_key`: is a reference that has not been resolved"
+        );
+        assert_eq!(
+            required_secret(&None, "cloud_access_key")
+                .unwrap_err()
+                .to_string(),
+            "`cloud_access_key` is required"
+        );
+        assert_eq!(
+            required_secret(&Some(Secret::new("value")), "cloud_access_key").unwrap(),
+            "value"
+        );
     }
 
     #[test]
@@ -213,6 +351,16 @@ mod tests {
             error.contains(
                 "objectstorage/awsobject is not compiled in; rebuild with the cargo feature `aws`"
             ),
+            "{error}"
+        );
+    }
+
+    #[cfg(not(feature = "goat"))]
+    #[test]
+    fn goat_needs_its_feature() {
+        let error = refusal("    subscriber_type: goat\n");
+        assert!(
+            error.contains("sink goat is not compiled in; rebuild with the cargo feature `goat`"),
             "{error}"
         );
     }

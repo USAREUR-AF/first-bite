@@ -197,19 +197,72 @@ pub struct VectorExpectation {
     pub fields: BTreeMap<String, Option<String>>,
 }
 
-/// Parse a decimal or `0x`-prefixed hexadecimal integer, optionally negative.
+/// Parse a decimal or `0x`-prefixed hexadecimal integer with at most one
+/// leading sign. `None` for anything else, including a value outside `i128`.
 pub fn parse_int(text: &str) -> Option<i128> {
     let text = text.trim();
     let (negative, digits) = match text.strip_prefix('-') {
         Some(rest) => (true, rest),
-        None => (false, text),
+        None => (false, text.strip_prefix('+').unwrap_or(text)),
     };
+    // The integer parsers below accept a sign of their own; a second sign is
+    // not a number.
+    if digits.starts_with(['+', '-']) {
+        return None;
+    }
     let value = match digits
         .strip_prefix("0x")
         .or_else(|| digits.strip_prefix("0X"))
     {
+        Some(hex) if hex.starts_with(['+', '-']) => return None,
         Some(hex) => i128::from_str_radix(hex, 16).ok()?,
         None => digits.parse::<i128>().ok()?,
     };
-    Some(if negative { -value } else { value })
+    if negative {
+        value.checked_neg()
+    } else {
+        Some(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_int;
+
+    #[test]
+    fn decimal_and_hexadecimal_with_one_sign() {
+        assert_eq!(parse_int("42"), Some(42));
+        assert_eq!(parse_int(" -42 "), Some(-42));
+        assert_eq!(parse_int("+42"), Some(42));
+        assert_eq!(parse_int("0x2A"), Some(42));
+        assert_eq!(parse_int("-0X2a"), Some(-42));
+        assert_eq!(parse_int(""), None);
+        assert_eq!(parse_int("0x"), None);
+        assert_eq!(parse_int("four"), None);
+    }
+
+    #[test]
+    fn a_second_sign_is_not_a_number() {
+        // Each of these used to reach the negation with i128::MIN, or to
+        // parse as the opposite sign.
+        assert_eq!(parse_int("--170141183460469231731687303715884105728"), None);
+        assert_eq!(parse_int("-0x-80000000000000000000000000000000"), None);
+        assert_eq!(parse_int("--5"), None);
+        assert_eq!(parse_int("-+5"), None);
+        assert_eq!(parse_int("0x-5"), None);
+        assert_eq!(parse_int("+-5"), None);
+    }
+
+    #[test]
+    fn the_ends_of_the_range_parse() {
+        assert_eq!(
+            parse_int("170141183460469231731687303715884105727"),
+            Some(i128::MAX)
+        );
+        assert_eq!(
+            parse_int("-170141183460469231731687303715884105727"),
+            Some(-i128::MAX)
+        );
+        assert_eq!(parse_int("170141183460469231731687303715884105728"), None);
+    }
 }

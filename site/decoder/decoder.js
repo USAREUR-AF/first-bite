@@ -4,6 +4,11 @@
 const $ = (id) => document.getElementById(id);
 const HUES = 8;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
+// A dictionary is whatever file the visitor was handed. These bound what one
+// can make this page read and draw: the decoder's own limit on files per
+// dictionary, and the bytes the bit view draws (eight cells each).
+const MAX_FILES = 10000;
+const MAX_VIEW_BYTES = 1024;
 
 // Set once the WebAssembly module is loaded.
 let loadDictionary = null;
@@ -294,7 +299,8 @@ function renderBits() {
   const fields = message ? message.fields : [];
   const lanes = assignLanes(fields);
   const payloadBits = bytes.length * 8;
-  const totalBytes = Math.max(bytes.length, Math.ceil((message ? message.bit_length : 0) / 8));
+  const wantedBytes = Math.max(bytes.length, Math.ceil((message ? message.bit_length : 0) / 8));
+  const totalBytes = Math.min(wantedBytes, MAX_VIEW_BYTES);
   const totalBits = totalBytes * 8;
 
   const owner = new Array(totalBits).fill(-1);
@@ -405,6 +411,14 @@ function renderBits() {
 
   const note = $("bits-note");
   note.replaceChildren();
+  if (wantedBytes > totalBytes) {
+    note.append(
+      element("span", {
+        class: "numbering",
+        text: `The first ${totalBytes} of ${wantedBytes} bytes are drawn. The table lists every field.`,
+      }),
+    );
+  }
   if (disc.source === "payload") {
     note.append(
       element("span", { class: "key" }, [
@@ -712,6 +726,11 @@ async function loadOwn(list) {
   const picked = list.filter(({ path }) => path.toLowerCase().endsWith(".json"));
   try {
     if (picked.length === 0) throw new Error("No .json files among what was chosen.");
+    if (picked.length > MAX_FILES) {
+      throw new Error(
+        `${picked.length} .json files were chosen; a dictionary holds at most ${MAX_FILES}.`,
+      );
+    }
     const texts = {};
     for (const { path, file } of picked) {
       if (file.size > MAX_FILE_BYTES) continue;

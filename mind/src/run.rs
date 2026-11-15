@@ -7,7 +7,7 @@ use chrono::Utc;
 use datamodels::packets::PacketInfoWithParsedMessage;
 use log::{debug, info, log_enabled, warn, Level};
 use serde::Serialize;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -58,7 +58,7 @@ impl OutputFile {
     /// Create `completelog_<UTC time>.log` in the working directory.
     pub fn create() -> Result<Self, Error> {
         let path = format!("completelog_{}.log", Utc::now().format("%Y%m%d%H%M%S"));
-        let file = File::create(&path).map_err(|source| Error::OutputFile {
+        let file = create_private(&path).map_err(|source| Error::OutputFile {
             path: path.clone(),
             source,
         })?;
@@ -77,6 +77,20 @@ impl OutputFile {
     fn flush(&mut self) -> Result<(), Error> {
         Ok(self.writer.flush()?)
     }
+}
+
+/// Create or truncate `path` for writing. The file holds records, so on Unix
+/// it is created readable by its owner and group only, whatever the umask
+/// allows beyond that.
+fn create_private(path: &str) -> std::io::Result<File> {
+    let mut options = OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o640);
+    }
+    options.open(path)
 }
 
 /// Read frames until the source ends or fails, or `stop` is set.

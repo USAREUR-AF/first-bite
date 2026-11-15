@@ -7,29 +7,51 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/how-it-works-dark.svg">
-  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap on the link sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
+  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
 </picture>
 
 **first-bite takes binary messages off the wire and hands them, decoded, to
-anything that can read JSON from a socket.** It listens on a network tap or
-mirror port, decodes each fixed-layout message against a dictionary, and
-publishes one JSON record per message on a ZeroMQ PUB socket. Sinks forward the
-records to S3-compatible storage, Azure Blob, an HTTP endpoint, a Zenoh data
-fabric or a file, and a transform emits Cursor-on-Target.
+anything that can read JSON from a socket.** It listens on a network tap or a
+switch mirror port, local or tunnelled (ERSPAN, GRE or VXLAN), decodes each
+fixed-layout message against a dictionary, and publishes one JSON record per
+message on a ZeroMQ PUB socket. Sinks forward the records to S3-compatible
+storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
+transform emits Cursor-on-Target.
 
-The name says what it does: it takes the first bite of every byte while it is still
-on the wire, before the addressee does, and takes nothing from it. It never
-transmits on the capture interface. On a passive tap there is no path
+The name says what it does: it takes the first bite of every byte while it is
+still on the wire, before the addressee does, and takes nothing from it. It
+never transmits on the capture interface. On a passive tap there is no path
 from the monitor ports back to the link, so the systems exchanging the messages
 are not delayed, blocked or altered, and the link is unaffected if first-bite
-stops. One core handles 340,000 packets per second, so a link carrying 1,000
-messages per second uses about 0.3% of it. It was built to open up the traffic
-of a tactical local network that until then was visible only to the systems
-exchanging it.
+stops. A mirror port leaves forwarding as it was, but the switch does the
+copying and drops mirrored frames first when it is busy; a remote mirror also
+puts the mirrored traffic on the network that carries its tunnel. One core
+handles 340,000 packets per second, so a link carrying 1,000 messages per
+second uses about 0.3% of it.
 
 [Interactive decoder](https://usareur-af.github.io/first-bite/decoder/) ·
 [Documentation](https://usareur-af.github.io/first-bite/) ·
-[Ten-page brief (PDF)](docs/brief/first-bite-brief.pdf)
+[Ten-page brief (PDF)](docs/brief/first-bite-brief.pdf) ·
+[Roadmap](ROADMAP.md) ·
+[Project board](https://github.com/orgs/USAREUR-AF/projects/12)
+
+## Opening up systems you cannot change
+
+A great deal of fielded equipment exchanges data in a one-off binary wire
+format, defined once in an interface document and compiled into both ends:
+radar and surveillance feeds, vehicle and avionics data buses, industrial and
+utility control systems. Those systems work, and they are expensive to change.
+Altering certified, safety-critical software means repeating years of testing
+and qualification, so the data stays sealed between the two machines built to
+exchange it, and every new consumer needs its own point-to-point integration.
+
+first-bite does not change them. It reads a copy of what is already on the
+wire, decodes it from a description of the format kept as data, and publishes
+it. Monitoring, analytics, migration testing and new consumers can be added
+around a certified system, and because nothing on that system changes, there
+is nothing about it to qualify again. first-bite observes and commands
+nothing. It decodes fixed-layout messages today; variable-length and repeated
+structures are on the [roadmap](ROADMAP.md).
 
 ## The numbers
 
@@ -143,7 +165,7 @@ sudo BITE_DICT_PATH=/path/to/dictionary ./target/release/mind eth0
 |---|---|
 | `<interface>` | capture on a network interface (needs capture privileges) |
 | `--pcap-file <file>` | read a pcap or pcapng file, then exit |
-| `--mock` | read Ethernet frames from a UDP socket (`--mock-address`, default `0.0.0.0:12345`) |
+| `--mock` | read Ethernet frames from a UDP socket (`--mock-address`, default `127.0.0.1:12345`) |
 | `--dictionary <dir>` | dictionary directory; overrides `BITE_DICT_PATH` |
 | `--filter <bpf>` | capture filter, for example `"udp port 40100"` |
 | `--no-promiscuous` | capture only frames addressed to this host |
@@ -165,9 +187,9 @@ Configuration read from the environment:
 Example configuration files are in [`flow/config/`](flow/config); a systemd
 unit and install script are in [`deployment/`](deployment).
 
-On a tap, name both capture interfaces (`mind enp3s0 enp4s0`); `mind` logs what
+On a breakout tap, name both capture interfaces (`mind enp3s0 enp4s0`); `mind` logs what
 the kernel, the interface and its own queue dropped, per interface.
-[docs/tap.md](docs/tap.md) covers tap choice, interface preparation and the
+[docs/tap.md](docs/tap.md) covers taps, mirror ports and tunnelled mirrors, interface preparation and the
 loss counters; [docs/deployment.md](docs/deployment.md) covers the release
 archives, the systemd service, the container and building without internet
 access.
@@ -191,10 +213,19 @@ one file:
 }
 ```
 
+A dictionary turns an interface control document, hundreds of pages of tables
+in a PDF, into versioned, reviewable, testable data that developers read and
+maintain like code; the decoder, the JSON Schema (`bite schema`) and the
+in-browser bit view all run from it. A documented method for going from a
+document to a dictionary, with tooling for the error-prone steps, is in
+progress.
+
 Put payloads and what they must decode to in `vectors/`, and `bite check` runs
 them. A dictionary does not have to live in this repository: point
 `BITE_DICT_PATH` at any directory. Keep a dictionary for a message set you may
 not publish in a repository of your own.
+
+Optional, off by default: built with the cargo feature `goat`, `mind` can join a goat network and publish decoded records on its Zenoh data fabric ([docs/goat/joining.md](docs/goat/joining.md)).
 
 ## Beyond IP
 

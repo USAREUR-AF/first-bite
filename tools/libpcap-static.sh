@@ -12,8 +12,10 @@
 #
 # Needs: a C compiler, make, flex, bison, curl, xz, the kernel headers.
 
-LIBPCAP_VERSION=1.10.5
-LIBPCAP_SHA256=84fa89ac6d303028c1c5b754abff77224f45eca0a94eb1a34ff0aa9ceece3925
+# 1.10.7 fixes CVE-2026-0799 and CVE-2026-6554 in the BPF interpreter and,
+# from 1.10.6, CVE-2025-11961 in pcap_ether_aton().
+LIBPCAP_VERSION=1.10.7
+LIBPCAP_SHA256=68fa62cffb974f4275641ce14c2e2d75739251f30e00e6a0900903b247d76a03
 
 build_static_libpcap() {
   local work="$1"

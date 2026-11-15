@@ -1,7 +1,7 @@
 //! The YAML files shipped in `flow/config` parse into the configuration
 //! structs with the values written in them, and every entry builds.
 
-use flow::config::{parse, PublisherConfigs, SubPubConfigs, SubscriberConfigs};
+use flow::config::{parse, PublisherConfigs, SubPubConfigs, SubscriberConfig, SubscriberConfigs};
 use flow::{build_sink, Transform};
 
 #[test]
@@ -84,6 +84,44 @@ fn subscribers_example_parses() {
     );
 }
 
+/// The variables the example file refers to, with values a sink accepts.
+fn example_environment(name: &str) -> Option<String> {
+    match name {
+        // base64 of "example-access-key"
+        "FIRST_BITE_BLOB_ACCESS_KEY" => Some("ZXhhbXBsZS1hY2Nlc3Mta2V5".to_string()),
+        "FIRST_BITE_S3_ACCESS_KEY_ID" => Some("example-access-key-id".to_string()),
+        "FIRST_BITE_S3_SECRET_ACCESS_KEY" => Some("example-secret-access-key".to_string()),
+        _ => None,
+    }
+}
+
+/// The example file shows the reference form: it holds no credential value,
+/// and without its variables set each credential is refused by name.
+#[test]
+fn the_example_holds_references_and_no_credential() {
+    let example: SubscriberConfigs = parse(
+        include_str!("../config/subscribers.example.yml"),
+        "subscribers.example.yml",
+    )
+    .unwrap();
+    let mut referenced = Vec::new();
+    for mut config in example.subscribers {
+        let unset = config.clone().resolve(&|_| None);
+        if let Err(problem) = unset {
+            referenced.push(format!("{}: {problem}", config.name));
+        }
+        let plain = config.resolve(&example_environment).unwrap();
+        assert!(plain.is_empty(), "{}: plain {plain:?}", config.name);
+    }
+    assert_eq!(
+        referenced,
+        [
+            "AllToBlob: `cloud_access_key` refers to the environment variable FIRST_BITE_BLOB_ACCESS_KEY, which is not set",
+            "AllToS3: `aws_access_key_id` refers to the environment variable FIRST_BITE_S3_ACCESS_KEY_ID, which is not set",
+        ]
+    );
+}
+
 /// Every subscriber in the shipped files builds its sink when the sink's
 /// feature is compiled in, and is refused by name when it is not.
 #[test]
@@ -98,7 +136,16 @@ fn shipped_subscribers_build_or_name_their_feature() {
         "subscribers.example.yml",
     )
     .unwrap();
-    for config in local.subscribers.iter().chain(&example.subscribers) {
+    let resolved: Vec<SubscriberConfig> = local
+        .subscribers
+        .into_iter()
+        .chain(example.subscribers)
+        .map(|mut config| {
+            config.resolve(&example_environment).unwrap();
+            config
+        })
+        .collect();
+    for config in &resolved {
         let feature = match (config.subscriber_type.as_str(), config.subtype.as_deref()) {
             ("objectstorage", Some("azureobject")) => Some(("azure", cfg!(feature = "azure"))),
             ("objectstorage", Some("awsobject")) => Some(("aws", cfg!(feature = "aws"))),

@@ -20,8 +20,8 @@ subscribers:
     zmq_url: "127.0.0.1"
     zmq_port: 12000
     topics: ["*"]
-    aws_access_key_id: "anything"
-    aws_secret_access_key: "anything"
+    aws_access_key_id: "anything"       # the mock accepts any value; a real
+    aws_secret_access_key: "anything"   # key is written as a ${NAME} reference
     aws_default_region: "us-east-1"
     aws_s3_endpoint: "http://127.0.0.1:9090"
     aws_bucket_name: "first-bite"

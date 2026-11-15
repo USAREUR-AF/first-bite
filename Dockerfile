@@ -19,7 +19,10 @@ COPY . .
 RUN cargo build --release --locked -p mind -p bite
 
 FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+# The upgrade installs the fixes Debian has released since the base image was
+# built; the digest above still fixes everything else.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends libpcap0.8 ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --user-group --no-create-home --home-dir /var/lib/first-bite \
