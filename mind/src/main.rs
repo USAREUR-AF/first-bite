@@ -3,7 +3,7 @@ use datamodels::packets::{
     get_log_metadata, PacketInfoWithParsedMessage, RecordVersion, RECORD_VERSION_ENV,
 };
 use flow::{Publishers, SubPubs, Subscribers};
-use log::{error, info};
+use log::{error, info, warn};
 use logger::loggers::setup_logger;
 use mind::cli::{Command, Opt};
 use mind::splash::print_splash_screen;
@@ -47,7 +47,9 @@ fn main() -> ExitCode {
     print_splash_screen();
 
     match start(opt) {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(true) => ExitCode::SUCCESS,
+        // Every frame was read; a sink did not deliver every record.
+        Ok(false) => ExitCode::from(EXIT_NOT_DELIVERED),
         Err(e) => {
             error!("{e}");
             ExitCode::FAILURE
@@ -64,7 +66,16 @@ enum StartError {
     Egress(#[from] flow::Error),
 }
 
-fn start(opt: Opt) -> Result<(), StartError> {
+/// Exit status when the run itself succeeded and a sink abandoned records or
+/// delivered none of those it was given.
+const EXIT_NOT_DELIVERED: u8 = 3;
+
+/// How long the start waits for the subscribers of this process to subscribe
+/// to the record socket before the first record is published.
+const SUBSCRIBE_WAIT: Duration = Duration::from_secs(5);
+
+/// Returns whether every sink delivered what was published for it.
+fn start(opt: Opt) -> Result<bool, StartError> {
     // The security block is read and the crypto provider installed before
     // anything can open a connection.
     flow::security::activate().map_err(flow::Error::from)?;
@@ -76,6 +87,7 @@ fn start(opt: Opt) -> Result<(), StartError> {
             "publishing version 1 records ({RECORD_VERSION_ENV}=1): field values and ports are text"
         );
     }
+    let loaded = dictionary.clone();
     let pipeline = Pipeline::new(dictionary)
         .with_record_version(version)
         .with_decapsulation(Decapsulation {
@@ -93,15 +105,18 @@ fn start(opt: Opt) -> Result<(), StartError> {
 
     // Publishers, subscribers and subpubs are built in full here, so a
     // configuration mistake in any of them stops the process before capture.
-    let publishers = Publishers::load()?;
+    let mut publishers = Publishers::load()?;
     let subscribers = Subscribers::load()?;
-    if !subscribers.is_empty() {
-        thread::spawn(move || {
-            if let Err(e) = subscribers.run() {
-                error!("subscribers stopped: {e}");
-            }
-        });
+    if let Some(dictionary) = loaded.as_deref() {
+        let unmatched =
+            mind::topics::unmatched(dictionary, &publishers.topic_rules(), &subscribers.topics());
+        for entry in unmatched {
+            warn!("{entry}");
+        }
     }
+    let running = subscribers.start()?;
+    publishers.feed(running.tracker());
+    let tracker = running.tracker();
     if opt.activate_subpubs {
         let subpubs = SubPubs::load()?;
         if !subpubs.is_empty() {
@@ -115,11 +130,27 @@ fn start(opt: Opt) -> Result<(), StartError> {
         info!("subpubs are off; pass --activate-subpubs and set SUBPUB_CONFIG_PATH to run them");
     }
 
+    // A record published before a subscriber has subscribed is discarded by
+    // the socket, so the subscribers of this process are waited for. A
+    // consumer in another process cannot be: file replay gives it a moment.
+    if !publishers.wait_for_subscribers(SUBSCRIBE_WAIT) {
+        warn!(
+            "not every subscriber had subscribed to the record socket after {SUBSCRIBE_WAIT:?}; \
+             the first records may not reach it"
+        );
+    }
     if replaying_file {
         thread::sleep(FILE_REPLAY_SETTLE);
     }
     info!("reading from {}", source.describe());
-    let mut publish = |_: &PacketInfoWithParsedMessage, json: &str| publishers.publish(json);
+    let mut publish = |_: &PacketInfoWithParsedMessage, json: &str| {
+        publishers.publish(json);
+        // A file is read faster than a sink delivers; live capture is never
+        // held up.
+        if replaying_file {
+            tracker.pace();
+        }
+    };
     let stats_interval = (opt.stats_interval > 0).then(|| Duration::from_secs(opt.stats_interval));
     // SIGINT and SIGTERM end the loop cleanly, so the output file is flushed
     // and the final counts are logged when the service is stopped.
@@ -131,18 +162,38 @@ fn start(opt: Opt) -> Result<(), StartError> {
         );
     }
     let started = Instant::now();
-    let stats = mind::run(
+    // A source that fails ends the input like any other end: what was
+    // published before it is still delivered, and the failure is reported
+    // after.
+    let outcome = mind::run(
         source.as_mut(),
         &pipeline,
         &mut publish,
         output.as_mut(),
         stats_interval,
         &stop,
-    )?;
+    );
     let elapsed = started.elapsed();
-    if replaying_file {
-        thread::sleep(FILE_REPLAY_SETTLE);
+
+    // Input has ended, or the process was told to stop. The sinks deliver
+    // what was already published, then the record socket is closed with time
+    // for a consumer in another process to take what is queued for it.
+    let drain = Duration::from_secs(opt.drain_seconds);
+    if !running.is_empty() {
+        info!("waiting up to {drain:?} for the sinks to deliver what was published");
     }
+    let reports = running.drain(drain);
+    publishers.close(FILE_REPLAY_SETTLE.max(Duration::from_millis(100)));
+    let mut complete = true;
+    for report in &reports {
+        if report.incomplete() {
+            complete = false;
+            error!("{report}");
+        } else {
+            info!("{report}");
+        }
+    }
+    let stats = outcome?;
     info!(
         "done: {} frames, {} records, {} decoded, {} not UDP or TCP, {} malformed",
         stats.frames, stats.records, stats.decoded, stats.skipped, stats.malformed
@@ -160,7 +211,7 @@ fn start(opt: Opt) -> Result<(), StartError> {
             stats.frames as f64 / elapsed.as_secs_f64()
         );
     }
-    Ok(())
+    Ok(complete)
 }
 
 fn open_source(opt: &Opt) -> Result<Box<dyn FrameSource>, Error> {

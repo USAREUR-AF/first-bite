@@ -1,0 +1,47 @@
+# Cursor-on-Target events to a TAK server or to TAK clients, built from
+# weather-station Position records. Copy the entry you need into your own
+# subscribers.yml and set the destinations: there is no default destination.
+# docs/cot-to-tak.md walks through it; README.md describes every key.
+
+subscribers:
+  # A TAK server's TLS streaming input, with the client certificate the
+  # server's administrator issued.
+  - name: PositionsToTakServer
+    subscriber_type: "tcp"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "WX/Position"
+    destinations:
+      - address: "tak.example.org:8089"
+    tls:
+      ca_file: "/etc/first-bite/tak/truststore.pem"
+      client_cert_file: "/etc/first-bite/tak/first-bite.pem"
+      client_key_file: "/etc/first-bite/tak/first-bite.key"
+    queue: 1000 # events held while the connection is down
+    cot:
+      uid: [station_id]
+      type:
+        value: "a-f-G"
+      position:
+        geodetic: [latitude, longitude, altitude]
+      stale_minutes: 10
+
+  # TAK clients on the local network, on the multicast group they listen to.
+  - name: PositionsToTakClients
+    subscriber_type: "udp"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "WX/Position"
+    destinations:
+      - address: "239.2.3.1:6969"
+        ttl: 1 # stays on the local network
+        interface: "192.0.2.15" # address of the interface to send from
+    cot:
+      uid: [station_id]
+      type:
+        value: "a-f-G"
+      position:
+        geodetic: [latitude, longitude, altitude]
+      stale_minutes: 10

@@ -490,7 +490,10 @@ impl FrameSource for UdpFrames {
             Err(e)
                 if matches!(
                     e.kind(),
-                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                    // Interrupted: a stop signal arrived during the wait.
+                    std::io::ErrorKind::WouldBlock
+                        | std::io::ErrorKind::TimedOut
+                        | std::io::ErrorKind::Interrupted
                 ) =>
             {
                 Ok(None)

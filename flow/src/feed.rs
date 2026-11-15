@@ -36,8 +36,32 @@ impl TopicFilter {
         }
     }
 
+    /// An entry matches the topic it spells. An entry that ends in `/`
+    /// matches every topic that begins with it: `WX/` is every message of
+    /// interface `WX`.
     pub(crate) fn matches(&self, topic: &str) -> bool {
-        self.all || self.topics.iter().any(|wanted| wanted == topic)
+        self.all
+            || self.topics.iter().any(|wanted| {
+                wanted == topic || (wanted.ends_with('/') && topic.starts_with(wanted.as_str()))
+            })
+    }
+
+    /// Subscriptions a socket with this filter makes.
+    pub(crate) fn subscriptions(&self) -> u64 {
+        if self.all {
+            1
+        } else {
+            self.topics.len() as u64
+        }
+    }
+
+    /// The entries, unless the filter takes everything.
+    pub(crate) fn entries(&self) -> &[String] {
+        if self.all {
+            &[]
+        } else {
+            &self.topics
+        }
     }
 }
 
@@ -48,6 +72,8 @@ pub(crate) struct FeedConfig {
     pub(crate) name: String,
     pub(crate) endpoint: String,
     pub(crate) port: String,
+    /// Whether the publisher it reads is on this machine.
+    pub(crate) local: bool,
     pub(crate) filter: TopicFilter,
 }
 
@@ -68,6 +94,7 @@ impl FeedConfig {
             name: config.name.clone(),
             endpoint: format!("tcp://{host}:{port}"),
             port: port.to_string(),
+            local: crate::security::is_loopback_host(host),
             filter: TopicFilter::new(&config.topics),
         })
     }
@@ -107,6 +134,16 @@ impl FeedConfig {
     }
 }
 
+/// What a wait on a feed gave.
+pub(crate) enum Polled {
+    /// A topic and its record as JSON text.
+    Record(String, String),
+    /// Nothing arrived in time.
+    Idle,
+    /// The ZeroMQ context was shut down.
+    Closed,
+}
+
 /// A connected SUB socket.
 pub(crate) struct Feed {
     name: String,
@@ -117,6 +154,27 @@ pub(crate) struct Feed {
 impl Feed {
     pub(crate) fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Wait up to `timeout` for a message on a wanted topic.
+    pub(crate) fn poll(&self, timeout: Duration) -> Polled {
+        let ready = self.socket.poll(
+            zmq::POLLIN,
+            timeout.as_millis().min(i64::MAX as u128) as i64,
+        );
+        match ready {
+            Ok(0) => Polled::Idle,
+            Ok(_) => match self.next() {
+                Some((topic, record)) => Polled::Record(topic, record),
+                None => Polled::Closed,
+            },
+            Err(zmq::Error::ETERM) => Polled::Closed,
+            Err(e) => {
+                error!("subscriber {}: poll failed: {e}", self.name);
+                std::thread::sleep(RECEIVE_RETRY);
+                Polled::Idle
+            }
+        }
     }
 
     /// Block until a message on a wanted topic arrives and return its topic
@@ -181,6 +239,20 @@ mod tests {
     }
 
     #[test]
+    fn an_entry_that_ends_in_a_slash_matches_every_topic_under_it() {
+        let filter = TopicFilter::new(&topics(&["WX/", "NTP/server"]));
+        assert!(filter.matches("WX/Observation"));
+        assert!(filter.matches("WX/Position"));
+        assert!(filter.matches("NTP/server"));
+        assert!(!filter.matches("NTP/client"));
+        // Not the interface whose name merely begins the same way.
+        assert!(!filter.matches("WXB/Observation"));
+        assert!(!filter.matches("WX"));
+        assert_eq!(filter.subscriptions(), 2);
+        assert_eq!(TopicFilter::new(&topics(&["a", "*"])).subscriptions(), 1);
+    }
+
+    #[test]
     fn a_message_over_the_size_limit_is_not_received() {
         use crate::test_support::free_port;
         let port = free_port();
@@ -192,6 +264,7 @@ mod tests {
             name: "test".to_string(),
             endpoint: format!("tcp://127.0.0.1:{port}"),
             port: port.to_string(),
+            local: true,
             filter: TopicFilter::new(&topics(&["*"])),
         }
         .connect(&context)

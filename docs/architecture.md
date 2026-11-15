@@ -83,6 +83,8 @@ a cargo feature of `flow`, forwarded by `mind`.
 | S3-compatible storage | `objectstorage` / `awsobject` | `aws` (default) | built |
 | HTTP POST | `rest` | always | built |
 | local file | `local` | always | built |
+| UDP datagrams, unicast or multicast; Cursor-on-Target with a `cot:` mapping ([cot-to-tak.md](cot-to-tak.md)) | `udp` | always | built |
+| TCP stream, optionally inside TLS with a client certificate; Cursor-on-Target with a `cot:` mapping | `tcp` | always | built |
 | Zenoh | `zenoh` | `zenoh` | built |
 | Zenoh on a goat data fabric (optional, off by default; [goat/joining.md](goat/joining.md)) | `goat` | `goat` | built |
 
@@ -99,7 +101,9 @@ A subpub is a subscriber, a transform and a publisher: it reads records, turns
 each into something else, and publishes the result on another ZeroMQ socket.
 The one transform is Cursor-on-Target (`subtype: cot`), driven by a mapping in
 the configuration that says which fields give the identifier, the type and the
-position. Subpubs run when `mind` is started with `--activate-subpubs`.
+position. Subpubs run when `mind` is started with `--activate-subpubs`. A
+`udp` or `tcp` subscriber takes the same mapping and sends the event to a TAK
+server or to TAK clients, with no subpub between.
 
 Cursor-on-Target here is a per-message field mapping. A node that needs tracks
 normalised into Cursor-on-Target, ASTERIX CAT062 or SAPIENT with one identity

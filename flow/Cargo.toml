@@ -43,9 +43,11 @@ rustls-webpki = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 serde_norway.workspace = true
+socket2.workspace = true
 sha2 = { workspace = true, optional = true }
 thiserror.workspace = true
 tokio.workspace = true
+tokio-rustls.workspace = true
 webpki-roots.workspace = true
 x509-parser = { workspace = true, optional = true }
 zenoh = { workspace = true, optional = true }
@@ -53,3 +55,5 @@ zmq.workspace = true
 
 [dev-dependencies]
 ciborium.workspace = true
+quick-xml.workspace = true
+rcgen.workspace = true

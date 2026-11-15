@@ -42,11 +42,17 @@ A sink implements `flow::Sink`:
 pub trait Sink: Send + Sync {
     async fn prepare(&self) -> Result<(), SinkError> { Ok(()) }
     async fn send(&self, topic: &str, record: &str) -> Result<(), SinkError>;
+    async fn finish(&self, within: Duration) -> u64 { 0 }
+    fn lost(&self) -> u64 { 0 }
 }
 ```
 
 `prepare` runs once before the first record (create the bucket, open the
-session). `flow::build_sink` in [`src/sink/mod.rs`](src/sink/mod.rs) is the one
+session). `finish` runs once when the run ends: a sink that queues, such as
+`tcp`, sends what it holds within the time given and returns what is left,
+and `lost` is what it accepted and could not send. `Subscribers::start`
+returns a `Running`; `Running::drain` waits for every subscriber to catch up
+with what the publishers sent and returns one `SinkReport` per sink. `flow::build_sink` in [`src/sink/mod.rs`](src/sink/mod.rs) is the one
 function that turns a subscriber's configuration into a sink; a new sink is a
 module in `src/sink/` and an arm there.
 
@@ -57,6 +63,7 @@ module in `src/sink/` and an arm there.
 | `sink::zenoh` | Zenoh put | `zenoh` |
 | `goat::sink` | Zenoh put on a goat data fabric, with goat's identity, key and announcement conventions; optional and off by default ([docs/goat/joining.md](../docs/goat/joining.md)) | `goat` |
 | `sink::rest` | HTTP POST | always built |
+| `sink::network` | UDP datagrams and TCP streams, optionally inside TLS; Cursor-on-Target to a TAK server with a `cot:` mapping | always built |
 | `sink::local_log` | local file: one JSON record per line, or a CBOR sequence | always built |
 | `sink::message_rates` | per-topic counts | always built |
 

@@ -8,7 +8,8 @@
 #
 # Checks, each in a fresh container with no network:
 #   the default command prints the usage of mind and exits 0
-#   the image's user is not root
+#   the image's user is not root, and is declared by number (uid:gid), which
+#   is what Kubernetes needs to honour `runAsNonRoot`
 #   bite check --strict passes on the weather-station dictionary in the image
 #   mind replays examples/weather-station.pcap and decodes every frame
 #   the image carries the OCI labels source, licenses, description, version
@@ -41,7 +42,12 @@ say default "$usage"
 
 uid="$("$engine" run --rm --network none --entrypoint id "$image" -u)"
 [ "$uid" != 0 ] || fail "the image runs as root"
-say user "uid $uid, set as $("$engine" image inspect --format '{{.Config.User}}' "$image")"
+declared="$("$engine" image inspect --format '{{.Config.User}}' "$image")"
+printf '%s\n' "$declared" | grep -qE '^[1-9][0-9]*:[1-9][0-9]*$' ||
+  fail "the image declares the user \"$declared\"; it must be numeric, uid:gid, and not 0"
+[ "${declared%%:*}" = "$uid" ] || fail "the image declares the user $declared and runs as uid $uid"
+name="$("$engine" run --rm --network none --entrypoint id "$image" -un)"
+say user "$declared ($name), declared by number"
 
 output="$("$engine" run --rm --network none --entrypoint bite "$image" check "$dictionary" --strict 2>&1)" ||
   fail "bite check failed: $output"

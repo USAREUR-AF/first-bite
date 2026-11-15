@@ -17,6 +17,7 @@
 //! configuration mistake stops startup with an error that names the entry.
 
 pub mod config;
+pub mod delivery;
 pub mod encoding;
 pub mod error;
 mod feed;
@@ -32,10 +33,11 @@ pub mod subscribe;
 mod test_support;
 
 pub use crate::config::{PublisherConfig, SubPubConfig, SubscriberConfig};
+pub use crate::delivery::{SinkReport, Tracker};
 pub use crate::encoding::{Encoding, EncodingError};
 pub use crate::error::{ConfigError, Error, Problem};
 pub use crate::publish::{PublishError, Publisher, Publishers};
 pub use crate::secret::Secret;
 pub use crate::sink::{build_sink, build_sink_secured, describe_sink, Sink, SinkError};
 pub use crate::subpub::{SubPubs, Transform, TransformError};
-pub use crate::subscribe::Subscribers;
+pub use crate::subscribe::{Running, Subscribers};

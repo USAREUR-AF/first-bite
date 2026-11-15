@@ -73,6 +73,12 @@ pub struct Opt {
     /// Start the subscriber/publisher pairs from the subpub configuration.
     #[arg(long)]
     pub activate_subpubs: bool,
+
+    /// Seconds the sinks are given, once input has ended or the process is
+    /// told to stop, to deliver the records already published. What is not
+    /// delivered by then is counted as abandoned and the exit status is 3.
+    #[arg(long, value_name = "SECONDS", default_value_t = 30)]
+    pub drain_seconds: u64,
 }
 
 /// What `mind` does instead of capturing.
