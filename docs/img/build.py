@@ -210,7 +210,7 @@ def how_it_works():
     f = Fig("how-it-works", "The link is copied; first-bite decodes the copy and publishes it",
             "Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every "
             "frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and "
-            "publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a "
+            "publishes one record of typed values per message, as JSON or CBOR, on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a "
             "Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. "
             "Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.", 500)
     # native link
@@ -232,17 +232,17 @@ def how_it_works():
     f.text(56, 206, "first-bite", 15, True, "a")
     f.text(56, 224, "never transmits", 13, False, "q")
     f.box(196, 196, 140, 58, [("Capture", 15, True, "t"), ("interface or file", 13, False, "q")])
-    f.box(380, 196, 152, 58, [("Decode", 15, True, "t"), ("every field, 0.69 µs", 13, False, "q")])
-    f.box(576, 196, 128, 58, [("Publish", 15, True, "t"), ("JSON record", 13, False, "q")])
+    f.box(380, 196, 152, 58, [("Decode", 15, True, "t"), ("every field, 0.47 µs", 13, False, "q")])
+    f.box(576, 196, 128, 58, [("Publish", 15, True, "t"), ("typed record", 13, False, "q")])
     f.line([(336, 225), (380, 225)], "lna", head="fa")
     f.line([(532, 225), (576, 225)], "lna", head="fa")
     f.box(380, 280, 152, 50, [("Dictionary", 14, True, "t"), ("JSON files, not code", 13, False, "q")], "bxd")
     f.line([(456, 280), (456, 254)], "lnd", head="fl")
-    f.text(56, 296, "340,000", 26, True, "a")
+    f.text(56, 296, "450,000", 26, True, "a")
     f.text(56, 316, "packets per second on one core", 13, False, "q")
     # bus
     f.line([(640, 254), (640, 370)], "lna", head="fa")
-    f.box(40, 370, 680, 34, [("ZeroMQ PUB socket: one JSON record per message", 14, True, "t")], "bxp")
+    f.box(40, 370, 680, 34, [("ZeroMQ PUB socket: one record per message, JSON or CBOR", 14, True, "t")], "bxp")
     xs = [40, 177.5, 315, 452.5, 590]
     labels = [("Object storage", "S3, Azure Blob"), ("HTTP endpoint", "POST per record"),
               ("Zenoh", "data fabric"), ("Cursor-on-Target", "transform"), ("Your subscriber", "a ZeroMQ SUB")]
@@ -484,19 +484,19 @@ def components():
 # ---------------------------------------------------------------------------
 # 5. performance
 # ---------------------------------------------------------------------------
-DECODE_US = 0.69          # docs/performance.md: decode one message
-PIPELINE_US = 2.9         # docs/performance.md: whole pipeline per packet
+DECODE_US = 0.47          # docs/performance.md: decode one message
+PIPELINE_US = 2.2         # docs/performance.md: whole pipeline per packet
 FIRST_RATE = 194          # docs/performance.md: first implementation, messages per second
 NOW_RATE = 1_700_000      # docs/performance.md: now, on the same recorded messages
 
 
 def performance():
-    f = Fig("performance", "A link carrying 1,000 messages a second uses 0.3% of one core",
+    f = Fig("performance", "A link carrying 1,000 messages a second uses 0.2% of one core",
             "Three measurements on one core. Decoder throughput on a logarithmic scale: the project's first "
-            "decoder managed 194 messages per second and the current one 1,700,000 on the same recorded "
-            "messages. Time per packet on a linear scale: 2.9 microseconds for the whole pipeline, of which "
-            "decoding is 0.69. Share of one core by message rate, computed from 2.9 microseconds per packet: "
-            "0.3 percent at 1,000 messages per second, 2.9 percent at 10,000 and 29 percent at 100,000.", 508)
+            "decoder managed 194 messages per second and the rewritten one 1,700,000 on the same recorded "
+            "messages. Time per packet on a linear scale: 2.2 microseconds for the whole pipeline, of which "
+            "decoding is 0.47. Share of one core by message rate, computed from 2.2 microseconds per packet: "
+            "0.2 percent at 1,000 messages per second, 2.2 percent at 10,000 and 22 percent at 100,000.", 508)
     left, right = 176, 700
     # A: decoder throughput, log axis
     f.text(24, 72, "Decoder throughput, messages per second", 14, True, "t", role="note")
@@ -508,7 +508,7 @@ def performance():
         f.line([(x, 86), (x, 150)], "lnr")
         f.text(x, 168, label, 13, False, "q", "middle")
     f.text(24, 108, "First decoder", 13, False, "t")
-    f.text(24, 138, "Current decoder", 13, True, "t")
+    f.text(24, 138, "Rewritten decoder", 13, True, "t")
     f.line([(xa(FIRST_RATE), 104), (xa(FIRST_RATE), 134)], "lnd", nohead=True)
     f.disc(xa(FIRST_RATE), 104, 6, "fl")
     f.text(xa(FIRST_RATE) + 14, 108, thousands(FIRST_RATE), 13, True, "t")
@@ -521,15 +521,15 @@ def performance():
     f.line([(24, 186), (736, 186)], "lnr")
     f.text(24, 214, "Time per packet, microseconds", 14, True, "t", role="note")
     f.text(736, 214, "linear scale", 13, False, "q", "end")
-    xb = lambda us: left + us / 3.0 * (right - left)
+    xb = lambda us: left + us / 2.5 * (right - left)
     f.rect(left, 230, xb(PIPELINE_US) - left, 34, "bxp", 4)
     f.rect(left, 230, xb(DECODE_US) - left, 34, "fa", 4)
     f.text((left + xb(DECODE_US)) / 2, 252, f"decode {DECODE_US}", 13, True, "on", "middle")
-    f.text(xb(DECODE_US) + 14, 252, "read, parse headers, build JSON, publish", 13, False, "t",
+    f.text(xb(DECODE_US) + 14, 252, "read, parse, build the record, publish", 13, False, "t",
            maxw=xb(PIPELINE_US) - xb(DECODE_US) - 24)
     f.text(24, 244, "Whole pipeline", 13, True, "t")
     f.text(24, 262, f"{PIPELINE_US} µs", 13, False, "q")
-    for us in range(0, 4):
+    for us in range(0, 3):
         f.line([(xb(us), 264), (xb(us), 272)], "ln")
         f.text(xb(us), 288, str(us), 13, False, "q", "middle")
     # C: share of one core
@@ -562,7 +562,7 @@ def one_decode():
             "Left, point to point: each of four consumers implements the binary interface and holds its own "
             "connection to native system A, so there are four parsers and four connections for A to serve. "
             "Right, with a tap: first-bite decodes once and publishes, the four consumers subscribe and read "
-            "JSON, and there is one decoder and no connection to A or B.", 406)
+            "records, and there is one decoder and no connection to A or B.", 406)
     ys = [84 + k * 62 for k in range(count)]
     # left
     f.text(24, 70, "Point to point", 14, True, "t")
@@ -589,7 +589,7 @@ def one_decode():
     f.line([(610, ys[0] + 25), (610, ys[-1] + 25)], "lna", nohead=True)
     for k, y in enumerate(ys):
         f.line([(610, y + 25), (636, y + 25)], "lna", head="fa")
-        f.box(636, y, 100, 50, [(f"Consumer {k + 1}", 13, True, "t"), ("reads JSON", 13, False, "q")], pad=6)
+        f.box(636, y, 100, 50, [(f"Consumer {k + 1}", 13, True, "t"), ("reads records", 13, False, "q")], pad=6)
     f.rich(400, 362, [("1 decoder", True, "g"), (", driven by a dictionary", False, "t")], 13)
     f.rich(400, 382, [("0 connections", True, "g"), (" to System A or System B", False, "t")], 13)
     return f
@@ -601,8 +601,8 @@ def one_decode():
 def beyond_ip():
     f = Fig("beyond-ip", "The decoder that reads IP messages also reads CAN frames",
             "A table of link types against decoding and capture. IP networks: decoding is built and measured "
-            "at 1.45 million messages per second, and capture is built for an interface, a capture file and a "
-            "UDP socket. CAN bus: decoding is built and measured at 1.40 million frames per second with the "
+            "at 2.1 million messages per second, and capture is built for an interface, a capture file and a "
+            "UDP socket. CAN bus: decoding is built and measured at 1.8 million frames per second with the "
             "same decoder, and a SocketCAN capture source is designed, not built. MIL-STD-1553 and ARINC 429 "
             "sources are not built, and neither is importing a DBC file as a dictionary.", 348)
     c1, c2, c3 = 24, 232, 494
@@ -620,9 +620,9 @@ def beyond_ip():
     f.rect(c2, rows[0], 246, 132, "bxa", 8)
     f.line([(c2 + 14, 156), (c2 + 232, 156)], "lnr")
     f.rich(c2 + 14, 116, [("Built", True, "g"), (": weather-station, ntp", False, "t")], 13, maxw=218)
-    f.text(c2 + 14, 135, "measured 1.45 million messages/s", 13, False, "q", maxw=218)
+    f.text(c2 + 14, 135, "measured 2.1 million messages/s", 13, False, "q", maxw=218)
     f.rich(c2 + 14, 188, [("Built", True, "g"), (": vehicle-can", False, "t")], 13, maxw=218)
-    f.text(c2 + 14, 207, "measured 1.40 million frames/s", 13, False, "q", maxw=218)
+    f.text(c2 + 14, 207, "measured 1.8 million frames/s", 13, False, "q", maxw=218)
     # capture
     f.rect(c3, rows[0], 242, 60, "bx", 8)
     f.text(c3 + 14, 116, "Built", 13, True, "g")
@@ -708,7 +708,7 @@ def record_flow():
                                   ("tcp://127.0.0.1:12001", 13, False, "q")], pad=6)
     f.box(350, rows[2], 170, 72, [("Your subscriber", 14, True, "t"), ("a ZeroMQ SUB socket", 13, False, "q"),
                                   ("on either PUB socket", 13, False, "q")], "bxd", pad=6)
-    f.text(24, 348, "A message on a socket is <topic>|<record JSON>, and the topic is interface/message.",
+    f.text(24, 348, "A message on a socket is <topic>|<record>, JSON or CBOR, and the topic is interface/message.",
            13, False, "q", role="note")
     f.text(24, 368, "A filter matches a topic exactly; * keeps everything. A subpub publishes on the input topic plus a suffix.",
            13, False, "q", role="note")

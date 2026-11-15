@@ -45,6 +45,6 @@
 <text x="435" y="266.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Your subscriber</text>
 <text x="435" y="284.4" font-size="13" text-anchor="middle" class="q">a ZeroMQ SUB socket</text>
 <text x="435" y="302.4" font-size="13" text-anchor="middle" class="q">on either PUB socket</text>
-<text x="24" y="348" font-size="13" data-role="note" class="q">A message on a socket is &lt;topic&gt;|&lt;record JSON&gt;, and the topic is interface/message.</text>
+<text x="24" y="348" font-size="13" data-role="note" class="q">A message on a socket is &lt;topic&gt;|&lt;record&gt;, JSON or CBOR, and the topic is interface/message.</text>
 <text x="24" y="368" font-size="13" data-role="note" class="q">A filter matches a topic exactly; * keeps everything. A subpub publishes on the input topic plus a suffix.</text>
 </svg>

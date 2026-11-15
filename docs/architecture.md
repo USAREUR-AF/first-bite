@@ -2,7 +2,7 @@
 
 first-bite turns frames on a wire into decoded records on a bus. It reads
 frames from a network interface or a capture file, decodes the payload of each
-against a dictionary, and publishes one JSON record per packet to ZeroMQ, from
+against a dictionary, and publishes one record per packet (JSON by default, CBOR selectable) to ZeroMQ, from
 where sinks forward records to object storage, REST endpoints, a Zenoh fabric
 or a file.
 
@@ -13,7 +13,7 @@ or a file.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/how-it-works-dark.svg">
-  <img src="img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
+  <img src="img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one record of typed values per message, as JSON or CBOR, on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
 </picture>
 
 ## Crates
@@ -144,11 +144,11 @@ sent anywhere; the page needs only a static file server.
 
 ## Performance
 
-`bite` decodes about 1.7 million messages per second on one core (measured:
-331,600 messages averaging 28 fields in 194 ms, release build, x86-64). The
-pipeline makes one pass per packet: slice headers, one hash
+`bite` decodes a weather-station message in 0.47 µs, 2.1 million messages per
+second on one core, and the whole pipeline handles 450,000 packets per second
+([performance.md](performance.md)). The pipeline makes one pass per packet: slice headers, one hash
 lookup for the interface, one for the message, one bit extraction per field,
-one JSON serialisation.
+one serialisation of the record.
 
 ## Presenting first-bite
 

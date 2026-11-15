@@ -6,7 +6,7 @@ row is an issue with acceptance criteria; the live board, with status, is
 
 | Horizon | Means |
 |---|---|
-| **In progress** | built or being built for release 1.1.0 |
+| **Built** | merged for release 1.1.0, awaiting the tag |
 | **Now** | the next milestone, starting when 1.1.0 is out |
 | **Next** | planned after that milestone |
 | **Later** | wanted; starts when a user or a measurement calls for it |
@@ -14,9 +14,11 @@ row is an issue with acceptance criteria; the live board, with status, is
 Priority within a horizon: P0 blocks adoption or release, P1 is the next thing
 to pick up, P2 is planned, P3 waits for a reason to start. Size is XS to XL.
 
-## In progress: release 1.1.0
+## Built: release 1.1.0, awaiting the tag
 
-Built and in review; these make the first full release. Milestone
+Typed records, selectable encodings and transport security levels are merged;
+cutting the tag and running every artifact remains. These make the first full
+release. Milestone
 [v1.1.0](https://github.com/USAREUR-AF/first-bite/milestone/1). A release
 candidate, `v1.0.1-rc.1`, has proved the release workflow end to end.
 

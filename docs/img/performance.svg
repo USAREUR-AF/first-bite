@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 508" width="760" height="508" role="img" aria-labelledby="performance-title performance-desc" aria-label="A link carrying 1,000 messages a second uses 0.3% of one core">
-<title id="performance-title">A link carrying 1,000 messages a second uses 0.3% of one core</title>
-<desc id="performance-desc">Three measurements on one core. Decoder throughput on a logarithmic scale: the project&#x27;s first decoder managed 194 messages per second and the current one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.9 microseconds for the whole pipeline, of which decoding is 0.69. Share of one core by message rate, computed from 2.9 microseconds per packet: 0.3 percent at 1,000 messages per second, 2.9 percent at 10,000 and 29 percent at 100,000.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 508" width="760" height="508" role="img" aria-labelledby="performance-title performance-desc" aria-label="A link carrying 1,000 messages a second uses 0.2% of one core">
+<title id="performance-title">A link carrying 1,000 messages a second uses 0.2% of one core</title>
+<desc id="performance-desc">Three measurements on one core. Decoder throughput on a logarithmic scale: the project&#x27;s first decoder managed 194 messages per second and the rewritten one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.2 microseconds for the whole pipeline, of which decoding is 0.47. Share of one core by message rate, computed from 2.2 microseconds per packet: 0.2 percent at 1,000 messages per second, 2.2 percent at 10,000 and 22 percent at 100,000.</desc>
 <style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
 <rect class="bg" x="0.5" y="0.5" width="759" height="507" rx="12"/>
-<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">A link carrying 1,000 messages a second uses 0.3% of one core</text>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">A link carrying 1,000 messages a second uses 0.2% of one core</text>
 <text x="24" y="72" font-size="14" font-weight="700" data-role="note" class="t">Decoder throughput, messages per second</text>
 <text x="736" y="72" font-size="13" text-anchor="end" class="q">logarithmic scale</text>
 <path d="M176 86L176 150" class="lnr" data-lint="nohead"/>
@@ -19,7 +19,7 @@
 <path d="M700 86L700 150" class="lnr" data-lint="nohead"/>
 <text x="700" y="168" font-size="13" text-anchor="middle" class="q">10 million</text>
 <text x="24" y="108" font-size="13" class="t">First decoder</text>
-<text x="24" y="138" font-size="13" font-weight="700" class="t">Current decoder</text>
+<text x="24" y="138" font-size="13" font-weight="700" class="t">Rewritten decoder</text>
 <path d="M206.16 104L206.16 134" class="lnd" data-lint="nohead"/>
 <circle cx="206.16" cy="104" r="6" class="fl"/>
 <text x="220.16" y="108" font-size="13" font-weight="700" class="t">194</text>
@@ -31,35 +31,33 @@
 <path d="M24 186L736 186" class="lnr" data-lint="nohead"/>
 <text x="24" y="214" font-size="14" font-weight="700" data-role="note" class="t">Time per packet, microseconds</text>
 <text x="736" y="214" font-size="13" text-anchor="end" class="q">linear scale</text>
-<rect x="176" y="230" width="506.53" height="34" rx="4" class="bxp"/>
-<rect x="176" y="230" width="120.52" height="34" rx="4" class="fa"/>
-<text x="236.26" y="252" font-size="13" font-weight="700" text-anchor="middle" class="on">decode 0.69</text>
-<text x="310.52" y="252" font-size="13" class="t">read, parse headers, build JSON, publish</text>
+<rect x="176" y="230" width="461.12" height="34" rx="4" class="bxp"/>
+<rect x="176" y="230" width="98.51" height="34" rx="4" class="fa"/>
+<text x="225.26" y="252" font-size="13" font-weight="700" text-anchor="middle" class="on">decode 0.47</text>
+<text x="288.51" y="252" font-size="13" class="t">read, parse, build the record, publish</text>
 <text x="24" y="244" font-size="13" font-weight="700" class="t">Whole pipeline</text>
-<text x="24" y="262" font-size="13" class="q">2.9 µs</text>
+<text x="24" y="262" font-size="13" class="q">2.2 µs</text>
 <path d="M176 264L176 272" class="ln" data-lint="nohead"/>
 <text x="176" y="288" font-size="13" text-anchor="middle" class="q">0</text>
-<path d="M350.67 264L350.67 272" class="ln" data-lint="nohead"/>
-<text x="350.67" y="288" font-size="13" text-anchor="middle" class="q">1</text>
-<path d="M525.33 264L525.33 272" class="ln" data-lint="nohead"/>
-<text x="525.33" y="288" font-size="13" text-anchor="middle" class="q">2</text>
-<path d="M700 264L700 272" class="ln" data-lint="nohead"/>
-<text x="700" y="288" font-size="13" text-anchor="middle" class="q">3</text>
+<path d="M385.6 264L385.6 272" class="ln" data-lint="nohead"/>
+<text x="385.6" y="288" font-size="13" text-anchor="middle" class="q">1</text>
+<path d="M595.2 264L595.2 272" class="ln" data-lint="nohead"/>
+<text x="595.2" y="288" font-size="13" text-anchor="middle" class="q">2</text>
 <path d="M24 304L736 304" class="lnr" data-lint="nohead"/>
 <text x="24" y="332" font-size="14" font-weight="700" data-role="note" class="t">Share of one core, by message rate</text>
-<text x="736" y="332" font-size="13" text-anchor="end" class="q">rate × 2.9 µs, linear scale</text>
+<text x="736" y="332" font-size="13" text-anchor="end" class="q">rate × 2.2 µs, linear scale</text>
 <text x="24" y="365" font-size="13" font-weight="700" class="t">1,000 per second</text>
 <rect x="176" y="346" width="524" height="28" rx="4" class="bxp"/>
-<rect x="176" y="346" width="1.52" height="28" rx="0" class="fa"/>
-<text x="187.52" y="365" font-size="13" font-weight="700" class="a">0.3%</text>
+<rect x="176" y="346" width="1.5" height="28" rx="0" class="fa"/>
+<text x="187.15" y="365" font-size="13" font-weight="700" class="a">0.2%</text>
 <text x="24" y="399" font-size="13" class="t">10,000 per second</text>
 <rect x="176" y="380" width="524" height="28" rx="4" class="bxp"/>
-<rect x="176" y="380" width="15.2" height="28" rx="4" class="fa"/>
-<text x="201.2" y="399" font-size="13" font-weight="700" class="a">2.9%</text>
+<rect x="176" y="380" width="11.53" height="28" rx="4" class="fa"/>
+<text x="197.53" y="399" font-size="13" font-weight="700" class="a">2.2%</text>
 <text x="24" y="433" font-size="13" class="t">100,000 per second</text>
 <rect x="176" y="414" width="524" height="28" rx="4" class="bxp"/>
-<rect x="176" y="414" width="151.96" height="28" rx="4" class="fa"/>
-<text x="337.96" y="433" font-size="13" font-weight="700" class="a">29%</text>
+<rect x="176" y="414" width="115.28" height="28" rx="4" class="fa"/>
+<text x="301.28" y="433" font-size="13" font-weight="700" class="a">22%</text>
 <path d="M176 442L176 450" class="ln" data-lint="nohead"/>
 <text x="176" y="466" font-size="13" text-anchor="middle" class="q">0%</text>
 <path d="M307 442L307 450" class="ln" data-lint="nohead"/>

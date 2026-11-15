@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 348" width="760" height="348" role="img" aria-labelledby="beyond-ip-title beyond-ip-desc" aria-label="The decoder that reads IP messages also reads CAN frames">
 <title id="beyond-ip-title">The decoder that reads IP messages also reads CAN frames</title>
-<desc id="beyond-ip-desc">A table of link types against decoding and capture. IP networks: decoding is built and measured at 1.45 million messages per second, and capture is built for an interface, a capture file and a UDP socket. CAN bus: decoding is built and measured at 1.40 million frames per second with the same decoder, and a SocketCAN capture source is designed, not built. MIL-STD-1553 and ARINC 429 sources are not built, and neither is importing a DBC file as a dictionary.</desc>
+<desc id="beyond-ip-desc">A table of link types against decoding and capture. IP networks: decoding is built and measured at 2.1 million messages per second, and capture is built for an interface, a capture file and a UDP socket. CAN bus: decoding is built and measured at 1.8 million frames per second with the same decoder, and a SocketCAN capture source is designed, not built. MIL-STD-1553 and ARINC 429 sources are not built, and neither is importing a DBC file as a dictionary.</desc>
 <style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
 <rect class="bg" x="0.5" y="0.5" width="759" height="347" rx="12"/>
 <text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">The decoder that reads IP messages also reads CAN frames</text>
@@ -16,9 +16,9 @@
 <rect x="232" y="90" width="246" height="132" rx="8" class="bxa"/>
 <path d="M246 156L464 156" class="lnr" data-lint="nohead"/>
 <text x="246" y="116" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="g" font-weight="700">Built</tspan><tspan class="t">: weather-station, ntp</tspan></text>
-<text x="246" y="135" font-size="13" class="q">measured 1.45 million messages/s</text>
+<text x="246" y="135" font-size="13" class="q">measured 2.1 million messages/s</text>
 <text x="246" y="188" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="g" font-weight="700">Built</tspan><tspan class="t">: vehicle-can</tspan></text>
-<text x="246" y="207" font-size="13" class="q">measured 1.40 million frames/s</text>
+<text x="246" y="207" font-size="13" class="q">measured 1.8 million frames/s</text>
 <rect x="494" y="90" width="242" height="60" rx="8" class="bx"/>
 <text x="508" y="116" font-size="13" font-weight="700" class="g">Built</text>
 <text x="508" y="135" font-size="13" class="q">interface, capture file, UDP socket</text>

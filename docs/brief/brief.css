@@ -103,3 +103,6 @@ tr:last-child td { border-bottom: 0; }
 .open .why span { display: block; font-size: 10.5pt; line-height: 1.3; color: var(--quiet); }
 .open .next { font-size: 10pt; color: var(--quiet); margin: 0; }
 .open .why .wide { grid-column: 1 / -1; }
+.trust .cols { gap: 5mm 7mm; }
+.trust .card { padding-bottom: 1.2mm; }
+.trust .gap { margin-top: 4mm; }

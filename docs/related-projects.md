@@ -22,7 +22,7 @@ come from: Open Billie as of platform version 0.3.0, octo-pod as of 0.6.0.
 
 **first-bite** listens passively. It reads frames from a tap, a mirror port or
 a capture file, decodes every message it has a dictionary for, and publishes
-one JSON record per packet. It does not open a connection to the sensor and
+one record per packet. It does not open a connection to the sensor and
 the sensor does not know it is there. The message set is a directory of JSON
 files, so a new message set needs no code.
 

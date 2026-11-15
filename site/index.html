@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>first-bite: binary messages off the wire, decoded and published</title>
-<meta name="description" content="first-bite listens on a network tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary and publishes each as a JSON record, without touching the link it listens to.">
+<meta name="description" content="first-bite listens on a network tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary and publishes each as a record of typed values, without touching the link it listens to.">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -32,7 +32,7 @@
     <picture><source media="(prefers-color-scheme: dark)" srcset="img/wordmark-dark.svg"><img class="wordmark" src="img/wordmark-light.svg" width="380" height="128" alt="first-bite: the first bite of every byte, before it reaches its addressee"></picture>
     <p class="eyebrow">Open source, Apache-2.0</p>
     <h1>Binary messages off the wire, decoded, for those you authorise</h1>
-    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record for the consumers its owner allows.</strong> It never transmits on the capture interface, and one core handles 340,000 packets per second.</p>
+    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a record of typed values for the consumers its owner allows.</strong> It never transmits on the capture interface, and one core handles 450,000 packets per second.</p>
     <p class="actions">
       <a class="button primary" href="decoder/">Interactive decoder</a>
       <a class="button" href="architecture.html">Read the documentation</a>
@@ -44,14 +44,14 @@
   <section aria-labelledby="numbers">
     <h2 id="numbers" class="eyebrow">Measured on one core</h2>
     <ul class="numbers">
-      <li><b>0.69 µs</b><span>to decode one message: identify it, extract every field, render the values</span></li>
-      <li><b>340,000 / s</b><span>packets through the whole pipeline, from frame read to record published</span></li>
-      <li><b>0.3%</b><span>of one core for a link carrying 1,000 messages per second</span></li>
+      <li><b>0.47 µs</b><span>to decode one message: identify it, extract every field, render the values</span></li>
+      <li><b>450,000 / s</b><span>packets through the whole pipeline, from frame read to record published</span></li>
+      <li><b>0.2%</b><span>of one core for a link carrying 1,000 messages per second</span></li>
       <li><b>500 of 500</b><span>packets decoded in live capture on two interfaces at once, none dropped</span></li>
-      <li><b>10.7 MB</b><span>resident memory while replaying a 145 MB capture</span></li>
-      <li><b>16.5 MB</b><span>one binary that needs only glibc</span></li>
+      <li><b>10.9 MB</b><span>resident memory while replaying a 145 MB capture</span></li>
+      <li><b>14.67 MB</b><span>the portable build of <code>mind</code>: one file that needs only glibc</span></li>
     </ul>
-    <p class="source">AMD Ryzen 7 8845HS, release build. <a href="performance.html">The command behind each figure</a>.</p>
+    <p class="source">AMD Ryzen 7 8845HS, release build of the 1.1.0 code, 2026-11-15, the machine also running other work. <a href="performance.html">The command behind each figure</a>.</p>
   </section>
 
   <section class="section" id="how" aria-labelledby="how-h">
@@ -69,14 +69,14 @@
 
   <section class="section" id="performance" aria-labelledby="perf-h">
     <h2 id="perf-h">One core is far more than a link needs</h2>
-    <p>The whole pipeline (read a frame, parse Ethernet, IP and UDP, decode, build the JSON record, publish) takes 2.9 µs per packet. A link carrying 1,000 messages per second therefore uses about 0.3% of one core, and a record is on the bus about three microseconds after its frame is read.</p>
-    <p>The project's first decoder managed 194 messages per second. The current one decodes 1,700,000 on the same recorded messages, and also decodes the fields the first returned as null.</p>
+    <p>The whole pipeline (read a frame, parse Ethernet, IP and UDP, decode, build the record, publish) takes 2.2 µs per packet. A link carrying 1,000 messages per second therefore uses about 0.2% of one core, and a record is on the bus about two microseconds after its frame is read.</p>
+    <p>The project's first decoder managed 194 messages per second. Its rewrite decoded 1,700,000 on the same recorded messages, and also decodes the fields the first returned as null.</p>
     <!-- figure: performance | Every figure comes from a command in the repository: <a href="performance.html">performance</a>. -->
   </section>
 
   <section class="section" aria-labelledby="fan-h">
     <h2 id="fan-h">One decode, as many consumers as you allow</h2>
-    <p>Without a tap, each consumer of a binary interface writes its own parser and holds its own connection to the native system. With first-bite the decode happens once: consumers subscribe to a ZeroMQ socket and read JSON, or read what a sink wrote to S3-compatible storage, Azure Blob, an HTTP endpoint, a <a href="goat-integration.html">Zenoh data fabric</a> or a file. A transform emits Cursor-on-Target. The owner decides who reads: the record socket binds loopback by default, no sink runs unless it is configured, and HTTPS and storage endpoints are reached over TLS with the certificate checked.</p>
+    <p>Without a tap, each consumer of a binary interface writes its own parser and holds its own connection to the native system. With first-bite the decode happens once: consumers on the host subscribe to a ZeroMQ socket and read records, as JSON or CBOR, or read what a sink wrote to S3-compatible storage, Azure Blob, an HTTP endpoint, a <a href="goat-integration.html">Zenoh data fabric</a> or a file. A transform emits Cursor-on-Target. The owner decides who reads: the record socket binds loopback by default, no sink runs unless it is configured, and HTTPS and storage endpoints are reached over TLS with the certificate checked.</p>
     <!-- figure: one-decode-many-consumers -->
   </section>
 
