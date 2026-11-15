@@ -82,8 +82,8 @@
 
   <section class="section" aria-labelledby="run-h">
     <h2 id="run-h">Where it runs, and what it reads</h2>
-    <p>One process, <code>mind</code>, installed as a systemd service from a release tarball or run in a container. The same decoder reads CAN-style frames; a SocketCAN capture source is <span class="status planned">designed, not built</span>.</p>
-    <!-- figure: platforms | <a href="deployment.html">Deployment</a> covers the tarball, the service, the container and building without internet access. -->
+    <p>One process, <code>mind</code>, from one archive per platform with nothing to install on the target. The standard Linux build (glibc 2.31 or later) and the fully static one are <span class="status">built and run</span> on x86-64; the 64-bit Arm Linux, macOS and Windows archives are <span class="status planned">built in CI; not run locally</span>. The same decoder reads CAN-style frames; a SocketCAN capture source is <span class="status planned">designed, not built</span>.</p>
+    <!-- figure: platforms | <a href="deployment.html">Deployment</a> covers which archive to choose, the service, the container and building without internet access. -->
     <!-- figure: beyond-ip -->
   </section>
 

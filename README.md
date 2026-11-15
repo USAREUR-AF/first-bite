@@ -169,7 +169,7 @@ On a tap, name both capture interfaces (`mind enp3s0 enp4s0`); `mind` logs what
 the kernel, the interface and its own queue dropped, per interface.
 [docs/tap.md](docs/tap.md) covers tap choice, interface preparation and the
 loss counters; [docs/deployment.md](docs/deployment.md) covers the release
-tarball, the systemd service, the container and building without internet
+archives, the systemd service, the container and building without internet
 access.
 
 ## Write a dictionary
@@ -214,7 +214,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`flow/`](flow) | ZeroMQ publishers, sinks and transforms |
 | [`cotify/`](cotify) | Cursor-on-Target output |
 | [`dictionaries/`](dictionaries) | example dictionaries with vectors |
-| [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [illustrations](docs/img), [brief](docs/brief) |
+| [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
 | [`site/`](site) | the documentation site; `make site` builds it |
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |
 | [`mocks/`](mocks) | local stand-ins for the sinks |

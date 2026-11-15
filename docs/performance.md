@@ -4,6 +4,11 @@ Every figure here was measured by a command in this repository, on one core of
 an AMD Ryzen 7 8845HS (a 2024 laptop-class processor) under Linux, with a
 release build. Run the same commands to get the figures for your hardware.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/performance-dark.svg">
+  <img src="img/performance.svg" width="100%" alt="Three measurements on one core. Decoder throughput on a logarithmic scale: the project's first decoder managed 194 messages per second and the current one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.9 microseconds for the whole pipeline, of which decoding is 0.69. Share of one core by message rate, computed from 2.9 microseconds per packet: 0.3 percent at 1,000 messages per second, 2.9 percent at 10,000 and 29 percent at 100,000.">
+</picture>
+
 | What | Result | Command |
 |---|---|---|
 | Decode one message (identify it, extract every field, render the values) | **0.69 µs**: 1.45 million messages, 9.3 million fields per second | `cargo run --release -p bite --example throughput -- dictionaries/weather-station` |

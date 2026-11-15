@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 290" width="760" height="290" role="img" aria-labelledby="loss-counters-title loss-counters-desc" aria-label="Three counters say where a frame was lost">
+<title id="loss-counters-title">Three counters say where a frame was lost</title>
+<desc id="loss-counters-desc">A frame passes from the tap to the network card, the kernel capture buffer, the queue inside mind and the pipeline. mind counts losses at three of them. By interface: the card or driver discarded frames; raise the receive ring. Dropped by kernel: the capture buffer was full; raise --buffer-mb or add a filter. In queue: the pipeline was behind because a sink is blocking; check the subscriber log lines.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="289" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">Three counters say where a frame was lost</text>
+<rect x="20" y="64" width="128" height="56" rx="8" class="bx"/>
+<text x="84" y="87.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Tap</text>
+<text x="84" y="105.4" font-size="13" text-anchor="middle" class="q">monitor port</text>
+<rect x="168" y="64" width="128" height="56" rx="8" class="bx"/>
+<text x="232" y="87.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Network card</text>
+<text x="232" y="105.4" font-size="13" text-anchor="middle" class="q">receive ring</text>
+<path d="M148 92L159 92" class="lna"/><path d="M168 92L158 97L158 87z" class="fa"/>
+<rect x="316" y="64" width="128" height="56" rx="8" class="bx"/>
+<text x="380" y="87.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Kernel buffer</text>
+<text x="380" y="105.4" font-size="13" text-anchor="middle" class="q">32 MiB by default</text>
+<path d="M296 92L307 92" class="lna"/><path d="M316 92L306 97L306 87z" class="fa"/>
+<rect x="464" y="64" width="128" height="56" rx="8" class="bxa"/>
+<text x="528" y="87.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Queue in mind</text>
+<text x="528" y="105.4" font-size="13" text-anchor="middle" class="q">65,536 frames</text>
+<path d="M444 92L455 92" class="lna"/><path d="M464 92L454 97L454 87z" class="fa"/>
+<rect x="612" y="64" width="128" height="56" rx="8" class="bxa"/>
+<text x="676" y="87.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Pipeline</text>
+<text x="676" y="105.4" font-size="13" text-anchor="middle" class="q">decode, publish</text>
+<path d="M592 92L603 92" class="lna"/><path d="M612 92L602 97L602 87z" class="fa"/>
+<path d="M232 120L232 140L138 140L138 160" class="lnd" data-lint="nohead"/>
+<rect x="24" y="160" width="228" height="82" rx="8" class="bxw"/>
+<text x="40" y="186" font-size="14" font-weight="700" class="w">by interface</text>
+<text x="40" y="208" font-size="13" class="t">card or driver dropped frames</text>
+<text x="40" y="228" font-size="13" class="q">raise the receive ring</text>
+<path d="M380 120L380 160" class="lnd" data-lint="nohead"/>
+<rect x="266" y="160" width="228" height="82" rx="8" class="bxw"/>
+<text x="282" y="186" font-size="14" font-weight="700" class="w">dropped by kernel</text>
+<text x="282" y="208" font-size="13" class="t">the capture buffer was full</text>
+<text x="282" y="228" font-size="13" class="q">raise --buffer-mb, add a filter</text>
+<path d="M528 120L528 140L622 140L622 160" class="lnd" data-lint="nohead"/>
+<rect x="508" y="160" width="228" height="82" rx="8" class="bxw"/>
+<text x="524" y="186" font-size="14" font-weight="700" class="w">in queue</text>
+<text x="524" y="208" font-size="13" class="t">pipeline behind: a sink blocks</text>
+<text x="524" y="228" font-size="13" class="q">check the subscriber log lines</text>
+<text x="24" y="270" font-size="13" data-role="note" class="q">mind logs the three counts for each interface every --stats-interval seconds (default 60) and at shutdown.</text>
+</svg>

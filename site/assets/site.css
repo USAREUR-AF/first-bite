@@ -98,6 +98,7 @@ figcaption { color: var(--quiet); font-size: 0.92rem; margin-top: 0.6rem; max-wi
 .doc-nav .pages a { border: 1px solid var(--rule); }
 .doc-nav li a:hover { background: var(--panel); }
 .doc-nav li a[aria-current] { background: var(--accent-soft); color: var(--accent); font-weight: 600; border-color: transparent; }
+.doc-nav .group { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--quiet); padding: 0.45rem 0.4rem 0; white-space: nowrap; }
 .doc-nav .toc { display: none; }
 .doc-nav h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--quiet); margin: 1.4rem 0.8rem 0.3rem; }
 .doc-nav .contents a { color: var(--quiet); font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.2rem; white-space: normal; }
@@ -106,6 +107,7 @@ figcaption { color: var(--quiet); font-size: 0.92rem; margin-top: 0.6rem; max-wi
   .doc-nav { position: sticky; top: 4.2rem; align-self: start; max-height: calc(100vh - 5rem); overflow-y: auto; padding-bottom: 2rem; }
   .doc-nav .pages { display: block; padding: 0; }
   .doc-nav .pages a { border: 0; }
+  .doc-nav .group { padding: 1.1rem 0.8rem 0.3rem; }
   .doc-nav .toc { display: block; }
 }
 .prose { min-width: 0; max-width: 50rem; padding-bottom: 1rem; }
@@ -127,3 +129,6 @@ td code { white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 @media print { .site-header, .doc-nav, .pager, .actions { display: none; } .fig img { min-width: 0; } }
+blockquote { margin: 1rem 0; padding: 0.2rem 1rem; border-left: 3px solid var(--line); color: var(--quiet); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+p code, li code { overflow-wrap: anywhere; }

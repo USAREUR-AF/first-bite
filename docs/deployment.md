@@ -6,6 +6,11 @@ archive to download for which machine, installing it as a systemd service,
 running it in a container, and building it on a machine with no internet
 access.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/platforms-dark.svg">
+  <img src="img/platforms.svg" width="100%" alt="Where first-bite runs. The standard Linux build needs glibc 2.31 or later and is built and run on x86-64 in Ubuntu 20.04, 22.04, 24.04 and 26.04. The self-contained Linux build is fully static, needs only a Linux kernel 3.2 or later, and is built and run on x86-64. Archives for 64-bit Arm Linux, macOS and Windows are built in CI and not run locally. The container image replays a capture file, measured. The decoder library is compile-checked for iOS, Android, Windows, WebAssembly and 64-bit Arm Linux; no application is built. A build with no internet access uses vendored dependencies.">
+</picture>
+
 ## Platforms
 
 A release has one archive per platform, named
@@ -180,7 +185,7 @@ can read.
 A healthy start logs the dictionary and the source:
 
 ```text
-[mind::dictionary] --- dictionary /etc/first-bite/dictionary: 1 interfaces, 2 messages
+[mind::dictionary] --- dictionary /etc/first-bite/dictionary: 1 interfaces, 3 messages
 [mind] --- reading from interface eth0
 ```
 

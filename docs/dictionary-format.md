@@ -5,6 +5,11 @@ interfaces. It is a directory of JSON files; nothing about a message set is
 compiled into the decoder. `bite check <dir>` validates a dictionary and runs
 its test vectors.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/frame-to-record-dark.svg">
+  <img src="img/frame-to-record.svg" width="100%" alt="The 23 bytes of a weather-station Observation message, 0200174b583700fb2e18bcda9b4236000004030201beef, with the bit range of each of its nine fields marked. A table gives the dictionary entry for each field (start bit, stop bit, type, options) and the value it decodes to: message_type Observation, message_length 23, station_id KX7, temperature -12.34, pressure 101325, wind_direction 271.5, humidity 45.5, sample_serial 16909060, checksum beef.">
+</picture>
+
 Three dictionaries ship in [`dictionaries/`](../dictionaries):
 
 | Dictionary | Shows |

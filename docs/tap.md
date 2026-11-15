@@ -5,6 +5,11 @@ sends on it, and the systems on the tapped link cannot tell it is there: with a
 passive tap there is no electrical path from the monitor ports back to the
 link, and a decoder that stalls or crashes costs the link nothing.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/tap-placement-dark.svg">
+  <img src="img/tap-placement.svg" width="100%" alt="Three ways to give first-bite a copy of a link. A breakout tap has one monitor port per direction, so first-bite uses two capture interfaces and loses nothing at the tap. An aggregating tap merges both directions into one port and loses nothing at the tap. A switch mirror port carries both directions on one port, and the switch drops mirrored frames first when it is busy.">
+</picture>
+
 ## Tap or mirror port
 
 | | Passive or aggregating tap | Switch mirror (SPAN) port |
@@ -72,6 +77,11 @@ line per interface:
 ```text
 capture enp3s0: 1200344 seen by kernel, 0 dropped by kernel, 0 by interface, 0 in queue
 ```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/loss-counters-dark.svg">
+  <img src="img/loss-counters.svg" width="100%" alt="A frame passes from the tap to the network card, the kernel capture buffer, the queue inside mind and the pipeline. mind counts losses at three of them. By interface: the card or driver discarded frames; raise the receive ring. Dropped by kernel: the capture buffer was full; raise --buffer-mb or add a filter. In queue: the pipeline was behind because a sink is blocking; check the subscriber log lines.">
+</picture>
 
 | Counter | Meaning | If it grows |
 |---|---|---|

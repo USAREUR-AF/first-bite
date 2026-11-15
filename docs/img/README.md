@@ -13,11 +13,13 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 | `performance` | the measured figures of [`../performance.md`](../performance.md) |
 | `one-decode-many-consumers` | point-to-point integrations against one tap and publish/subscribe |
 | `beyond-ip` | what is built, designed and not built for IP, CAN and other buses |
-| `platforms` | where it runs, from [`../deployment.md`](../deployment.md) |
+| `record-flow` | publishers, subscribers with topic filters, sinks, and a subpub republishing on its own socket |
+| `loss-counters` | the stages a frame passes through and the three counters that say where one was lost |
+| `platforms` | which archive runs where, from [`../deployment.md`](../deployment.md) |
 
 ## Regenerate and preview
 
-`build.py` writes all sixteen files. It needs Python 3 and nothing else.
+`build.py` writes all twenty files. It needs Python 3 and nothing else.
 
 ```bash
 python3 docs/img/build.py            # write the figures
@@ -57,7 +59,7 @@ Neue, Helvetica and Arial, in thousandths of an em.
 | dashed outline, dashed arrow | data read at start (the dictionary), or something designed and not built |
 | dotted outline on grey | not built |
 | green word | built; or the native path, which is left as it was |
-| amber word | designed, in progress, or a cost |
+| amber word | designed, built but not run, or a cost |
 
 Status is always written as a word as well as drawn. In `frame-to-record`
 alone the four tints identify fields, with a number on each, and carry no

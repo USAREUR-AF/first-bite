@@ -247,20 +247,25 @@
 <!-- 8 -->
 <section class="page">
   <p class="kicker">7. Deployment</p>
-  <h1>One binary beside the link, installed in one command</h1>
-  <p class="lede">A deployment is a tap, a small Linux host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary needs only glibc and libpcap on the host.</p>
-  <figure><img src="../img/platforms.svg" alt="Where first-bite runs: release tarball, container, from source, offline build."></figure>
+  <h1>One archive beside the link, and nothing to install first</h1>
+  <p class="lede">A deployment is a tap, a small host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary carries libpcap and ZeroMQ inside it, so the target needs no package installed.</p>
+  <figure><img src="../img/platforms.svg" alt="Where first-bite runs: the standard and self-contained Linux builds, other platforms, the container, the decoder library and the offline build."></figure>
   <div class="cols c2">
     <div>
       <h2>Install as a service</h2>
 <pre><code>$ sha256sum --check --ignore-missing SHA256SUMS
-$ tar -xzf first-bite-&lt;version&gt;-&lt;target&gt;.tar.gz
+$ tar -xzf first-bite-&lt;version&gt;-&lt;platform&gt;.tar.gz
 $ sudo deployment/install.sh \
     --interface enp3s0 \
     --dictionary /path/to/dictionary</code></pre>
       <p>The installer asks no questions, checks the interface, libpcap and the dictionary before it changes anything, and prints what it installed. Settings live in <code>/etc/first-bite/first-bite.env</code>, where a second capture interface is added to <code>FIRST_BITE_INTERFACE</code>; an upgrade keeps them.</p>
+      <h2>Which Linux archive</h2>
+      <table>
+        <tr><td class="num">linux-gnu</td><td>the default: Ubuntu 20.04 or later, or any distribution with glibc 2.31 or later</td></tr>
+        <tr><td class="num">linux-musl</td><td>fully static, for a machine with no glibc or an older one: Alpine, busybox, a cut-down system</td></tr>
+      </table>
       <h2>Prepare the capture interfaces</h2>
-      <p>A capture interface carries nothing of its own: no address, no ARP, no offloading that merges or splits frames. <code>docs/tap.md</code> has the commands and the netplan stanza that keeps them across reboots.</p>
+      <p>No address, no ARP, no offloading that merges or splits frames: <code>docs/tap.md</code> has the commands.</p>
     </div>
     <div>
       <h2>Know whether frames were lost</h2>
@@ -304,7 +309,7 @@ $ sudo deployment/install.sh \
     <div class="card">
       <h2>The build is checked and traceable</h2>
       <p>Every code change is formatted, linted with warnings as errors, and tested on Linux and macOS. Dependencies pass a licence policy (cargo-deny) and an advisory scan (cargo-audit). Each release carries an SPDX SBOM, checksums and a build provenance attestation.</p>
-      <p>Check: <code>gh attestation verify &lt;tarball&gt;</code>.</p>
+      <p>Check: <code>gh attestation verify &lt;archive&gt;</code>.</p>
     </div>
     <div class="card">
       <h2>It builds without the internet</h2>
@@ -320,13 +325,13 @@ $ sudo deployment/install.sh \
   <div class="card soft gap">
     <h2>Verify a release before you unpack it</h2>
 <pre><code>$ sha256sum --check --ignore-missing SHA256SUMS
-$ gh attestation verify first-bite-&lt;version&gt;-&lt;target&gt;.tar.gz --repo USAREUR-AF/first-bite</code></pre>
+$ gh attestation verify first-bite-&lt;version&gt;-&lt;platform&gt;.tar.gz --repo USAREUR-AF/first-bite</code></pre>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
 
 <!-- 10 -->
-<section class="page">
+<section class="page tight">
   <p class="kicker">9. Status and next steps</p>
   <h1>What is built, and how to try it</h1>
   <div class="cols c2">
@@ -335,15 +340,17 @@ $ gh attestation verify first-bite-&lt;version&gt;-&lt;target&gt;.tar.gz --repo 
       <tr><td>Dictionary-driven decoder; <code>bite check</code>, <code>decode</code>, <code>schema</code></td><td class="st b">built, measured</td></tr>
       <tr><td>Capture on several interfaces, loss counters, clean stop</td><td class="st b">built, measured</td></tr>
       <tr><td>Decoding CAN-style frames</td><td class="st b">built, measured</td></tr>
-      <tr><td>Installer and container image</td><td class="st b">built, measured</td></tr>
+      <tr><td>Standard and self-contained Linux builds on x86-64; installer; container image</td><td class="st b">built, measured</td></tr>
+      <tr><td>Decoder as a WebAssembly module for browsers</td><td class="st b">built</td></tr>
       <tr><td>Sinks: S3, Azure Blob, HTTP, file, Zenoh; Cursor-on-Target</td><td class="st b">built</td></tr>
       <tr><td>VLAN-tagged frames (802.1Q, QinQ)</td><td class="st b">built</td></tr>
       <tr><td>systemd unit (verified; not yet run under systemd)</td><td class="st b">built</td></tr>
     </table>
     <table>
       <tr><th>Not yet</th><th>Status</th></tr>
-      <tr><td>Interactive decoder in the browser; static binary; macOS and Windows builds</td><td class="st d">in progress</td></tr>
-      <tr><td>SocketCAN capture source</td><td class="st d">designed, not built</td></tr>
+      <tr><td>64-bit Arm Linux, macOS and Windows archives</td><td class="st d w">built in CI; not run locally</td></tr>
+      <tr><td>Decoder library for iOS and Android</td><td class="st d">compile-checked</td></tr>
+      <tr><td>SocketCAN capture source</td><td class="st d w">designed, not built</td></tr>
       <tr><td>Typed records and schemas published on the fabric</td><td class="st d">designed, not built</td></tr>
       <tr><td>Which interface, and so which direction, a record came from</td><td class="st n">not built</td></tr>
       <tr><td>Reassembly of fragmented IP datagrams and TCP streams</td><td class="st n">not built</td></tr>
@@ -366,7 +373,7 @@ cargo run -p mind -- \
         <ol>
           <li>Write the dictionary for your interface, with vectors.</li>
           <li>Fit a tap; prepare two capture interfaces.</li>
-          <li>Install the tarball; watch the loss counters.</li>
+          <li>Install the archive; watch the loss counters.</li>
           <li>Point a sink at where the data is needed.</li>
         </ol>
       </div>

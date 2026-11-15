@@ -625,36 +625,114 @@ def beyond_ip():
 # 8. platforms
 # ---------------------------------------------------------------------------
 def platforms():
-    f = Fig("platforms", "One binary, installed from a tarball or run in a container",
-            "Where first-bite runs. Built: release tarballs for x86-64 and arm64 Linux with glibc 2.35 or "
-            "later, holding an installer, a systemd unit and the mind and bite binaries; a container image "
-            "that runs as a non-root user; a build from source on Linux and macOS, both tested in CI; and a "
-            "build with no internet access from vendored dependencies. In progress: a fully static Linux "
-            "binary and release builds for macOS and Windows.", 311)
+    f = Fig("platforms", "One archive per platform, and nothing to install on the target",
+            "Where first-bite runs. The standard Linux build needs glibc 2.31 or later and is built and run on "
+            "x86-64 in Ubuntu 20.04, 22.04, 24.04 and 26.04. The self-contained Linux build is fully static, "
+            "needs only a Linux kernel 3.2 or later, and is built and run on x86-64. Archives for 64-bit Arm "
+            "Linux, macOS and Windows are built in CI and not run locally. The container image replays a "
+            "capture file, measured. The decoder library is compile-checked for iOS, Android, Windows, "
+            "WebAssembly and 64-bit Arm Linux; no application is built. A build with no internet access "
+            "uses vendored dependencies.", 364)
     cards = [
-        (24, 60, 228, "bx", "Release tarball", "g", "built",
-         ["x86-64 and arm64 Linux", "glibc 2.35 or later, systemd", "installer, unit, mind, bite"]),
-        (266, 60, 228, "bx", "Container image", "g", "built",
-         ["mind as the entry point", "runs as a non-root user", "live capture: host network"]),
-        (508, 60, 228, "bx", "From source", "g", "built",
-         ["Linux and macOS", "tests run in CI on both", "Rust, CMake, libpcap headers"]),
-        (24, 192, 349, "bx", "No internet access", "g", "built",
-         ["make vendor copies every dependency", "cargo build --offline on the offline machine", ""]),
-        (387, 192, 349, "bxd", "More platforms", "w", "in progress",
-         ["a fully static Linux binary", "release builds for macOS and Windows", ""]),
+        ("Standard Linux", "bx", "g", "built and run",
+         ["Ubuntu 20.04 to 26.04, x86-64", "glibc 2.31 or later", "nothing to install"]),
+        ("Self-contained Linux", "bx", "g", "built and run",
+         ["fully static (musl), x86-64", "Linux kernel 3.2 or later", "Alpine, busybox, scratch"]),
+        ("Arm, macOS, Windows", "bxd", "w", "built in CI; not run locally",
+         ["64-bit Arm Linux, both builds", "macOS: Apple silicon and Intel", "Windows: the bite tool only"]),
+        ("Container image", "bx", "g", "measured",
+         ["mind as the entry point", "runs as a non-root user", "replays a capture file"]),
+        ("Decoder library", "bxd", "w", "compile-checked",
+         ["iOS, Android, WebAssembly", "Windows, 64-bit Arm Linux", "no application built"]),
+        ("No internet access", "bx", "g", "built",
+         ["make vendor, copy the tree", "cargo build --offline", "on the offline machine"]),
     ]
-    for x, y, w, cls, head, scls, status, lines in cards:
-        f.rect(x, y, w, 114 if lines[2] else 95, cls, 8)
-        f.text(x + 16, y + 30, head, 15, True, "t")
-        f.text(x + w - 16, y + 30, status, 13, True, scls, "end")
+    for k, (head, cls, scls, status, lines) in enumerate(cards):
+        x, y, w, h = 24 + (k % 3) * 242, 60 + (k // 3) * 146, 228, 132
+        f.rect(x, y, w, h, cls, 8)
+        f.text(x + 16, y + 30, head, 15, True, "t", maxw=w - 32)
         f.line([(x + 16, y + 42), (x + w - 16, y + 42)], "lnr")
         for j, ln in enumerate(lines):
-            if ln:
-                f.text(x + 16, y + 64 + j * 19, ln, 13, False, "q" if j else "t", maxw=w - 32)
+            f.text(x + 16, y + 63 + j * 18, ln, 13, False, "q" if j else "t", maxw=w - 32)
+        f.text(x + 16, y + 119, status, 13, True, scls, maxw=w - 32)
     return f
 
 
-FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms]
+# ---------------------------------------------------------------------------
+# 9. record-flow
+# ---------------------------------------------------------------------------
+def record_flow():
+    f = Fig("record-flow", "A record is published once; each reader takes the topics it filters for",
+            "mind hands each record to the publishers, a ZeroMQ PUB socket on tcp://127.0.0.1:12000 by "
+            "default. A subscriber reads the socket, keeps the records on its topics and forwards each to "
+            "one sink: object storage, HTTP, a local file or Zenoh. A subpub reads the socket the same way, "
+            "transforms each record into Cursor-on-Target and publishes the result on a socket of its own, "
+            "tcp://127.0.0.1:12001 by default. Any other ZeroMQ SUB socket can read either socket.", 392)
+    rows = [60, 152, 244]
+    f.box(24, 152, 90, 72, [("mind", 15, True, "a"), ("a record", 13, False, "q"), ("per packet", 13, False, "q")], "bxa", pad=6)
+    f.box(150, 152, 160, 72, [("Publishers", 14, True, "t"), ("ZeroMQ PUB socket", 13, False, "q"),
+                              ("tcp://127.0.0.1:12000", 13, False, "q")], pad=6)
+    f.line([(114, 188), (150, 188)], "lna", head="fa")
+    f.line([(310, 188), (330, 188)], "lna", nohead=True)
+    f.line([(330, rows[0] + 36), (330, rows[2] + 36)], "lna", nohead=True)
+    for y in rows:
+        f.line([(330, y + 36), (350, y + 36)], "lna", head="fa")
+    f.box(350, rows[0], 170, 72, [("Subscriber", 14, True, "t"), ("keeps its topics, such as", 13, False, "q"),
+                                  ("WX/Observation", 13, False, "t", True)], pad=6)
+    f.box(556, rows[0], 180, 72, [("Sink", 14, True, "t"), ("object storage, HTTP,", 13, False, "q"),
+                                  ("local file, Zenoh", 13, False, "q")], pad=6)
+    f.line([(520, rows[0] + 36), (556, rows[0] + 36)], "lna", head="fa")
+    f.box(350, rows[1], 170, 72, [("Subpub", 14, True, "t"), ("keeps its topics, such as", 13, False, "q"),
+                                  ("WX/Position", 13, False, "t", True)], pad=6)
+    f.box(556, rows[1], 180, 72, [("Transform", 14, True, "t"), ("record to", 13, False, "q"),
+                                  ("Cursor-on-Target", 13, False, "q")], pad=6)
+    f.line([(520, rows[1] + 36), (556, rows[1] + 36)], "lna", head="fa")
+    f.line([(646, rows[1] + 72), (646, rows[2])], "lna", head="fa")
+    f.box(556, rows[2], 180, 72, [("Its own socket", 14, True, "t"), ("ZeroMQ PUB socket", 13, False, "q"),
+                                  ("tcp://127.0.0.1:12001", 13, False, "q")], pad=6)
+    f.box(350, rows[2], 170, 72, [("Your subscriber", 14, True, "t"), ("any ZeroMQ SUB socket", 13, False, "q"),
+                                  ("on either PUB socket", 13, False, "q")], "bxd", pad=6)
+    f.text(24, 348, "A message on a socket is <topic>|<record JSON>, and the topic is interface/message.",
+           13, False, "q", role="note")
+    f.text(24, 368, "A filter matches a topic exactly; * keeps everything. A subpub publishes on the input topic plus a suffix.",
+           13, False, "q", role="note")
+    return f
+
+
+# ---------------------------------------------------------------------------
+# 10. loss-counters
+# ---------------------------------------------------------------------------
+def loss_counters():
+    f = Fig("loss-counters", "Three counters say where a frame was lost",
+            "A frame passes from the tap to the network card, the kernel capture buffer, the queue inside mind "
+            "and the pipeline. mind counts losses at three of them. By interface: the card or driver discarded "
+            "frames; raise the receive ring. Dropped by kernel: the capture buffer was full; raise --buffer-mb "
+            "or add a filter. In queue: the pipeline was behind because a sink is blocking; check the "
+            "subscriber log lines.", 290)
+    stages = [("Tap", "monitor port"), ("Network card", "receive ring"), ("Kernel buffer", "32 MiB by default"),
+              ("Queue in mind", "65,536 frames"), ("Pipeline", "decode, publish")]
+    for k, (head, sub) in enumerate(stages):
+        x = 20 + k * 148
+        f.box(x, 64, 128, 56, [(head, 14, True, "t"), (sub, 13, False, "q")], "bxa" if k >= 3 else "bx", pad=6)
+        if k:
+            f.line([(x - 20, 92), (x, 92)], "lna", head="fa")
+    cards = [(24, 232, "by interface", "card or driver dropped frames", "raise the receive ring"),
+             (266, 380, "dropped by kernel", "the capture buffer was full", "raise --buffer-mb, add a filter"),
+             (508, 528, "in queue", "pipeline behind: a sink blocks", "check the subscriber log lines")]
+    for x, src, name, why, do in cards:
+        cx = x + 114
+        f.line([(src, 120), (src, 140), (cx, 140), (cx, 160)] if src != cx else [(src, 120), (src, 160)], "lnd", nohead=True)
+        f.rect(x, 160, 228, 82, "bxw", 8)
+        f.text(x + 16, 186, name, 14, True, "w", maxw=196)
+        f.text(x + 16, 208, why, 13, False, "t", maxw=196)
+        f.text(x + 16, 228, do, 13, False, "q", maxw=196)
+    f.text(24, 270, "mind logs the three counts for each interface every --stats-interval seconds (default 60) and at shutdown.",
+           13, False, "q", role="note")
+    return f
+
+
+FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
+           record_flow, loss_counters]
 
 
 def main():
