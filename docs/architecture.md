@@ -143,7 +143,7 @@ one JSON serialisation.
 | What | Where | Rebuild |
 |---|---|---|
 | Illustrations, light and dark | [`docs/img/`](img) | `make figures` |
-| Ten-page brief (PDF, A4) | [`docs/brief/first-bite-brief.pdf`](brief/first-bite-brief.pdf), from `docs/brief/brief.html` | `make brief` |
+| Technical brief (PDF, A4, eleven pages) | [`docs/brief/first-bite-brief.pdf`](brief/first-bite-brief.pdf), from `docs/brief/brief.html` | `make brief` |
 | Documentation site | [`site/`](../site), built into `site/_build` and published by `.github/workflows/pages.yml` | `make site` |
 
 The figures, the site and the brief share one palette and one set of numbers:

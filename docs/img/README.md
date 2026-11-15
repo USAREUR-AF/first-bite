@@ -18,6 +18,7 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 | `ways-onto-the-fabric` | a native Zenoh publisher, Open Billie, octo-pod and first-bite as four ways onto one fabric, from [`../related-projects.md`](../related-projects.md) |
 | `on-a-goat-fabric` | first-bite as a publisher on a goat data fabric, what each is responsible for, and the same decoder without goat |
 | `icd-to-dictionary` | an interface document transcribed into a dictionary, and the four things that run from it |
+| `locked-to-open`, `where-it-fits` | large-type figures for the opening page of the brief: a private link becoming named values, and old systems reaching the goat data fabric through first-bite |
 | `platforms` | which archive runs where, from [`../deployment.md`](../deployment.md) |
 | `icd-pipeline` | the nine steps from an interface document to a versioned dictionary, each with the `bite` command that does or checks it |
 | `bit-numbering` | one 16-bit word under LSB-0 and MSB-0 numbering, with "word 3, bits 12-5" mapped to `[35, 43)` |

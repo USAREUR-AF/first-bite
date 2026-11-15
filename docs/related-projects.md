@@ -241,14 +241,18 @@ decodes today with `bite decode <dictionary> --port <port> <hex>`.
 
 ## A dictionary as the decoder of a kid
 
-Status: designed, not built.
+Status: built as an example kid and measured in containers; not part of the
+Open Billie repository, and not measured on a provisioned node.
 
 A kid may be written in Rust and must supply a decoder
 (`schemas/kid-manifest.schema.json`, `decoderImplementations`). The
 [`bite`](../bite) library is a decoder with no network code: given a
 dictionary and a payload it returns the typed fields. A kid whose decoder is
-`bite` with a dictionary would need only the mapping from field names to
-Canonical Track v2, and one dictionary would then serve the tap and the kid.
+`bite` with a dictionary needs only the mapping from field names to
+Canonical Track v2, and one dictionary then serves the tap and the kid. The
+example kid decodes the `weather-station` dictionary this way: its Rust source
+holds no field layout, and with Open Billie's translator and Zenoh router in
+containers a subscriber received the Cursor-on-Target and SAPIENT tracks.
 
 Open Billie's own description of a message layout is a byte-offset JSON schema
 (`kids/examples/oetf/packages/oetf/shared/schemas/_meta.schema.json`), which
@@ -271,7 +275,7 @@ first-bite dictionary describe the same thing:
 | first-bite beside Open Billie or octo-pod without contending for the sensor or for keys | designed; follows from each one's code, not measured together |
 | complete CoT 2.0 events from first-bite (`form: event`) | built |
 | first-bite records to the fabric through an Open Billie node's local router | designed, not measured |
-| a kid that decodes with `bite` and a dictionary | designed, not built |
+| a kid that decodes with `bite` and a dictionary | built; measured in containers; not measured on a provisioned node |
 | first-bite publishing into an octo-pod as a peer, under the pod's certificate, release gate and audit | designed, not measured |
 | a first-bite source that decodes payloads captured by an octo-pod | designed, not built |
 | conversion between a dictionary and a byte-offset schema | not built |

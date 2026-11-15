@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-labelledby="locked-to-open-title locked-to-open-desc" aria-label="A copy of a private link becomes values anyone can use">
+<title id="locked-to-open-title">A copy of a private link becomes values anyone can use</title>
+<desc id="locked-to-open-desc">Today two machines exchange bytes in a private format and nobody else can read them. With first-bite the same two machines carry on unchanged; a one-way copy of their traffic goes to first-bite, which listens and never sends, and turns each message into named values such as station KX7, temperature -12.34 and pressure 101325, for any software to read.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="329" rx="12"/>
+<text x="24" y="36" font-size="22" font-weight="700" data-role="note" class="t">Today: only two machines can read the data</text>
+<rect x="24" y="50" width="140" height="52" rx="8" class="bx"/>
+<text x="94" y="82" font-size="20" font-weight="700" text-anchor="middle" class="t">Machine A</text>
+<rect x="284" y="50" width="140" height="52" rx="8" class="bx"/>
+<text x="354" y="82" font-size="20" font-weight="700" text-anchor="middle" class="t">Machine B</text>
+<path d="M164 76L284 76" class="lnk" data-lint="nohead"/>
+<text x="450" y="72" font-size="20" class="q m">02 00 17 4b 58 37 00 fb</text>
+<text x="450" y="98" font-size="20" class="w">private bytes, unreadable</text>
+<path d="M24 120L736 120" class="lnr" data-lint="nohead"/>
+<text x="24" y="154" font-size="22" font-weight="700" data-role="note" class="a">With first-bite: a copy becomes values anyone can use</text>
+<rect x="24" y="170" width="140" height="52" rx="8" class="bx"/>
+<text x="94" y="202" font-size="20" font-weight="700" text-anchor="middle" class="t">Machine A</text>
+<rect x="284" y="170" width="140" height="52" rx="8" class="bx"/>
+<text x="354" y="202" font-size="20" font-weight="700" text-anchor="middle" class="t">Machine B</text>
+<path d="M164 196L284 196" class="lnk" data-lint="nohead"/>
+<circle cx="224" cy="196" r="7" class="fa"/>
+<path d="M224 196L224 243" class="lna"/><path d="M224 252L219 242L229 242z" class="fa"/>
+<text x="238" y="244" font-size="20" class="q">one-way copy</text>
+<rect x="84" y="252" width="280" height="62" rx="8" class="bxa"/>
+<text x="224" y="277.7" font-size="24" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="224" y="303.5" font-size="20" text-anchor="middle" class="q">listens, never sends</text>
+<path d="M364 284L441 284" class="lna"/><path d="M450 284L440 289L440 279z" class="fa"/>
+<rect x="450" y="170" width="286" height="144" rx="8" class="bx"/>
+<text x="468" y="198" font-size="20" font-weight="700" class="t">Named values</text>
+<text x="468" y="224" font-size="20" class="t m">station KX7</text>
+<text x="468" y="248" font-size="20" class="t m">temperature -12.34</text>
+<text x="468" y="272" font-size="20" class="t m">pressure 101325</text>
+<text x="468" y="302" font-size="20" class="g">for any software to read</text>
+</svg>

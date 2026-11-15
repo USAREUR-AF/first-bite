@@ -43,7 +43,7 @@ second uses about 0.3% of it.
 
 [Interactive decoder](https://usareur-af.github.io/first-bite/decoder/) ·
 [Documentation](https://usareur-af.github.io/first-bite/) ·
-[Ten-page brief (PDF)](docs/brief/first-bite-brief.pdf) ·
+[Technical brief (PDF)](docs/brief/first-bite-brief.pdf) ·
 [Roadmap](ROADMAP.md) ·
 [Project board](https://github.com/orgs/USAREUR-AF/projects/12)
 
