@@ -9,7 +9,7 @@
     },
     "port": 22200,
     "message_type": {
-        "start": 64,
+        "start": 72,
         "stop": 80,
         "values": {
             "0": "None",
@@ -18,6 +18,6 @@
     },
     "message_length": {
         "start": 0,
-        "stop": 24
+        "stop": 16
     }
 }
