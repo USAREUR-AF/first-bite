@@ -82,9 +82,10 @@ verified commits: 0 points, because tier 1 is not met.
 [rulesets/](rulesets/) holds three bodies for a repository ruleset on `main`,
 and one for release tags. All three forbid deletion and force pushes, require
 a pull request, a linear history, squash merging, resolved review threads and
-these status checks on an up-to-date branch: `scripts`, `fmt`, `clippy`,
-`test (ubuntu-latest)`, `test (macos-latest)`, `decoder-targets`, `leak-gate`,
-`contributor-trust`.
+these status checks on an up-to-date branch: `ci`, `leak-gate` and
+`contributor-trust`. `ci` is the last job of `ci.yml`: it always runs and fails
+if any other job of that workflow failed, so a change that touches no code,
+whose Rust jobs are skipped, is not left waiting for checks that never report.
 None has a bypass list. They differ in the review they require:
 
 | File | Approving reviews | Score | What it costs |

@@ -41,28 +41,7 @@
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
-            "context": "scripts",
-            "integration_id": 15368
-          },
-          {
-            "context": "fmt",
-            "integration_id": 15368
-          },
-          {
-            "context": "clippy",
-            "integration_id": 15368
-          },
-          {
-            "context": "test (ubuntu-latest)",
-            "integration_id": 15368
-          },
-          {
-            "context": "test (macos-latest)",
-            "integration_id": 15368
-          },
-          {
-            "context": "decoder-targets",
-            "integration_id": 15368
+            "context": "ci"
           },
           {
             "context": "leak-gate",

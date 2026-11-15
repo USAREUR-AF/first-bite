@@ -186,3 +186,24 @@ jobs:
       - name: Rust 1.85.1
         run: rustup toolchain install 1.85.1 --no-self-update --profile minimal
       - run: cargo +1.85.1 check -p bite --lib --no-default-features --locked
+
+  # The one check the branch ruleset requires from this workflow. The jobs
+  # above are skipped when a change touches no code, and a skipped matrix job
+  # never reports the names a ruleset would list, so a documentation change
+  # would wait for ever. This job always runs and fails if any job it needs
+  # failed or was cancelled; a skipped job counts as passed.
+  ci:
+    name: ci
+    if: always()
+    needs: [changes, scripts, fmt, clippy, test, decoder-targets, decoder-msrv]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: every job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "*|*" cancelled "*) exit 1 ;;
+          esac

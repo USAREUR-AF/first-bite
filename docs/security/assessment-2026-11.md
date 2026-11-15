@@ -148,9 +148,9 @@ Secret Protection on the organisation's plan; on a public one they are free.
 ```
 
 `leak-gate` and `scripts` run on every pull request. The Rust jobs of
-`ci.yml` are skipped for documentation-only changes and report success when
-skipped, so `fmt`, `clippy`, `test (ubuntu-latest)` and `test (macos-latest)`
-can be added to the list as well. `goatcore` requires zero approving reviews;
+`ci.yml` are skipped for documentation-only changes, and a skipped matrix job
+does not report the per-platform names, so the ruleset requires the `ci` job
+of that workflow instead: it always runs and fails if any other job failed. `goatcore` requires zero approving reviews;
 `CONTRIBUTING.md` here says one from a code owner, which is
 `"required_approving_review_count": 1` with `"require_code_owner_review": true`.
 

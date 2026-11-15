@@ -10,6 +10,15 @@ on:
       - '**/Cargo.toml'
       - '.cargo/audit.toml'
       - '.github/workflows/rust-audit.yml'
+  # On main as well, so the badge in the README has a result for the branch.
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.lock'
+      - 'fuzz/Cargo.lock'
+      - '**/Cargo.toml'
+      - '.cargo/audit.toml'
+      - '.github/workflows/rust-audit.yml'
   schedule:
     - cron: '0 3 * * 0'
   workflow_dispatch:
