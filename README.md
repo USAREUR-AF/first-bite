@@ -325,6 +325,16 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |
 | [`mocks/`](mocks) | local stand-ins for the sinks |
 
+## Acknowledgements
+
+Scarlett Swerdlow transcribed the first dictionaries this decoder read, field
+by field from their interface documents, and built the first services that
+consumed its records: one that delivered Cursor-on-Target to TAK servers and
+one that kept the latest status of every source on a board. The dictionary
+format, the Cursor-on-Target output and the
+[hello-galaxy-record-consumers](https://github.com/USAREUR-AF/hello-galaxy-record-consumers)
+example all descend from that work.
+
 ## Contributing
 
 first-bite is part of [goat](https://github.com/USAREUR-AF/goatcore) and
