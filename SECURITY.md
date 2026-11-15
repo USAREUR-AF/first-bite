@@ -1,6 +1,6 @@
 # Security policy
 
-first-bite reads raw network traffic and runs with capture privileges. Security reports are prioritised over feature work.
+first-bite, part of [goat](https://github.com/USAREUR-AF/goatcore), reads raw network traffic and runs with capture privileges. Security reports are prioritised over feature work.
 
 ## Reporting a vulnerability
 
@@ -10,7 +10,9 @@ first-bite reads raw network traffic and runs with capture privileges. Security 
 
 You can also open the reporting form from this repository's *Security* tab by selecting *Report a vulnerability*.
 
-Reports are private until a maintainer publishes the advisory. Include: a description of the issue and its impact; reproduction steps or a proof of concept (a capture file or a payload in hex is ideal); the affected versions or commits; whether you have shared it elsewhere.
+Reports are private and accessible to repository administrators, organization owners, security managers, the reporter, and collaborators explicitly added to the advisory. Being listed in `CODEOWNERS` does not itself grant access. Reports remain private until an authorized maintainer publishes the advisory. See [GitHub's advisory permissions](https://docs.github.com/en/code-security/reference/permissions/repository-security-advisory) for details.
+
+Include: a description of the issue and its impact; reproduction steps or a proof of concept (a synthetic capture file or a payload in hex is ideal); the affected versions or commits; whether you have shared it elsewhere.
 
 ## What to expect
 
@@ -27,11 +29,16 @@ In scope: the code in this repository and the release artifacts built from it, i
 
 A dictionary describes a message set. Do not attach a dictionary or a capture that you are not permitted to share.
 
+## Supported versions
+
+Pre-1.0, the latest tagged release is supported. Fixes land on `main` and are released by tag.
+
 ## How this repository is watched
 
 | Control | Where | Runs | What it catches |
 |---|---|---|---|
 | leak gate | `.github/workflows/leak-gate.yml` running `tools/check-public-tree.sh` | every pull request, forks included, and every push to `main` | private keys, cloud access key ids and tokens; capture files outside `examples/`; SSH public keys, age recipients, MAC addresses, private and CGNAT IPv4 addresses, e-mail addresses outside `example.org`, assistant session links and attribution trailers; names on the maintainers' list (a repository secret). It prints the file, line and class, never the match |
+| contributor trust | `.github/workflows/contributor-trust.yml`, running the check kept in `goatcore` | every pull request | a change from an author outside the maintainers that no owner has reviewed for security: from an unknown author, or touching a path in `.github/contributor-trust/sensitive-paths.txt`. An owner records the review with the label `security-reviewed`; a new push removes it |
 | leak check self-test | `tools/check-public-tree.test.sh`, `scripts` job of `ci.yml` | every pull request and push to `main` | a leak check that has stopped catching one of its classes |
 | pre-commit hook | `tools/git-hooks/pre-commit`, installed with `make hooks` | each commit, on the contributor's machine | the same shapes as the leak gate, in the staged files, before they enter history |
 | pin check | `tools/check-pins.py`, `scripts` job of `ci.yml` | every pull request and push to `main` | a GitHub Action not pinned to a full commit SHA; a container image in a workflow, `Dockerfile`, compose file or the `Makefile` without a digest; a pinned image no Dependabot entry updates |
@@ -43,13 +50,11 @@ A dictionary describes a message set. Do not attach a dictionary or a capture th
 | tests of hostile input | `bite/tests/robustness.rs`, `bite/tests/hostile_dictionary.rs`, `test` job of `ci.yml` | pull requests that change code | a decoder or dictionary loader that panics on a malformed payload or dictionary, or exceeds a limit of `bite/src/limits.rs` |
 | fuzzing | `fuzz/` (three libFuzzer targets), `.github/workflows/cflite_pr.yml` and `cflite_batch.yml` (ClusterFuzzLite) | pull requests that change code, for 5 minutes; every night and pushes to `main` that change code, for 30 minutes | a panic, an arithmetic overflow, a memory error, a hang or runaway memory use in the decoder, the dictionary loader or the frame pipeline, on an input no test thought of |
 | release provenance | `publish` job of `.github/workflows/release.yml` | every release | a release asset that was not built by this repository's release workflow: each asset's digest is in a signed SLSA provenance statement, published as a GitHub artifact attestation and as the release asset `first-bite-<version>.intoto.jsonl`. Check one with `gh attestation verify <file> --repo USAREUR-AF/first-bite` |
+| image provenance | `image-publish` job of `.github/workflows/release.yml` | every release | a container image that was not built by this repository's release workflow: the digest of `ghcr.io/usareur-af/first-bite:<version>` is the subject of a signed SLSA provenance statement and of a signed SBOM attestation, stored in the registry beside the image and as GitHub artifact attestations. Check with `gh attestation verify oci://ghcr.io/usareur-af/first-bite:<version> --repo USAREUR-AF/first-bite` |
 | script lint | `shellcheck` and `yamllint` in the `scripts` job of `ci.yml` | every pull request and push to `main` | mistakes in shell scripts and workflow files |
 
 CodeQL and Scorecard run only while the repository is public; both workflows
-skip on a private repository, and a release made then has no provenance. [docs/security/threat-model.md](docs/security/threat-model.md)
+skip on a private repository, and a release or image made then has no
+provenance. [docs/security/threat-model.md](docs/security/threat-model.md)
 states what the design protects and what it does not;
 [docs/security/](docs/security/) holds the assessments.
-
-## Supported versions
-
-Pre-1.0, the latest tagged release is supported. Fixes land on `main` and are released by tag.

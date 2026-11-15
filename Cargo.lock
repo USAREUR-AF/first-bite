@@ -296,7 +296,7 @@ dependencies = [
  "lru",
  "percent-encoding",
  "regex-lite",
- "sha2 0.11.1",
+ "sha2",
  "tracing",
  "url",
 ]
@@ -318,7 +318,7 @@ dependencies = [
  "hmac 0.13.0",
  "http",
  "percent-encoding",
- "sha2 0.11.1",
+ "sha2",
  "time",
  "tracing",
 ]
@@ -351,7 +351,7 @@ dependencies = [
  "md-5",
  "pin-project-lite",
  "sha1",
- "sha2 0.11.1",
+ "sha2",
  "tracing",
 ]
 
@@ -1267,7 +1267,7 @@ dependencies = [
  "chrono",
  "cotify",
  "hex",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "log",
  "reqwest",
  "rustls-pki-types",
@@ -1275,7 +1275,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_norway",
- "sha2 0.10.9",
+ "sha2",
  "thiserror",
  "tokio",
  "x509-parser",
@@ -3230,17 +3230,6 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.3.1",
  "digest 0.11.3",
-]
-
-[[package]]
-name = "sha2"
-version = "0.10.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
-dependencies = [
- "cfg-if",
- "cpufeatures 0.2.17",
- "digest 0.10.7",
 ]
 
 [[package]]

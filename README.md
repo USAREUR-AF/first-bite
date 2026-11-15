@@ -7,13 +7,13 @@
 
 [![CI](https://github.com/USAREUR-AF/first-bite/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/USAREUR-AF/first-bite/badge)](https://scorecard.dev/viewer/?uri=github.com/USAREUR-AF/first-bite)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16721/badge)](https://www.bestpractices.dev/projects/16721)
 [![fuzzing](https://github.com/USAREUR-AF/first-bite/actions/workflows/cflite_batch.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/cflite_batch.yml)
 [![cargo-audit](https://github.com/USAREUR-AF/first-bite/actions/workflows/rust-audit.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/rust-audit.yml)
 [![cargo-deny](https://github.com/USAREUR-AF/first-bite/actions/workflows/cargo-deny.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/cargo-deny.yml)
 [![licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![docs](https://img.shields.io/badge/docs-usareur--af.github.io-blue.svg)](https://usareur-af.github.io/first-bite/)
-<!-- To add when each exists (docs/security/best-practices-answers.md, docs/security/scorecard.md):
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/<id>/badge)](https://www.bestpractices.dev/projects/<id>)
+<!-- To add when the first release exists (docs/security/scorecard.md):
 [![release](https://img.shields.io/github/v/release/USAREUR-AF/first-bite?sort=semver)](https://github.com/USAREUR-AF/first-bite/releases/latest)
 -->
 
@@ -173,6 +173,16 @@ installer, the layout of each archive and how they are built.
 | macOS | `aarch64-apple-darwin`, `x86_64-apple-darwin` | built in CI; not run locally |
 | Windows | `x86_64-pc-windows-msvc`: `bite.exe` only | built in CI; not run locally |
 | iOS, iPadOS, Android, a browser | none: the `bite` library compiles for them | compile-checked; no application built |
+| a container host, x86-64 or 64-bit Arm | the image `ghcr.io/usareur-af/first-bite:<version>` | x86-64 built and run on the build host; Arm, and publishing, built in CI, not run |
+
+```bash
+docker pull ghcr.io/usareur-af/first-bite:<version>
+gh attestation verify oci://ghcr.io/usareur-af/first-bite:<version> --repo USAREUR-AF/first-bite
+```
+
+The second command checks the image's signed build provenance.
+[docs/deployment.md](docs/deployment.md#container) has the image's tags and
+how to run it.
 
 iOS, iPadOS and Android do not allow an app to capture from a network
 interface without root or a VPN entitlement, so on those platforms the decoder
@@ -301,8 +311,11 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 
 ## Contributing
 
-[CONTRIBUTING.md](CONTRIBUTING.md) is the whole process. Report
-vulnerabilities through [SECURITY.md](SECURITY.md), not an issue.
+first-bite is part of [goat](https://github.com/USAREUR-AF/goatcore) and
+follows its contribution process. [CONTRIBUTING.md](CONTRIBUTING.md) is the
+whole process and [GOVERNANCE.md](GOVERNANCE.md) says who decides. Report
+vulnerabilities through [SECURITY.md](SECURITY.md), not an issue. Questions go
+to [goat's Discussions](https://github.com/USAREUR-AF/goatcore/discussions).
 
 ## Licence
 

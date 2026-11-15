@@ -3,6 +3,9 @@
 #
 #   docker build -t first-bite .
 #
+# `make image` does the same and records the version and the commit in the
+# image's labels; the release workflow publishes that image to ghcr.io.
+#
 # Base images are pinned by tag and digest; change both together. The builder
 # and the runtime are the same Debian release so the binaries find the glibc
 # and libpcap they were linked against.
@@ -16,6 +19,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . .
+# Unset, cargo uses every processor.
+ARG CARGO_BUILD_JOBS
 RUN cargo build --release --locked -p mind -p bite
 
 FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
@@ -37,3 +42,14 @@ WORKDIR /var/lib/first-bite
 # ZeroMQ PUB socket of the default publisher; UDP socket of --mock.
 EXPOSE 12000/tcp 12345/udp
 ENTRYPOINT ["mind"]
+# With no arguments the container prints the options and exits.
+CMD ["--help"]
+# Last, so that a new version or commit rebuilds nothing above.
+ARG VERSION=0.0.0-local
+ARG REVISION=unknown
+LABEL org.opencontainers.image.title="first-bite" \
+      org.opencontainers.image.description="Reads frames from a network interface or a capture file, decodes fixed-layout binary messages against a dictionary, and publishes each as a JSON record" \
+      org.opencontainers.image.source="https://github.com/USAREUR-AF/first-bite" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="$VERSION" \
+      org.opencontainers.image.revision="$REVISION"

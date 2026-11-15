@@ -20,7 +20,15 @@ import sys
 from html import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-METRICS = json.load(open(os.path.join(HERE, "font-metrics.json"), encoding="utf-8"))
+
+
+def read_text(path):
+    """The text of the file at `path`."""
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+METRICS = json.loads(read_text(os.path.join(HERE, "font-metrics.json")))
 W = 760
 FONT = '"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif'
 MONO = 'Menlo, Consolas, "Liberation Mono", "Courier New", monospace'
@@ -313,8 +321,8 @@ PAYLOAD = "0200174b583700fb2e18bcda9b4236000004030201beef"
 
 def load_observation():
     path = os.path.join(HERE, "..", "..", "dictionaries", "weather-station", "WX")
-    msg = json.load(open(os.path.join(path, "messages", "Observation.json"), encoding="utf-8"))
-    meta = json.load(open(os.path.join(path, "metadata.json"), encoding="utf-8"))
+    msg = json.loads(read_text(os.path.join(path, "messages", "Observation.json")))
+    meta = json.loads(read_text(os.path.join(path, "metadata.json")))
     return msg["fields"], meta
 
 
@@ -1064,7 +1072,7 @@ def main():
             path = os.path.join(HERE, f"{fig.name}{suffix}.svg")
             svg = fig.render(theme)
             if check:
-                if not os.path.exists(path) or open(path, encoding="utf-8").read() != svg:
+                if not os.path.exists(path) or read_text(path) != svg:
                     stale.append(os.path.basename(path))
             else:
                 with open(path, "w", encoding="utf-8") as out:

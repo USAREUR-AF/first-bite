@@ -6,8 +6,9 @@
 #   tools/package-release.sh x86_64-linux-gnu target/ubuntu-20.04/release
 #
 # Writes dist/first-bite-<version>-<platform>.tar.gz (.zip for a Windows
-# platform) and prints its path. <version> is the version of the mind crate;
-# under GitHub Actions on a tag, the tag must be v<version>.
+# platform) and prints its path. <version> is what tools/release-version.sh
+# prints: the version of the mind crate, or under GitHub Actions on a tag, the
+# tag without its `v`.
 #
 #   *-linux-*   deployment/ with install.sh, the systemd unit, mind, bite and
 #               example configuration in config/; dictionaries/
@@ -26,15 +27,7 @@ bin_dir="$(cd "$2" && pwd)"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-version="$(sed -n 's/^version = "\(.*\)"$/\1/p' mind/Cargo.toml | head -n 1)"
-[ -n "$version" ] || {
-  echo "package-release: no version in mind/Cargo.toml" >&2
-  exit 1
-}
-if [ "${GITHUB_REF_TYPE:-}" = tag ] && [ "v$version" != "${GITHUB_REF_NAME:-}" ]; then
-  echo "::error::mind/Cargo.toml says $version and the tag is $GITHUB_REF_NAME: set the version before tagging"
-  exit 1
-fi
+version="$(tools/release-version.sh)"
 
 name="first-bite-$version-$platform"
 stage="dist/$name"

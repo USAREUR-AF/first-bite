@@ -7,5 +7,9 @@ ignore = [
     # optional `zenoh` feature is built. zenoh is pinned to =1.9.0 to match the
     # goat fabric; this ignore goes when that pin moves to a zenoh release that
     # depends on lz4_flex >= 0.11.6.
+    # The one call that decompresses (zenoh-transport src/common/batch.rs) is
+    # compiled only with zenoh's `transport_compression` feature, which this
+    # workspace does not enable. zenoh-transport requires lz4_flex ^0.10.0
+    # through 1.10.2, so no lockfile update reaches the fixed 0.11.6.
     "RUSTSEC-2026-0041",
 ]

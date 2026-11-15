@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         For general questions about how to use the project, please use
-        [Discussions](https://github.com/USAREUR-AF/first-bite/discussions). Use this template
+        [goat's Discussions](https://github.com/USAREUR-AF/goatcore/discussions). Use this template
         specifically when you can point at a doc that is missing, wrong, or hard to find.
   - type: textarea
     id: where

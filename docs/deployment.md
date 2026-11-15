@@ -277,9 +277,48 @@ README.
 
 ## Container
 
-The [`Dockerfile`](../Dockerfile) at the repository root builds an image with
+Each release publishes an image for `linux/amd64` and `linux/arm64` with
 `mind` as the entry point, `bite` beside it, and the example dictionaries in
-`/usr/share/first-bite/dictionaries`. It runs as a non-root user.
+`/usr/share/first-bite/dictionaries`. It runs as the non-root user `firstbite`
+and, started with no arguments, prints the options of `mind` and exits.
+
+```bash
+docker pull ghcr.io/usareur-af/first-bite:<version>
+```
+
+| Tag | Is |
+|---|---|
+| `<version>`, for example `1.0.1` | that release, for both platforms |
+| `<version>-amd64`, `<version>-arm64` | that release, for one platform |
+| `latest` | the newest release that is not a pre-release |
+
+A pre-release has a version with a hyphen, such as `1.0.1-rc.1`; it is
+published under its own tags and never as `latest`.
+
+The image of a release carries two signed attestations, stored in the registry
+beside it and by GitHub. Check them before running an image you did not build:
+
+```bash
+# Built by this repository's release workflow, from the commit of the tag.
+gh attestation verify oci://ghcr.io/usareur-af/first-bite:<version> --repo USAREUR-AF/first-bite
+
+# The SPDX SBOM attested to the same image.
+gh attestation verify oci://ghcr.io/usareur-af/first-bite:<version> --repo USAREUR-AF/first-bite \
+    --predicate-type https://spdx.dev/Document/v2.3
+```
+
+The SBOM is the one published with the release, `first-bite-<version>.spdx.json`:
+it lists the Rust crates compiled into `mind` and `bite`, and not the Debian
+packages of the base image. The image's labels give the version
+(`org.opencontainers.image.version`) and the commit
+(`org.opencontainers.image.revision`) it was built from.
+
+The [`Dockerfile`](../Dockerfile) at the repository root builds the same image
+from a checkout: `make image` builds it as `first-bite:local` with those
+labels, and `make image-check` runs it
+([`tools/image-check.sh`](../tools/image-check.sh)). The examples below use an
+image built that way; with a published image, put its name in place of
+`first-bite`.
 
 ```bash
 docker build -t first-bite .
@@ -361,6 +400,9 @@ the libpcap headers (`libpcap-dev`) installed beforehand.
 | `install.sh` from the unpacked x86-64 standard archive, on a host with no libpcap | measured in a bare `ubuntu:26.04` container with `systemctl` replaced by a stub |
 | `install.sh`: install, second run, `--prefix`, `--uninstall`, refusal of a broken dictionary | measured in an Ubuntu 26.04 container with `systemctl` replaced by a stub |
 | `first-bite.service` | built; `systemd-analyze verify` passes; not yet run under systemd |
-| container image: capture-file replay, `bite check` | measured |
+| container image, `linux/amd64`: default command, non-root user, `bite check`, capture-file replay, labels | measured with `make image-check` on the build host |
+| container image, `linux/arm64` | built in CI; not run |
+| publishing the image: push of each platform, the joined tag, `latest` only for a release that is not a pre-release | measured against a registry on the build host's loopback, with a stand-in for the `linux/arm64` image |
+| publishing to `ghcr.io`, and the attestations | built in CI; not run |
 | container: `--mock` through `docker/compose.yml`, live capture | built |
 | `filebeat/`, `telegraf/` | built |

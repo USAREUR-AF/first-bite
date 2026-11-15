@@ -4,7 +4,7 @@ The [OpenSSF Best Practices](https://www.bestpractices.dev/) badge is a
 questionnaire a maintainer answers about the project. Its *passing* level has
 67 criteria; this page gives the answer and the evidence for each, in the
 order the form asks, so that filling it in is copying. The form takes a URL as
-evidence wherever one is given here. Status of the badge: not registered.
+evidence wherever one is given here. Status of the badge: registered as project 16721, in progress.
 
 ## Registering
 
@@ -58,7 +58,7 @@ Scorecard counts as 2; passing counts as 5.
 | `repo_track` | Met | Git: every change with its author and date. |
 | `repo_interim` | Met | Every change is a commit on `main` between releases; releases are tags on it. |
 | `repo_distributed` | Met | Git. |
-| `version_unique` | Met | Each release is a tag `vX.Y.Z`; `release.yml` refuses a tag that differs from the version of the `mind` crate (`R/tools/package-release.sh`). |
+| `version_unique` | Met | Each release is a tag `vX.Y.Z`, or `vX.Y.Z-<suffix>` for a pre-release of it; `release.yml` refuses any other tag than those of the version of the `mind` crate (`R/tools/release-version.sh`). |
 | `version_semver` | Met | `R/GOVERNANCE.md#releases`: `vX.Y.Z`; pre-1.0 minor versions may change interfaces. |
 | `version_tags` | Met | Releases are git tags; a ruleset forbids moving or deleting a `v*` tag. |
 | `release_notes` | N/A until the first release, then Met | `https://github.com/USAREUR-AF/first-bite/releases`. The release workflow drafts the notes from the merged pull requests; the criterion wants a summary a user can decide an upgrade from, so the maintainer adds one at the top of each release. |
@@ -125,6 +125,6 @@ Scorecard counts as 2; passing counts as 5.
 | `static_analysis_fixed` | Met after the first CodeQL run | `https://github.com/USAREUR-AF/first-bite/security/code-scanning`: answer once the first run on the public repository shows no open finding of medium or higher severity. |
 | `static_analysis_often` | Met | CodeQL runs on every pull request and every push to `main`. |
 | `dynamic_analysis` | Met | Three libFuzzer targets (`R/fuzz/README.md`) run by ClusterFuzzLite on pull requests and every night (`R/.github/workflows/cflite_pr.yml`, `R/.github/workflows/cflite_batch.yml`). |
-| `dynamic_analysis_unsafe` | N/A | Rust is memory-safe and first-party code has no `unsafe`. The fuzz targets are built with AddressSanitizer all the same, for the C libraries linked in. |
+| `dynamic_analysis_unsafe` | N/A | Rust is memory-safe and first-party code has no `unsafe` block. The fuzz targets are built with AddressSanitizer all the same, for the C libraries linked in. |
 | `dynamic_analysis_enable_assertions` | Met | The fuzz build keeps debug assertions and integer-overflow checks on (`R/fuzz/Cargo.toml`). |
 | `dynamic_analysis_fixed` | Met | The fuzz runs have produced no finding (`R/docs/security/scorecard.md#fuzzing`). |

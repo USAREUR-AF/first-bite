@@ -67,6 +67,10 @@
           {
             "context": "leak-gate",
             "integration_id": 15368
+          },
+          {
+            "context": "contributor-trust",
+            "integration_id": 15368
           }
         ]
       }

@@ -14,6 +14,7 @@ dir="${REMOTE_BUILD_DIR:-fb-build}/${REMOTE_BUILD_NAME:-$branch}"
 ssh "$host" "mkdir -p '$dir'"
 rsync -az --delete \
   --exclude .git --exclude target --exclude vendor --exclude .claude/worktrees \
+  --exclude private --exclude .leak-needles \
   --exclude '*.pyc' --exclude __pycache__ \
   "$root/" "$host:$dir/"
 rc=0

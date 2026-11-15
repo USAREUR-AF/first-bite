@@ -30,7 +30,7 @@ and are *expected*, not measured, until the repository is public.
 | Fuzzing | medium | 0, measured | 10, measured | 10 | n/a |
 | License | low | 10, expected (9 measured offline) | 10 | 10 | n/a |
 | Maintained | high | 0 | 0 until 13 February 2027 | 10 | the repository to be 90 days old, then one commit or maintainer issue reply a week |
-| Packaging | medium | not scored | not scored | 10 | a workflow that publishes a package: designed, not built |
+| Packaging | medium | not scored | 10, expected, once `release.yml` has completed one run | 10 | n/a |
 | Pinned-Dependencies | medium | 10, measured | 10, measured | 10 | n/a |
 | SAST | medium | 10, measured | 10 | 10 | n/a |
 | Security-Policy | medium | 10, measured | 10 | 10 | n/a |
@@ -44,8 +44,8 @@ critical check 10, a high one 7.5, a medium one 5 and a low one 2.5.
 | State of the repository | Expected average |
 |---|---|
 | public as it was before this page's changes | 4.9 |
-| public, the changes merged, the ruleset with one required review, the passing badge, one release | 8.0 |
-| the same, 90 days old, the last 30 commits all approved pull requests | 9.5 |
+| public, the changes merged, the ruleset with one required review, the passing badge, one release | 8.1 |
+| the same, 90 days old, the last 30 commits all approved pull requests | 9.6 |
 | also two required reviewers, the gold badge and three contributing organisations | 10 |
 
 Scorecard also has two experimental checks, SBOM and Webhooks, that are off
@@ -83,7 +83,8 @@ verified commits: 0 points, because tier 1 is not met.
 and one for release tags. All three forbid deletion and force pushes, require
 a pull request, a linear history, squash merging, resolved review threads and
 these status checks on an up-to-date branch: `scripts`, `fmt`, `clippy`,
-`test (ubuntu-latest)`, `test (macos-latest)`, `decoder-targets`, `leak-gate`.
+`test (ubuntu-latest)`, `test (macos-latest)`, `decoder-targets`, `leak-gate`,
+`contributor-trust`.
 None has a bypass list. They differ in the review they require:
 
 | File | Approving reviews | Score | What it costs |
@@ -108,8 +109,11 @@ gh api -X POST repos/USAREUR-AF/first-bite/rulesets --input docs/security/rulese
 
 `rulesets/tags.json` forbids deleting, moving or force-pushing a `v*` tag. It
 is not scored; it keeps a release tag pointing at the commit that was built.
+`rulesets/tag-creation.json` lets only the maintainers' team `goat-owners`
+create a tag, as the other goat repositories do; it is designed, not applied.
 
-The status checks are named after the jobs of `ci.yml` and `leak-gate.yml`. A
+The status checks are named after the jobs of `ci.yml`, `leak-gate.yml` and
+`contributor-trust.yml`. A
 job that is renamed has to be renamed in the ruleset, or pull requests wait for
 a check that never reports.
 
@@ -211,13 +215,30 @@ gives 10.
 
 ### Packaging
 
-Looks for a workflow that publishes a package: `cargo publish`, a container
-image push, and the like. The crates are not published to crates.io
-(`publish = false`), and the releases are archives on the releases page, which
-the check does not count. It reports no score.
+Reads every workflow file for a job that publishes a package, and asks GitHub
+whether that workflow has a successful run: 10 when both hold, no score
+otherwise. A job counts when one of its steps matches a list in
+`IsPackagingWorkflow` (`checks/fileparser/github_workflow.go`); for a
+container image the two entries are a step that uses
+`docker/build-push-action`, and a `run` step in which the text `docker` is
+followed on the same line by `push`. Release archives on the releases page
+are not on the list, and the crates are not published to crates.io
+(`publish = false`).
 
-Publishing the container image of the `Dockerfile` to `ghcr.io` from
-`release.yml` would be counted. Designed, not built.
+The `image-publish` job of `release.yml` pushes the container image of the
+`Dockerfile` to `ghcr.io/usareur-af/first-bite` with `docker push` in a `run`
+step, which is the second entry. The run that the check asks for is any
+successful run of `release.yml`
+(`ListWorkflowRunsByFileName` with `Status: "success"`, in
+`clients/githubrepo/workflows.go`): the dry run counts, so the score does not
+wait for a release.
+
+```
+gh workflow run release.yml --ref main -f static=true
+```
+
+That builds, runs and packages every archive and both images and publishes
+nothing. The job has not run on GitHub.
 
 ### Pinned-Dependencies
 
@@ -275,13 +296,21 @@ GitHub issues attestations for public repositories; a release cut while the
 repository is private has no provenance and would score 0. There is no release
 yet.
 
+The check reads the last five releases, pre-releases included, and gives the
+average. A pre-release such as `v1.0.1-rc.1` is built by the same workflow and
+carries its own `first-bite-1.0.1-rc.1.intoto.jsonl`, so it scores 10 like any
+other release.
+
 ### Token-Permissions
 
 Looks for workflows whose token can write. Every workflow sets
 `permissions: contents: read` at the top; write scopes are on the one job that
 needs each: `security-events` for CodeQL and Scorecard, `id-token` for
 Scorecard, Pages and the release attestation, `pages` for the deployment,
-`contents` and `attestations` for publishing a release.
+`contents` and `attestations` for publishing a release, `packages` and
+`attestations` for publishing the image. The check leaves `packages: write`
+out of account in a workflow that `IsPackagingWorkflow` matches
+(`createIgnoredPermissions` in `checks/raw/permissions.go`).
 
 ### Vulnerabilities
 
@@ -303,7 +332,9 @@ maintained); the default build and the release binaries do not contain them.
 | 3 | administrator | Make the repository public. CodeQL, Scorecard and Pages start running, and attestations become available. |
 | 4 | administrator | Run `cargo-deny` and `cflite-batch` once from the Actions tab, so that their badges have a result on `main`. |
 | 5 | maintainer | Register for the Best Practices badge with [best-practices-answers.md](best-practices-answers.md) and put the project number in the README badge. |
-| 6 | maintainer | Cut the first release by tag, after step 3: it carries the provenance. Then add the release badge to the README. |
+| 6 | maintainer | Run the release workflow as a dry run, after step 3: `gh workflow run release.yml --ref main -f static=true`. Nothing is published; Packaging scores from this run. |
+| 7 | maintainer | Cut the first release by tag: it carries the provenance and publishes the image. Then add the release badge to the README. |
+| 8 | administrator | Set the visibility of the package `first-bite` to public in the organisation's package settings, once, after the first image is pushed: a new package is private. |
 
 ## The workflow
 

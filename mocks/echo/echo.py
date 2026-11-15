@@ -37,7 +37,8 @@ def main():
     try:
         ThreadingHTTPServer(("127.0.0.1", port), Echo).serve_forever()
     except KeyboardInterrupt:
-        pass
+        # Ctrl-C is how this server is stopped: exit without a traceback.
+        print("stopped", flush=True)
 
 
 if __name__ == "__main__":

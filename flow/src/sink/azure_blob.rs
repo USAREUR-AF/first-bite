@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use chrono::{DateTime, Utc};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use log::{debug, info};
 use reqwest::{Method, StatusCode, Url};
 use sha2::Sha256;

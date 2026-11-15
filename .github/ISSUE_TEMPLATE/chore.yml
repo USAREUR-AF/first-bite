@@ -1,13 +1,27 @@
 name: Chore
 description: Maintenance, infrastructure, documentation, or process work.
 title: "chore(<scope>): <what changes>"
-labels: ["chore", "needs-triage"]
+labels: ["chore", "needs-triage", "needs-estimate"]
 body:
   - type: markdown
     attributes:
       value: |
         A chore still needs acceptance criteria. "Clean up X" with no definition of
         clean is how a chore runs forever.
+
+  - type: dropdown
+    id: points
+    attributes:
+      label: Estimate (story points)
+      options:
+        - Not yet estimated
+        - "1"
+        - "2"
+        - "3"
+        - "5"
+        - "8 - too big, split it"
+    validations:
+      required: true
 
   - type: textarea
     id: context
