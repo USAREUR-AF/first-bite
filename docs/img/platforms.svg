@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 311" width="760" height="311" role="img" aria-labelledby="platforms-title platforms-desc" aria-label="One binary, installed from a tarball or run in a container">
+<title id="platforms-title">One binary, installed from a tarball or run in a container</title>
+<desc id="platforms-desc">Where first-bite runs. Built: release tarballs for x86-64 and arm64 Linux with glibc 2.35 or later, holding an installer, a systemd unit and the mind and bite binaries; a container image that runs as a non-root user; a build from source on Linux and macOS, both tested in CI; and a build with no internet access from vendored dependencies. In progress: a fully static Linux binary and release builds for macOS and Windows.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="310" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">One binary, installed from a tarball or run in a container</text>
+<rect x="24" y="60" width="228" height="114" rx="8" class="bx"/>
+<text x="40" y="90" font-size="15" font-weight="700" class="t">Release tarball</text>
+<text x="236" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<path d="M40 102L236 102" class="lnr" data-lint="nohead"/>
+<text x="40" y="124" font-size="13" class="t">x86-64 and arm64 Linux</text>
+<text x="40" y="143" font-size="13" class="q">glibc 2.35 or later, systemd</text>
+<text x="40" y="162" font-size="13" class="q">installer, unit, mind, bite</text>
+<rect x="266" y="60" width="228" height="114" rx="8" class="bx"/>
+<text x="282" y="90" font-size="15" font-weight="700" class="t">Container image</text>
+<text x="478" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<path d="M282 102L478 102" class="lnr" data-lint="nohead"/>
+<text x="282" y="124" font-size="13" class="t">mind as the entry point</text>
+<text x="282" y="143" font-size="13" class="q">runs as a non-root user</text>
+<text x="282" y="162" font-size="13" class="q">live capture: host network</text>
+<rect x="508" y="60" width="228" height="114" rx="8" class="bx"/>
+<text x="524" y="90" font-size="15" font-weight="700" class="t">From source</text>
+<text x="720" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<path d="M524 102L720 102" class="lnr" data-lint="nohead"/>
+<text x="524" y="124" font-size="13" class="t">Linux and macOS</text>
+<text x="524" y="143" font-size="13" class="q">tests run in CI on both</text>
+<text x="524" y="162" font-size="13" class="q">Rust, CMake, libpcap headers</text>
+<rect x="24" y="192" width="349" height="95" rx="8" class="bx"/>
+<text x="40" y="222" font-size="15" font-weight="700" class="t">No internet access</text>
+<text x="357" y="222" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<path d="M40 234L357 234" class="lnr" data-lint="nohead"/>
+<text x="40" y="256" font-size="13" class="t">make vendor copies every dependency</text>
+<text x="40" y="275" font-size="13" class="q">cargo build --offline on the offline machine</text>
+<rect x="387" y="192" width="349" height="95" rx="8" class="bxd"/>
+<text x="403" y="222" font-size="15" font-weight="700" class="t">More platforms</text>
+<text x="720" y="222" font-size="13" font-weight="700" text-anchor="end" class="w">in progress</text>
+<path d="M403 234L720 234" class="lnr" data-lint="nohead"/>
+<text x="403" y="256" font-size="13" class="t">a fully static Linux binary</text>
+<text x="403" y="275" font-size="13" class="q">release builds for macOS and Windows</text>
+</svg>

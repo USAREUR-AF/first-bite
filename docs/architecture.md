@@ -6,30 +6,15 @@ against a dictionary, and publishes one JSON record per packet to ZeroMQ, from
 where sinks forward records to object storage, REST endpoints, a Zenoh fabric
 or a file.
 
-```mermaid
-flowchart LR
-    subgraph sources [frame sources]
-        nic[network interface]
-        file[capture file]
-        udp[UDP socket]
-    end
-    dict[(dictionary<br/>directory of JSON)]
-    subgraph mind [mind]
-        pipeline[pipeline]
-    end
-    nic --> pipeline
-    file --> pipeline
-    udp --> pipeline
-    dict -. loaded at start .-> pipeline
-    pipeline -- record JSON --> pub[ZeroMQ PUB<br/>topic: interface/message]
-    pub --> sinks
-    pub --> transforms
-    pub --> external[any ZeroMQ subscriber]
-    subgraph flow [flow]
-        sinks[sinks:<br/>object storage, REST,<br/>Zenoh, local file]
-        transforms[transforms:<br/>Cursor-on-Target] --> pub2[ZeroMQ PUB]
-    end
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/components-dark.svg">
+  <img src="img/components.svg" width="100%" alt="The crates of first-bite and what crosses each boundary. Sources (a network interface, a capture file, a UDP socket) hand frames to mind. mind asks bite to decode each payload against the dictionary and builds a record. flow publishes the record on a ZeroMQ PUB socket and runs the sinks: object storage, HTTP, Zenoh and a local file. cotify turns a record into Cursor-on-Target through a field mapping.">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/how-it-works-dark.svg">
+  <img src="img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary and publishes one JSON record per message. Nothing is sent back to the link.">
+</picture>
 
 ## Crates
 
@@ -151,3 +136,15 @@ sent anywhere; the page needs only a static file server.
 pipeline makes one pass per packet: slice headers, one hash
 lookup for the interface, one for the message, one bit extraction per field,
 one JSON serialisation.
+
+## Presenting first-bite
+
+| What | Where | Rebuild |
+|---|---|---|
+| Illustrations, light and dark | [`docs/img/`](img) | `make figures` |
+| Ten-page brief (PDF, A4) | [`docs/brief/first-bite-brief.pdf`](brief/first-bite-brief.pdf), from `docs/brief/brief.html` | `make brief` |
+| Documentation site | [`site/`](../site), built into `site/_build` and published by `.github/workflows/pages.yml` | `make site` |
+
+The figures, the site and the brief share one palette and one set of numbers:
+[`docs/img/README.md`](img/README.md) records the visual system, and every
+figure quoted is in [performance.md](performance.md).

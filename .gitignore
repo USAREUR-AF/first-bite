@@ -63,3 +63,6 @@ azurite_data
 .claude/coldstart.md
 .claude/coldstart.consumed/
 .iso-mode.env
+
+# built documentation site
+site/_build/

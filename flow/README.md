@@ -4,10 +4,16 @@ Egress for first-bite. Decoded records are published on local ZeroMQ sockets;
 from there, subscribers forward them to sinks and subpubs transform and
 republish them.
 
-```
-mind ──► Publishers ──► tcp://127.0.0.1:12000 ──► Subscribers ──► sink (object storage, HTTP, file, Zenoh)
-                                     └──► SubPubs ──► transform ──► tcp://127.0.0.1:12001
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../docs/img/one-decode-many-consumers-dark.svg">
+  <img src="../docs/img/one-decode-many-consumers.svg" width="100%" alt="first-bite decodes once and publishes; any number of consumers subscribe and read JSON, with no connection to the native systems.">
+</picture>
+
+| Step | What | Where |
+|---|---|---|
+| 1 | `mind` hands each record to the publishers | `Publishers`, a ZeroMQ PUB socket, by default `tcp://127.0.0.1:12000` |
+| 2 | subscribers read records by topic and forward each to a sink | `Subscribers`: object storage, HTTP, a local file, Zenoh |
+| 3 | subpubs read records, transform them and publish the result | `SubPubs`: Cursor-on-Target, by default on `tcp://127.0.0.1:12001` |
 
 | Type | Does |
 |---|---|

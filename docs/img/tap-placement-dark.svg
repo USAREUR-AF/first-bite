@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 414" width="760" height="414" role="img" aria-labelledby="tap-placement-title tap-placement-desc" aria-label="Where the copy is taken decides what can be lost">
+<title id="tap-placement-title">Where the copy is taken decides what can be lost</title>
+<desc id="tap-placement-desc">Three ways to give first-bite a copy of a link. A breakout tap has one monitor port per direction, so first-bite uses two capture interfaces and loses nothing at the tap. An aggregating tap merges both directions into one port and loses nothing at the tap. A switch mirror port carries both directions on one port, and the switch drops mirrored frames first when it is busy.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="413" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">Where the copy is taken decides what can be lost</text>
+<rect x="24" y="60" width="220" height="336" rx="10" class="bxp"/>
+<text x="40" y="86" font-size="15" font-weight="700" class="t">Breakout tap</text>
+<rect x="40" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="62" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">A</text>
+<rect x="184" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="206" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">B</text>
+<path d="M84 121L104 121" class="lnk" data-lint="nohead"/>
+<path d="M164 121L184 121" class="lnk" data-lint="nohead"/>
+<rect x="104" y="104" width="60" height="34" rx="6" class="bx"/>
+<text x="134" y="124.9" font-size="13" font-weight="700" text-anchor="middle" class="t">tap</text>
+<path d="M120 138L120 187" class="lna"/><path d="M120 196L115 186L125 186z" class="fa"/>
+<path d="M148 138L148 187" class="lna"/><path d="M148 196L143 186L153 186z" class="fa"/>
+<text x="110" y="170" font-size="13" text-anchor="end" class="q">A to B</text>
+<text x="158" y="170" font-size="13" class="q">B to A</text>
+<rect x="54" y="196" width="160" height="52" rx="8" class="bxa"/>
+<text x="134" y="217.2" font-size="14" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="134" y="235.4" font-size="13" text-anchor="middle" class="q">2 capture interfaces</text>
+<path d="M40 268L228 268" class="lnr" data-lint="nohead"/>
+<text x="38" y="294" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Link: </tspan><tspan class="t">no effect</tspan></text>
+<text x="38" y="320" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Loss: </tspan><tspan class="t">none at the tap</tspan></text>
+<text x="38" y="346" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Ports: </tspan><tspan class="t">one per direction</tspan></text>
+<text x="38" y="372" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Use: </tspan><tspan class="t">if every frame matters</tspan></text>
+<rect x="270" y="60" width="220" height="336" rx="10" class="bxp"/>
+<text x="286" y="86" font-size="15" font-weight="700" class="t">Aggregating tap</text>
+<rect x="286" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="308" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">A</text>
+<rect x="430" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="452" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">B</text>
+<path d="M330 121L350 121" class="lnk" data-lint="nohead"/>
+<path d="M410 121L430 121" class="lnk" data-lint="nohead"/>
+<rect x="350" y="104" width="60" height="34" rx="6" class="bx"/>
+<text x="380" y="124.9" font-size="13" font-weight="700" text-anchor="middle" class="t">tap</text>
+<path d="M380 138L380 187" class="lna"/><path d="M380 196L375 186L385 186z" class="fa"/>
+<text x="390" y="170" font-size="13" class="q">A to B, B to A</text>
+<rect x="300" y="196" width="160" height="52" rx="8" class="bxa"/>
+<text x="380" y="217.2" font-size="14" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="380" y="235.4" font-size="13" text-anchor="middle" class="q">1 capture interface</text>
+<path d="M286 268L474 268" class="lnr" data-lint="nohead"/>
+<text x="284" y="294" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Link: </tspan><tspan class="t">no effect</tspan></text>
+<text x="284" y="320" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Loss: </tspan><tspan class="t">none at the tap</tspan></text>
+<text x="284" y="346" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Ports: </tspan><tspan class="t">one for both directions</tspan></text>
+<text x="284" y="372" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Use: </tspan><tspan class="t">if every frame matters</tspan></text>
+<rect x="516" y="60" width="220" height="336" rx="10" class="bxp"/>
+<text x="532" y="86" font-size="15" font-weight="700" class="t">Mirror port (SPAN)</text>
+<rect x="532" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="554" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">A</text>
+<rect x="676" y="104" width="44" height="34" rx="6" class="bx"/>
+<text x="698" y="125.2" font-size="14" font-weight="700" text-anchor="middle" class="t">B</text>
+<path d="M576 121L596 121" class="lnk" data-lint="nohead"/>
+<path d="M656 121L676 121" class="lnk" data-lint="nohead"/>
+<rect x="596" y="104" width="60" height="34" rx="6" class="bx"/>
+<text x="626" y="124.9" font-size="13" font-weight="700" text-anchor="middle" class="t">switch</text>
+<path d="M626 138L626 187" class="lna"/><path d="M626 196L621 186L631 186z" class="fa"/>
+<text x="636" y="170" font-size="13" class="q">A to B, B to A</text>
+<rect x="546" y="196" width="160" height="52" rx="8" class="bxa"/>
+<text x="626" y="217.2" font-size="14" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="626" y="235.4" font-size="13" text-anchor="middle" class="q">1 capture interface</text>
+<path d="M532 268L720 268" class="lnr" data-lint="nohead"/>
+<text x="530" y="294" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Link: </tspan><tspan class="t">no effect on forwarding</tspan></text>
+<text x="530" y="320" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Loss: </tspan><tspan class="w">when the switch is busy</tspan></text>
+<text x="530" y="346" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Ports: </tspan><tspan class="t">one for both directions</tspan></text>
+<text x="530" y="372" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="q" font-weight="700">Use: </tspan><tspan class="t">if no tap can be fitted</tspan></text>
+</svg>
