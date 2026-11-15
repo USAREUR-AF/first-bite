@@ -1,0 +1,114 @@
+{
+    "description": "Sent once a second while the controller is powered.",
+    "source": {
+        "section": "5.2",
+        "table": "5-2"
+    },
+    "declared_bits": 128,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "operating_mode": {
+            "start": 64,
+            "stop": 68,
+            "values": {
+                "0": "Off",
+                "1": "Manual",
+                "2": "Automatic",
+                "3": "Frost Protection",
+                "4": "Maintenance"
+            },
+            "description": "Mode the zone is in."
+        },
+        "door_open": {
+            "start": 68,
+            "stop": 69,
+            "type": "bool",
+            "description": "Set while the zone door is open."
+        },
+        "heating_active": {
+            "start": 69,
+            "stop": 70,
+            "type": "bool",
+            "description": "Set while the heating valve is open."
+        },
+        "irrigation_active": {
+            "start": 70,
+            "stop": 71,
+            "type": "bool",
+            "description": "Set while an irrigation run is in progress."
+        },
+        "alarm_present": {
+            "start": 71,
+            "stop": 72,
+            "type": "bool",
+            "description": "Set while at least one alarm is unacknowledged."
+        },
+        "spare_72": {
+            "start": 72,
+            "stop": 80
+        },
+        "supply_voltage": {
+            "start": 80,
+            "stop": 96,
+            "scale": 0.01,
+            "unit": "V",
+            "description": "Controller supply voltage."
+        },
+        "zone_label": {
+            "start": 96,
+            "stop": 128,
+            "type": "ascii",
+            "description": "Four ASCII characters, padded with spaces.",
+            "note": "The document does not say on which side the label is padded; appendix B.1 pads on the right, which is what the decoder strips. See ISSUE-002 in icd-notes/issues.md."
+        }
+    }
+}

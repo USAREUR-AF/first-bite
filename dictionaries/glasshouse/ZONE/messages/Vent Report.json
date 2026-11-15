@@ -1,0 +1,114 @@
+{
+    "description": "Sent every five seconds with the position of the roof vents.",
+    "source": {
+        "section": "5.5",
+        "table": "5-5"
+    },
+    "declared_bits": 112,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "roof_vent_offset_sign": {
+            "start": 64,
+            "stop": 65,
+            "values": {
+                "0": "Positive",
+                "1": "Negative"
+            },
+            "description": "Angle of the roof vents from the commanded angle, sign-magnitude: bit 15 is the sign (1 is negative), bits 14-6 the magnitude.",
+            "note": "Sign-magnitude in the document: the value is roof_vent_offset_magnitude, negative when roof_vent_offset_sign is Negative."
+        },
+        "roof_vent_offset_magnitude": {
+            "start": 65,
+            "stop": 74,
+            "scale": 0.1,
+            "unit": "deg",
+            "description": "Angle of the roof vents from the commanded angle, sign-magnitude: bit 15 is the sign (1 is negative), bits 14-6 the magnitude.",
+            "note": "Sign-magnitude in the document: the value is roof_vent_offset_magnitude, negative when roof_vent_offset_sign is Negative."
+        },
+        "spare_74": {
+            "start": 74,
+            "stop": 80
+        },
+        "windward_vent_position": {
+            "start": 80,
+            "stop": 88,
+            "scale": 0.5,
+            "unit": "%",
+            "description": "Opening of the windward vents."
+        },
+        "leeward_vent_position": {
+            "start": 88,
+            "stop": 96,
+            "scale": 0.5,
+            "unit": "%",
+            "description": "Opening of the leeward vents."
+        },
+        "vent_drive_state": {
+            "start": 96,
+            "stop": 100,
+            "values": {
+                "0": "Idle",
+                "1": "Opening",
+                "2": "Closing",
+                "3": "Stalled",
+                "15": "Not Fitted"
+            },
+            "description": "State of the vent drive."
+        },
+        "motor_current": {
+            "start": 100,
+            "stop": 112,
+            "unit": "mA",
+            "description": "Current drawn by the vent drive motor."
+        }
+    }
+}

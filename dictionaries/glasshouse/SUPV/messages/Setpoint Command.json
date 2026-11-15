@@ -1,0 +1,93 @@
+{
+    "description": "Sets the climate the zone holds in Automatic mode.",
+    "source": {
+        "section": "6.2",
+        "table": "6-2"
+    },
+    "declared_bits": 128,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "day_temperature_setpoint": {
+            "start": 64,
+            "stop": 80,
+            "type": "int",
+            "scale": 0.01,
+            "unit": "degC",
+            "description": "Air temperature to hold between sunrise and sunset."
+        },
+        "night_temperature_setpoint": {
+            "start": 80,
+            "stop": 96,
+            "type": "int",
+            "scale": 0.01,
+            "unit": "degC",
+            "description": "Air temperature to hold between sunset and sunrise."
+        },
+        "humidity_setpoint": {
+            "start": 96,
+            "stop": 106,
+            "scale": 0.1,
+            "unit": "%",
+            "description": "Relative humidity above which the vents open."
+        },
+        "spare_106": {
+            "start": 106,
+            "stop": 112
+        },
+        "co2_setpoint": {
+            "start": 112,
+            "stop": 128,
+            "unit": "ppm",
+            "description": "Carbon dioxide concentration to hold while the vents are closed."
+        }
+    }
+}

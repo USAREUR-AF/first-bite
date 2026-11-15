@@ -1,0 +1,26 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "03091fff014998f40520003212d6873e073a",
+    "expect": {
+        "message_type": "Irrigation Report",
+        "fields": {
+            "message_id": "3",
+            "message_length": "9",
+            "zone_number": "7",
+            "sequence_number": "1023",
+            "time_of_day": "21600500",
+            "spare_64": "0",
+            "valve_4_open": "false",
+            "valve_3_open": "true",
+            "valve_2_open": "false",
+            "valve_1_open": "true",
+            "pump_state": "Running",
+            "spare_76": "0",
+            "flow_rate": "12.50",
+            "volume_delivered": "123456.7",
+            "nutrient_solution_ph": "6.2",
+            "electrical_conductivity": "1.850"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.3."
+}

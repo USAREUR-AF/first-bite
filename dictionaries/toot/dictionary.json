@@ -1,0 +1,27 @@
+{
+    "lint": {
+        "allow": [
+            {
+                "rule": "C004",
+                "at": "FAE/None",
+                "reason": "Identifier 0 is named and has no definition, to show a message that is identified and not decoded."
+            },
+            {
+                "rule": "P001",
+                "reason": "Synthetic example: there is no source document to cite."
+            },
+            {
+                "rule": "P002",
+                "reason": "Synthetic example: there is no source document to cite."
+            },
+            {
+                "rule": "S003",
+                "reason": "The minimal form of a dictionary, kept as it is: integer fields with value labels and nothing else."
+            },
+            {
+                "rule": "V002",
+                "reason": "Synthetic example: there is no source document to cite."
+            }
+        ]
+    }
+}

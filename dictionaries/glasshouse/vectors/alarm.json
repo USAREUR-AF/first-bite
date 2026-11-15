@@ -1,0 +1,22 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "050730040038cefc058000030fa0",
+    "expect": {
+        "message_type": "Alarm",
+        "fields": {
+            "message_id": "5",
+            "message_length": "7",
+            "zone_number": "12",
+            "sequence_number": "4",
+            "time_of_day": "3723004",
+            "alarm_code": "Pump Fault",
+            "severity": "Warning",
+            "acknowledged": "false",
+            "spare_75": "0",
+            "occurrence_count": "3",
+            "minutes_since_raised": "125",
+            "spare_107": "0"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.5."
+}

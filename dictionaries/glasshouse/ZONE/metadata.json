@@ -1,0 +1,35 @@
+{
+    "description": "Zone controller to supervisor: status and measurements.",
+    "source": {
+        "section": "5"
+    },
+    "protocol": {
+        "network": "ip",
+        "transport": "udp"
+    },
+    "port": 47010,
+    "icd_numbering": {
+        "word_bits": 16,
+        "bit0": "lsb",
+        "first_word": 1,
+        "first_bit": 0,
+        "word_order": "big"
+    },
+    "message_type": {
+        "start": 0,
+        "stop": 8,
+        "values": {
+            "1": "Zone Status",
+            "2": "Climate Report",
+            "3": "Irrigation Report",
+            "4": "Vent Report",
+            "5": "Alarm",
+            "6": "Event Log",
+            "7": "Maintenance Data"
+        }
+    },
+    "message_length": {
+        "start": 8,
+        "stop": 16
+    }
+}

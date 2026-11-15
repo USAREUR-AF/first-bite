@@ -1,0 +1,31 @@
+interface,message,field,value,label
+ZONE,Zone Status,operating_mode,0,Off
+ZONE,Zone Status,operating_mode,1,Manual
+ZONE,Zone Status,operating_mode,2,Automatic
+ZONE,Zone Status,operating_mode,3,Frost Protection
+ZONE,Zone Status,operating_mode,4,Maintenance
+ZONE,Irrigation Report,pump_state,0,Stopped
+ZONE,Irrigation Report,pump_state,1,Starting
+ZONE,Irrigation Report,pump_state,2,Running
+ZONE,Irrigation Report,pump_state,3,Fault
+ZONE,Vent Report,roof_vent_offset_sign,0,Positive
+ZONE,Vent Report,roof_vent_offset_sign,1,Negative
+ZONE,Vent Report,vent_drive_state,0,Idle
+ZONE,Vent Report,vent_drive_state,1,Opening
+ZONE,Vent Report,vent_drive_state,2,Closing
+ZONE,Vent Report,vent_drive_state,3,Stalled
+ZONE,Vent Report,vent_drive_state,15,Not Fitted
+ZONE,Alarm,alarm_code,1,High Temperature
+ZONE,Alarm,alarm_code,2,Low Temperature
+ZONE,Alarm,alarm_code,3,High Humidity
+ZONE,Alarm,alarm_code,4,Sensor Fault
+ZONE,Alarm,alarm_code,5,Pump Fault
+ZONE,Alarm,alarm_code,6,Vent Stalled
+ZONE,Alarm,alarm_code,7,Power Supply
+ZONE,Alarm,severity,0,Advisory
+ZONE,Alarm,severity,1,Caution
+ZONE,Alarm,severity,2,Warning
+SUPV,Vent Command,vent_command_mode,0,Hold
+SUPV,Vent Command,vent_command_mode,1,Go To Target
+SUPV,Vent Command,vent_command_mode,2,Close All
+SUPV,Vent Command,vent_command_mode,3,Storm Close

@@ -1,0 +1,89 @@
+{
+    "description": "Moves the roof vents.",
+    "source": {
+        "section": "6.4",
+        "table": "6-4"
+    },
+    "declared_bits": 96,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "windward_vent_target": {
+            "start": 64,
+            "stop": 72,
+            "scale": 0.5,
+            "unit": "%",
+            "description": "Opening to move the windward vents to."
+        },
+        "leeward_vent_target": {
+            "start": 72,
+            "stop": 80,
+            "scale": 0.5,
+            "unit": "%",
+            "description": "Opening to move the leeward vents to."
+        },
+        "vent_command_mode": {
+            "start": 80,
+            "stop": 84,
+            "values": {
+                "0": "Hold",
+                "1": "Go To Target",
+                "2": "Close All",
+                "3": "Storm Close"
+            },
+            "description": "What the vent drive is to do."
+        },
+        "spare_84": {
+            "start": 84,
+            "stop": 96
+        }
+    }
+}

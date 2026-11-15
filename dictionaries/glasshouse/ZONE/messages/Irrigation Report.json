@@ -1,0 +1,131 @@
+{
+    "description": "Sent once a second while an irrigation run is in progress, and once when it ends.",
+    "source": {
+        "section": "5.4",
+        "table": "5-4"
+    },
+    "declared_bits": 144,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "spare_64": {
+            "start": 64,
+            "stop": 68
+        },
+        "valve_4_open": {
+            "start": 68,
+            "stop": 69,
+            "type": "bool",
+            "description": "Set while valve 4 is open."
+        },
+        "valve_3_open": {
+            "start": 69,
+            "stop": 70,
+            "type": "bool",
+            "description": "Set while valve 3 is open."
+        },
+        "valve_2_open": {
+            "start": 70,
+            "stop": 71,
+            "type": "bool",
+            "description": "Set while valve 2 is open."
+        },
+        "valve_1_open": {
+            "start": 71,
+            "stop": 72,
+            "type": "bool",
+            "description": "Set while valve 1 is open."
+        },
+        "pump_state": {
+            "start": 72,
+            "stop": 76,
+            "values": {
+                "0": "Stopped",
+                "1": "Starting",
+                "2": "Running",
+                "3": "Fault"
+            },
+            "description": "State of the dosing pump."
+        },
+        "spare_76": {
+            "start": 76,
+            "stop": 80
+        },
+        "flow_rate": {
+            "start": 80,
+            "stop": 96,
+            "scale": 0.25,
+            "unit": "L/min",
+            "description": "Flow through the zone manifold."
+        },
+        "volume_delivered": {
+            "start": 96,
+            "stop": 120,
+            "scale": 0.1,
+            "unit": "L",
+            "description": "Volume delivered since the run began, a 24-bit value."
+        },
+        "nutrient_solution_ph": {
+            "start": 120,
+            "stop": 128,
+            "scale": 0.1,
+            "unit": "1",
+            "description": "Acidity of the nutrient solution, as pH."
+        },
+        "electrical_conductivity": {
+            "start": 128,
+            "stop": 144,
+            "scale": 0.001,
+            "unit": "mS/cm",
+            "description": "Conductivity of the nutrient solution."
+        }
+    }
+}

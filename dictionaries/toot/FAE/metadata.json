@@ -1,8 +1,8 @@
 {
+    "description": "The purpose of this ICD interface is to enable sharing of feelings of missing out.",
     "icd": {
         "version": "D"
     },
-    "mission": "The purpose of this ICD interface is to enable sharing of feelings of missing out.",
     "protocol": {
         "network": "ip",
         "transport": "udp"

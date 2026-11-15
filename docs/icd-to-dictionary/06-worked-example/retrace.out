@@ -1,0 +1,486 @@
+
+=== 1. Scaffold ===
+
+$ bite new glasshouse --name glasshouse --interface ZONE --port 47010 --interface SUPV --port 47011
+wrote glasshouse/README.md
+wrote glasshouse/SUPV/metadata.json
+wrote glasshouse/ZONE/metadata.json
+wrote glasshouse/dictionary.json
+glasshouse: dictionary "glasshouse" with 2 interfaces and an empty vectors/
+
+=== 2. The numbering of section 3.1, checked on three fields ===
+
+$ bite range --word-bits 16 --bit0 lsb --first-word 1 --word 1 --bits 15-8
+start 0
+stop  8
+width 8 bits, under "bit_order": "msb0"
+numbering: 16-bit words numbered from 1, sent most significant byte first; bit 0 is the least significant bit of a word
+word 1 (payload bytes 0-1)
+  15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   #  #  #  #  #  #  #  #  .  .  .  .  .  .  .  .
+
+$ bite range --word-bits 16 --bit0 lsb --first-word 1 --word 6 --bits 15-6
+start 80
+stop  90
+width 10 bits, under "bit_order": "msb0"
+numbering: 16-bit words numbered from 1, sent most significant byte first; bit 0 is the least significant bit of a word
+word 6 (payload bytes 10-11)
+  15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   #  #  #  #  #  #  #  #  #  #  .  .  .  .  .  .
+
+$ bite range --word-bits 16 --bit0 lsb --first-word 1 --word 7-8 --bits 15-8
+start 96
+stop  120
+width 24 bits, under "bit_order": "msb0"
+numbering: 16-bit words numbered from 1, sent most significant byte first; bit 0 is the least significant bit of a word
+word 7 (payload bytes 12-13)
+  15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #
+word 8 (payload bytes 14-15)
+  15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   #  #  #  #  #  #  #  #  .  .  .  .  .  .  .  .
+
+=== 3. dictionary.json: name, version, source document, added units, allowed findings ===
+wrote glasshouse/dictionary.json
+
+=== 4. The tables exactly as the document prints them: Table 5-3 has an erratum ===
+
+$ bite import-csv as-printed --into glasshouse
+wrote glasshouse/SUPV/messages/Irrigation Command.json
+wrote glasshouse/SUPV/messages/Setpoint Command.json
+wrote glasshouse/SUPV/messages/Time Synchronisation.json
+wrote glasshouse/SUPV/messages/Vent Command.json
+wrote glasshouse/SUPV/metadata.json
+wrote glasshouse/ZONE/messages/Alarm.json
+wrote glasshouse/ZONE/messages/Climate Report.json
+wrote glasshouse/ZONE/messages/Event Log.json
+wrote glasshouse/ZONE/messages/Irrigation Report.json
+wrote glasshouse/ZONE/messages/Vent Report.json
+wrote glasshouse/ZONE/messages/Zone Status.json
+wrote glasshouse/ZONE/metadata.json
+2 interfaces, 10 messages: 12 files written, 0 unchanged
+
+$ bite check --strict glasshouse
+warning: ZONE/Climate Report/leaf_wetness: bits [89, 96) overlap relative_humidity [80, 90)
+allowed: ZONE/Maintenance Data: named by message_type but has no file in messages/; it is identified but not decoded (Defined in GZC-MNT-004, which is not transcribed here.)
+2 interfaces, 10 messages, 0 errors, 1 warnings (1 allowed in dictionary.json), 0/0 vectors passed
+(exit status 1)
+
+$ bite coverage glasshouse
+SUPV/Irrigation Command: 112 bits declared, 112 covered by 13 fields, 0 gaps, 0 vectors
+SUPV/Setpoint Command: 128 bits declared, 128 covered by 10 fields, 0 gaps, 0 vectors
+SUPV/Time Synchronisation: 112 bits declared, 112 covered by 11 fields, 0 gaps, 0 vectors
+SUPV/Vent Command: 96 bits declared, 96 covered by 9 fields, 0 gaps, 0 vectors
+ZONE/Alarm: 112 bits declared, 112 covered by 12 fields, 0 gaps, 0 vectors
+ZONE/Climate Report: 160 bits declared, 160 covered by 13 fields, 0 gaps, 0 vectors
+  overlap [89, 90) relative_humidity and leaf_wetness
+ZONE/Event Log: 80 bits declared, 80 covered by 7 fields, 0 gaps, 0 vectors
+ZONE/Irrigation Report: 144 bits declared, 144 covered by 16 fields, 0 gaps, 0 vectors
+ZONE/Vent Report: 112 bits declared, 112 covered by 12 fields, 0 gaps, 0 vectors
+ZONE/Zone Status: 128 bits declared, 128 covered by 13 fields, 0 gaps, 0 vectors
+ZONE/Maintenance Data: named in message_type, not defined
+10 of 10 messages fully covered; 1 named and not defined; 0 defined and not named
+103 fields: 0 without a source, 0 without a description; 0 of 81 numeric fields without a unit
+C002 ZONE/Climate Report/leaf_wetness: bits [89, 96) overlap relative_humidity [80, 90) in [89, 90)
+1 finding failing, 10 not enforced by the flags given, 1 allowed in dictionary.json
+(exit status 1)
+
+=== 5. The tables with ISSUE-001 decided ===
+
+$ bite import-csv tables --into glasshouse
+wrote glasshouse/ZONE/messages/Climate Report.json
+2 interfaces, 10 messages: 1 file written, 11 unchanged
+
+$ bite fmt glasshouse
+13 files, 0 rewritten
+
+$ bite check --strict glasshouse
+allowed: ZONE/Maintenance Data: named by message_type but has no file in messages/; it is identified but not decoded (Defined in GZC-MNT-004, which is not transcribed here.)
+2 interfaces, 10 messages, 0 errors, 0 warnings (1 allowed in dictionary.json), 0/0 vectors passed
+
+$ bite lint glasshouse
+0 findings, 0 allowed in dictionary.json
+
+$ bite coverage --strict glasshouse
+SUPV/Irrigation Command: 112 bits declared, 112 covered by 13 fields, 0 gaps, 0 vectors
+SUPV/Setpoint Command: 128 bits declared, 128 covered by 10 fields, 0 gaps, 0 vectors
+SUPV/Time Synchronisation: 112 bits declared, 112 covered by 11 fields, 0 gaps, 0 vectors
+SUPV/Vent Command: 96 bits declared, 96 covered by 9 fields, 0 gaps, 0 vectors
+ZONE/Alarm: 112 bits declared, 112 covered by 12 fields, 0 gaps, 0 vectors
+ZONE/Climate Report: 160 bits declared, 160 covered by 13 fields, 0 gaps, 0 vectors
+ZONE/Event Log: 80 bits declared, 80 covered by 7 fields, 0 gaps, 0 vectors
+ZONE/Irrigation Report: 144 bits declared, 144 covered by 16 fields, 0 gaps, 0 vectors
+ZONE/Vent Report: 112 bits declared, 112 covered by 12 fields, 0 gaps, 0 vectors
+ZONE/Zone Status: 128 bits declared, 128 covered by 13 fields, 0 gaps, 0 vectors
+ZONE/Maintenance Data: named in message_type, not defined
+10 of 10 messages fully covered; 1 named and not defined; 0 defined and not named
+103 fields: 0 without a source, 0 without a description; 0 of 81 numeric fields without a unit
+C010 SUPV/Irrigation Command: no vector expects this message
+C010 SUPV/Setpoint Command: no vector expects this message
+C010 SUPV/Time Synchronisation: no vector expects this message
+C010 SUPV/Vent Command: no vector expects this message
+C010 ZONE/Alarm: no vector expects this message
+C010 ZONE/Climate Report: no vector expects this message
+C010 ZONE/Event Log: no vector expects this message
+C010 ZONE/Irrigation Report: no vector expects this message
+C010 ZONE/Vent Report: no vector expects this message
+C010 ZONE/Zone Status: no vector expects this message
+10 findings failing, 0 not enforced by the flags given, 1 allowed in dictionary.json
+(exit status 1)
+
+=== 6. One vector per message, from appendix B ===
+
+$ bite vectors new glasshouse --interface ZONE --message "Zone Status" --payload 01080c1102932e002500096f4e332020 --note "GZC-ICD-001 revision B, appendix B.1." --set message_id=1 --set message_length=8 --set zone_number=3 --set sequence_number=17 --set time_of_day=43200000 --set operating_mode=Automatic --set door_open=false --set heating_active=true --set irrigation_active=false --set alarm_present=true --set supply_voltage=24.15 --set zone_label=N3
+wrote glasshouse/vectors/zone-status.json
+
+$ bite vectors new glasshouse --interface ZONE --message "Climate Report" --payload 020a0c12029331e8ff06cb6a76d0019f0dea01a9 --note "GZC-ICD-001 revision B, appendix B.2." --set message_id=2 --set message_length=10 --set zone_number=3 --set sequence_number=18 --set time_of_day=43201000 --set air_temperature=-2.50 --set relative_humidity=81.3 --set leaf_wetness=42 --set outside_temperature=-7.35 --set co2_concentration=415 --set solar_irradiance=356.2 --set wind_speed=4.25
+wrote glasshouse/vectors/climate-report.json
+
+$ bite vectors new glasshouse --interface ZONE --message "Irrigation Report" --payload 03091fff014998f40520003212d6873e073a --note "GZC-ICD-001 revision B, appendix B.3." --set message_id=3 --set message_length=9 --set zone_number=7 --set sequence_number=1023 --set time_of_day=21600500 --set valve_4_open=false --set valve_3_open=true --set valve_2_open=false --set valve_1_open=true --set pump_state=Running --set flow_rate=12.50 --set volume_delivered=123456.7 --set nutrient_solution_ph=6.2 --set electrical_conductivity=1.850
+wrote glasshouse/vectors/irrigation-report.json
+
+$ bite vectors new glasshouse --interface ZONE --message "Vent Report" --payload 04070c13029335d09f404b001352 --note "GZC-ICD-001 revision B, appendix B.4." --set message_id=4 --set message_length=7 --set zone_number=3 --set sequence_number=19 --set time_of_day=43202000 --set roof_vent_offset_sign=Negative --set roof_vent_offset_magnitude=12.5 --set windward_vent_position=37.5 --set leeward_vent_position=0.0 --set vent_drive_state=Opening --set motor_current=850
+wrote glasshouse/vectors/vent-report.json
+
+$ bite vectors new glasshouse --interface ZONE --message Alarm --payload 050730040038cefc058000030fa0 --note "GZC-ICD-001 revision B, appendix B.5." --set message_id=5 --set message_length=7 --set zone_number=12 --set sequence_number=4 --set time_of_day=3723004 --set "alarm_code=Pump Fault" --set severity=Warning --set acknowledged=false --set occurrence_count=3 --set minutes_since_raised=125
+wrote glasshouse/vectors/alarm.json
+
+$ bite vectors new glasshouse --interface ZONE --message "Event Log" --payload 06090c14029339b802001102123412021240 --note "GZC-ICD-001 revision B, appendix B.6." --set message_id=6 --set message_length=9 --set zone_number=3 --set sequence_number=20 --set time_of_day=43203000 --set record_count=2
+wrote glasshouse/vectors/event-log.json
+
+$ bite vectors new glasshouse --interface SUPV --message "Setpoint Command" --payload 01080c050149970008ca0640af000320 --note "GZC-ICD-001 revision B, appendix B.7." --set message_id=1 --set message_length=8 --set zone_number=3 --set sequence_number=5 --set time_of_day=21600000 --set day_temperature_setpoint=22.50 --set night_temperature_setpoint=16.00 --set humidity_setpoint=70.0 --set co2_setpoint=800
+wrote glasshouse/vectors/setpoint-command.json
+
+$ bite vectors new glasshouse --interface SUPV --message "Irrigation Command" --payload 02071c06014997fa0500025809c4 --note "GZC-ICD-001 revision B, appendix B.8." --set message_id=2 --set message_length=7 --set zone_number=7 --set sequence_number=6 --set time_of_day=21600250 --set open_valve_4=false --set open_valve_3=true --set open_valve_2=false --set open_valve_1=true --set run_time=600 --set volume_limit=250.0
+wrote glasshouse/vectors/irrigation-command.json
+
+$ bite vectors new glasshouse --interface SUPV --message "Vent Command" --payload 03060c0702932a1864191000 --note "GZC-ICD-001 revision B, appendix B.9." --set message_id=3 --set message_length=6 --set zone_number=3 --set sequence_number=7 --set time_of_day=43199000 --set windward_vent_target=50.0 --set leeward_vent_target=12.5 --set "vent_command_mode=Go To Target"
+wrote glasshouse/vectors/vent-command.json
+
+$ bite vectors new glasshouse --interface SUPV --message "Time Synchronisation" --payload 04070c0800000000356ffe200000 --note "GZC-ICD-001 revision B, appendix B.10." --set message_id=4 --set message_length=7 --set zone_number=3 --set sequence_number=8 --set time_of_day=0 --set year=26 --set month=11 --set day=15 --set utc_offset=-480 --set daylight_saving_active=false
+wrote glasshouse/vectors/time-synchronisation.json
+
+$ bite vectors encode glasshouse --vector alarm
+payload_hex 050730040038cefc058000030fa0
+field                 bits          raw                 value
+message_id            [0, 8)        0x5                 5
+message_length        [8, 16)       0x7                 7
+zone_number           [16, 22)      0xc                 12
+sequence_number       [22, 32)      0x4                 4
+time_of_day           [32, 64)      0x38cefc            3723004
+alarm_code            [64, 72)      0x5                 Pump Fault
+severity              [72, 74)      0x2                 Warning
+acknowledged          [74, 75)      0x0                 false
+spare_75              [75, 80)      0x0                 0
+occurrence_count      [80, 96)      0x3                 3
+minutes_since_raised  [96, 107)     0x7d                125
+spare_107             [107, 112)    0x0                 0
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector climate-report
+payload_hex 020a0c12029331e8ff06cb6a76d0019f0dea01a9
+field                bits          raw                 value
+message_id           [0, 8)        0x2                 2
+message_length       [8, 16)       0xa                 10
+zone_number          [16, 22)      0x3                 3
+sequence_number      [22, 32)      0x12                18
+time_of_day          [32, 64)      0x29331e8           43201000
+air_temperature      [64, 80)      0xff06              -2.50
+relative_humidity    [80, 90)      0x32d               81.3
+leaf_wetness         [90, 96)      0x2a                42
+outside_temperature  [96, 108)     0x76d               -7.35
+spare_108            [108, 112)    0x0                 0
+co2_concentration    [112, 128)    0x19f               415
+solar_irradiance     [128, 144)    0xdea               356.2
+wind_speed           [144, 160)    0x1a9               4.25
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector event-log
+payload_hex 06090c14029339b80200
+field            bits          raw                 value
+message_id       [0, 8)        0x6                 6
+message_length   [8, 16)       0x9                 9
+zone_number      [16, 22)      0x3                 3
+sequence_number  [22, 32)      0x14                20
+time_of_day      [32, 64)      0x29339b8           43203000
+record_count     [64, 72)      0x2                 2
+spare_72         [72, 80)      0x0                 0
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+the vector's payload has 8 more bytes after the definition ends; they are not compared
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector irrigation-command
+payload_hex 02071c06014997fa0500025809c4
+field            bits          raw                 value
+message_id       [0, 8)        0x2                 2
+message_length   [8, 16)       0x7                 7
+zone_number      [16, 22)      0x7                 7
+sequence_number  [22, 32)      0x6                 6
+time_of_day      [32, 64)      0x14997fa           21600250
+spare_64         [64, 68)      0x0                 0
+open_valve_4     [68, 69)      0x0                 false
+open_valve_3     [69, 70)      0x1                 true
+open_valve_2     [70, 71)      0x0                 false
+open_valve_1     [71, 72)      0x1                 true
+spare_72         [72, 80)      0x0                 0
+run_time         [80, 96)      0x258               600
+volume_limit     [96, 112)     0x9c4               250.0
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector irrigation-report
+payload_hex 03091fff014998f40520003212d6873e073a
+field                    bits          raw                 value
+message_id               [0, 8)        0x3                 3
+message_length           [8, 16)       0x9                 9
+zone_number              [16, 22)      0x7                 7
+sequence_number          [22, 32)      0x3ff               1023
+time_of_day              [32, 64)      0x14998f4           21600500
+spare_64                 [64, 68)      0x0                 0
+valve_4_open             [68, 69)      0x0                 false
+valve_3_open             [69, 70)      0x1                 true
+valve_2_open             [70, 71)      0x0                 false
+valve_1_open             [71, 72)      0x1                 true
+pump_state               [72, 76)      0x2                 Running
+spare_76                 [76, 80)      0x0                 0
+flow_rate                [80, 96)      0x32                12.50
+volume_delivered         [96, 120)     0x12d687            123456.7
+nutrient_solution_ph     [120, 128)    0x3e                6.2
+electrical_conductivity  [128, 144)    0x73a               1.850
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector setpoint-command
+payload_hex 01080c050149970008ca0640af000320
+field                       bits          raw                 value
+message_id                  [0, 8)        0x1                 1
+message_length              [8, 16)       0x8                 8
+zone_number                 [16, 22)      0x3                 3
+sequence_number             [22, 32)      0x5                 5
+time_of_day                 [32, 64)      0x1499700           21600000
+day_temperature_setpoint    [64, 80)      0x8ca               22.50
+night_temperature_setpoint  [80, 96)      0x640               16.00
+humidity_setpoint           [96, 106)     0x2bc               70.0
+spare_106                   [106, 112)    0x0                 0
+co2_setpoint                [112, 128)    0x320               800
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector time-synchronisation
+payload_hex 04070c0800000000356ffe200000
+field                   bits          raw                 value
+message_id              [0, 8)        0x4                 4
+message_length          [8, 16)       0x7                 7
+zone_number             [16, 22)      0x3                 3
+sequence_number         [22, 32)      0x8                 8
+time_of_day             [32, 64)      0x0                 0
+year                    [64, 71)      0x1a                26
+month                   [71, 75)      0xb                 11
+day                     [75, 80)      0xf                 15
+utc_offset              [80, 96)      0xfe20              -480
+daylight_saving_active  [96, 97)      0x0                 false
+spare_97                [97, 112)     0x0                 0
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector vent-command
+payload_hex 03060c0702932a1864191000
+field                 bits          raw                 value
+message_id            [0, 8)        0x3                 3
+message_length        [8, 16)       0x6                 6
+zone_number           [16, 22)      0x3                 3
+sequence_number       [22, 32)      0x7                 7
+time_of_day           [32, 64)      0x2932a18           43199000
+windward_vent_target  [64, 72)      0x64                50.0
+leeward_vent_target   [72, 80)      0x19                12.5
+vent_command_mode     [80, 84)      0x1                 Go To Target
+spare_84              [84, 96)      0x0                 0
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector vent-report
+payload_hex 04070c13029335d09f404b001352
+field                       bits          raw                 value
+message_id                  [0, 8)        0x4                 4
+message_length              [8, 16)       0x7                 7
+zone_number                 [16, 22)      0x3                 3
+sequence_number             [22, 32)      0x13                19
+time_of_day                 [32, 64)      0x29335d0           43202000
+roof_vent_offset_sign       [64, 65)      0x1                 Negative
+roof_vent_offset_magnitude  [65, 74)      0x7d                12.5
+spare_74                    [74, 80)      0x0                 0
+windward_vent_position      [80, 88)      0x4b                37.5
+leeward_vent_position       [88, 96)      0x0                 0.0
+vent_drive_state            [96, 100)     0x1                 Opening
+motor_current               [100, 112)    0x352               850
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+$ bite vectors encode glasshouse --vector zone-status
+payload_hex 01080c1102932e002500096f4e332020
+field              bits          raw                 value
+message_id         [0, 8)        0x1                 1
+message_length     [8, 16)       0x8                 8
+zone_number        [16, 22)      0x3                 3
+sequence_number    [22, 32)      0x11                17
+time_of_day        [32, 64)      0x2932e00           43200000
+operating_mode     [64, 68)      0x2                 Automatic
+door_open          [68, 69)      0x0                 false
+heating_active     [69, 70)      0x1                 true
+irrigation_active  [70, 71)      0x0                 false
+alarm_present      [71, 72)      0x1                 true
+spare_72           [72, 80)      0x0                 0
+supply_voltage     [80, 96)      0x96f               24.15
+zone_label         [96, 128)                         N3
+These bytes were built with the dictionary. Check them against the document by hand or with a second implementation.
+matches the vector's payload_hex
+
+=== 7. The gates ===
+
+$ bite fmt --check glasshouse
+23 files, 0 not canonical
+
+$ bite check --strict glasshouse
+allowed: ZONE/Maintenance Data: named by message_type but has no file in messages/; it is identified but not decoded (Defined in GZC-MNT-004, which is not transcribed here.)
+2 interfaces, 10 messages, 0 errors, 0 warnings (1 allowed in dictionary.json), 10/10 vectors passed
+
+$ bite lint glasshouse
+0 findings, 0 allowed in dictionary.json
+
+$ bite coverage --strict glasshouse
+SUPV/Irrigation Command: 112 bits declared, 112 covered by 13 fields, 0 gaps, 1 vector
+SUPV/Setpoint Command: 128 bits declared, 128 covered by 10 fields, 0 gaps, 1 vector
+SUPV/Time Synchronisation: 112 bits declared, 112 covered by 11 fields, 0 gaps, 1 vector
+SUPV/Vent Command: 96 bits declared, 96 covered by 9 fields, 0 gaps, 1 vector
+ZONE/Alarm: 112 bits declared, 112 covered by 12 fields, 0 gaps, 1 vector
+ZONE/Climate Report: 160 bits declared, 160 covered by 13 fields, 0 gaps, 1 vector
+ZONE/Event Log: 80 bits declared, 80 covered by 7 fields, 0 gaps, 1 vector
+ZONE/Irrigation Report: 144 bits declared, 144 covered by 16 fields, 0 gaps, 1 vector
+ZONE/Vent Report: 112 bits declared, 112 covered by 12 fields, 0 gaps, 1 vector
+ZONE/Zone Status: 128 bits declared, 128 covered by 13 fields, 0 gaps, 1 vector
+ZONE/Maintenance Data: named in message_type, not defined
+10 of 10 messages fully covered; 1 named and not defined; 0 defined and not named
+103 fields: 0 without a source, 0 without a description; 0 of 81 numeric fields without a unit
+0 findings failing, 0 not enforced by the flags given, 1 allowed in dictionary.json
+
+=== 8. Byte for byte against dictionaries/glasshouse (copied to committed/) ===
+
+$ diff -r glasshouse committed
+identical
+
+=== 9. The tables round trip ===
+
+$ bite export-csv glasshouse --out exported
+wrote exported/interfaces.csv (2 rows)
+wrote exported/messages.csv (11 rows)
+wrote exported/fields.csv (116 rows)
+wrote exported/values.csv (30 rows)
+
+$ bite import-csv exported --into again
+wrote again/SUPV/messages/Irrigation Command.json
+wrote again/SUPV/messages/Setpoint Command.json
+wrote again/SUPV/messages/Time Synchronisation.json
+wrote again/SUPV/messages/Vent Command.json
+wrote again/SUPV/metadata.json
+wrote again/ZONE/messages/Alarm.json
+wrote again/ZONE/messages/Climate Report.json
+wrote again/ZONE/messages/Event Log.json
+wrote again/ZONE/messages/Irrigation Report.json
+wrote again/ZONE/messages/Vent Report.json
+wrote again/ZONE/messages/Zone Status.json
+wrote again/ZONE/metadata.json
+2 interfaces, 10 messages: 12 files written, 0 unchanged
+
+$ diff -r glasshouse again
+identical
+
+=== 10. Revision C of the document arrives ===
+
+$ bite import-csv tables-c --into glasshouse-c
+wrote glasshouse-c/ZONE/messages/Alarm.json
+wrote glasshouse-c/ZONE/messages/Climate Report.json
+wrote glasshouse-c/ZONE/messages/Irrigation Report.json
+wrote glasshouse-c/ZONE/messages/Vent Report.json
+wrote glasshouse-c/ZONE/messages/Zone Status.json
+2 interfaces, 10 messages: 5 files written, 7 unchanged
+
+$ bite check --strict glasshouse-c
+allowed: ZONE/Maintenance Data: named by message_type but has no file in messages/; it is identified but not decoded (Defined in GZC-MNT-004, which is not transcribed here.)
+vector irrigation-report: flow_rate: expected Some("12.50"), got Some("5")
+vector vent-report: motor_current: no such field in the decoded message
+2 interfaces, 10 messages, 0 errors, 0 warnings (1 allowed in dictionary.json), 8/10 vectors passed
+(exit status 1)
+
+$ bite diff --check-version glasshouse glasshouse-c
+breaking (1)
+  renamed    ZONE/Vent Report/motor_current: now drive_current at the same bits [100, 112)
+value (2)
+  resized    ZONE/Climate Report: declared_bits: 160 -> 176
+  rescaled   ZONE/Irrigation Report/flow_rate: scale 0.25 offset 0 -> scale 0.1 offset 0
+additive (3)
+  relabelled ZONE/Alarm/alarm_code: value 8: label "Low Battery" added
+  added      ZONE/Climate Report/dew_point: field added at [160, 176)
+  relabelled ZONE/Zone Status/operating_mode: value 5: label "Ventilation Purge" added
+documentation (2)
+  documented dictionary.json: source: {"document": "GZC-ICD-001", "revision": "B"} -> {"document": "GZC-ICD-001", "revision": "C"}
+  documented ZONE/Climate Report/leaf_wetness: note: "Table 5-3 prints bits 6-0, which overlap Relative Humidity; transcribed as bits 5-0. See ISSUE-001 in icd-notes/issues.md." -> none
+version 1.0.0 -> 1.0.0; the changes ask for a new major version: NOT sufficient
+(exit status 1)
+
+=== 11. Vectors of the changed messages, from revision C's appendix B; version 2.0.0 ===
+
+$ bite vectors new glasshouse-c --interface ZONE --message "Climate Report" --payload 020b0c12029331e8ff06cb6a76d0019f0dea01a9fde8 --note "GZC-ICD-001 revision C, appendix B.2." --set message_id=2 --set message_length=11 --set zone_number=3 --set sequence_number=18 --set time_of_day=43201000 --set air_temperature=-2.50 --set relative_humidity=81.3 --set leaf_wetness=42 --set outside_temperature=-7.35 --set co2_concentration=415 --set solar_irradiance=356.2 --set wind_speed=4.25 --set dew_point=-5.36
+wrote glasshouse-c/vectors/climate-report.json
+
+$ bite vectors new glasshouse-c --interface ZONE --message "Irrigation Report" --payload 03091fff014998f40520007d12d6873e073a --note "GZC-ICD-001 revision C, appendix B.3." --set message_id=3 --set message_length=9 --set zone_number=7 --set sequence_number=1023 --set time_of_day=21600500 --set valve_4_open=false --set valve_3_open=true --set valve_2_open=false --set valve_1_open=true --set pump_state=Running --set flow_rate=12.5 --set volume_delivered=123456.7 --set nutrient_solution_ph=6.2 --set electrical_conductivity=1.850
+wrote glasshouse-c/vectors/irrigation-report.json
+
+$ bite vectors new glasshouse-c --interface ZONE --message "Vent Report" --payload 04070c13029335d09f404b001352 --note "GZC-ICD-001 revision C, appendix B.4." --set message_id=4 --set message_length=7 --set zone_number=3 --set sequence_number=19 --set time_of_day=43202000 --set roof_vent_offset_sign=Negative --set roof_vent_offset_magnitude=12.5 --set windward_vent_position=37.5 --set leeward_vent_position=0.0 --set vent_drive_state=Opening --set drive_current=850
+wrote glasshouse-c/vectors/vent-report.json
+
+$ bite fmt --check glasshouse-c
+23 files, 0 not canonical
+
+$ bite check --strict glasshouse-c
+allowed: ZONE/Maintenance Data: named by message_type but has no file in messages/; it is identified but not decoded (Defined in GZC-MNT-004, which is not transcribed here.)
+2 interfaces, 10 messages, 0 errors, 0 warnings (1 allowed in dictionary.json), 10/10 vectors passed
+
+$ bite lint glasshouse-c
+0 findings, 0 allowed in dictionary.json
+
+$ bite coverage --strict glasshouse-c
+SUPV/Irrigation Command: 112 bits declared, 112 covered by 13 fields, 0 gaps, 1 vector
+SUPV/Setpoint Command: 128 bits declared, 128 covered by 10 fields, 0 gaps, 1 vector
+SUPV/Time Synchronisation: 112 bits declared, 112 covered by 11 fields, 0 gaps, 1 vector
+SUPV/Vent Command: 96 bits declared, 96 covered by 9 fields, 0 gaps, 1 vector
+ZONE/Alarm: 112 bits declared, 112 covered by 12 fields, 0 gaps, 1 vector
+ZONE/Climate Report: 176 bits declared, 176 covered by 14 fields, 0 gaps, 1 vector
+ZONE/Event Log: 80 bits declared, 80 covered by 7 fields, 0 gaps, 1 vector
+ZONE/Irrigation Report: 144 bits declared, 144 covered by 16 fields, 0 gaps, 1 vector
+ZONE/Vent Report: 112 bits declared, 112 covered by 12 fields, 0 gaps, 1 vector
+ZONE/Zone Status: 128 bits declared, 128 covered by 13 fields, 0 gaps, 1 vector
+ZONE/Maintenance Data: named in message_type, not defined
+10 of 10 messages fully covered; 1 named and not defined; 0 defined and not named
+104 fields: 0 without a source, 0 without a description; 0 of 82 numeric fields without a unit
+0 findings failing, 0 not enforced by the flags given, 1 allowed in dictionary.json
+
+$ bite diff glasshouse glasshouse-c
+breaking (1)
+  renamed    ZONE/Vent Report/motor_current: now drive_current at the same bits [100, 112)
+value (2)
+  resized    ZONE/Climate Report: declared_bits: 160 -> 176
+  rescaled   ZONE/Irrigation Report/flow_rate: scale 0.25 offset 0 -> scale 0.1 offset 0
+additive (3)
+  relabelled ZONE/Alarm/alarm_code: value 8: label "Low Battery" added
+  added      ZONE/Climate Report/dew_point: field added at [160, 176)
+  relabelled ZONE/Zone Status/operating_mode: value 5: label "Ventilation Purge" added
+documentation (2)
+  documented dictionary.json: source: {"document": "GZC-ICD-001", "revision": "B"} -> {"document": "GZC-ICD-001", "revision": "C"}
+  documented ZONE/Climate Report/leaf_wetness: note: "Table 5-3 prints bits 6-0, which overlap Relative Humidity; transcribed as bits 5-0. See ISSUE-001 in icd-notes/issues.md." -> none
+version 1.0.0 -> 2.0.0; the changes ask for a new major version: sufficient
+(exit status 1)
+the version is raised by enough
+
+retrace: ok

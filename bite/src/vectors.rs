@@ -1,5 +1,6 @@
 //! Test vectors carried by a dictionary: payloads and what they decode to.
 
+use crate::decode::Value;
 use crate::dictionary::{Dictionary, LoadError};
 use crate::schema::VectorSpec;
 
@@ -82,10 +83,47 @@ pub fn check_vector(dictionary: &Dictionary, vector: &VectorSpec) -> Vec<String>
         match rendered.get(field.as_str()) {
             None => failures.push(format!("{field}: no such field in the decoded message")),
             Some(actual) if actual != expected => {
-                failures.push(format!("{field}: expected {expected:?}, got {actual:?}"))
+                let is_float = matches!(
+                    decoded.field(field).and_then(|d| d.value.as_ref()),
+                    Some(Value::Float(_))
+                );
+                if !(is_float && same_number(expected.as_deref(), actual.as_deref())) {
+                    failures.push(format!("{field}: expected {expected:?}, got {actual:?}"))
+                }
             }
             Some(_) => {}
         }
     }
     failures
+}
+
+/// Whether two rendered values are the same number to nine significant
+/// digits. A scaled field decodes to a float, and `2300 * 0.05 - 102.4` is
+/// `12.599999999999994`; the document, and so the vector, says `12.6`.
+fn same_number(expected: Option<&str>, actual: Option<&str>) -> bool {
+    let (Some(expected), Some(actual)) = (expected, actual) else {
+        return false;
+    };
+    match (expected.trim().parse::<f64>(), actual.parse::<f64>()) {
+        (Ok(a), Ok(b)) if a.is_finite() && b.is_finite() => {
+            (a - b).abs() <= 1e-9 * a.abs().max(b.abs()).max(1e-300)
+        }
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::same_number;
+
+    #[test]
+    fn floats_compare_by_value() {
+        assert!(same_number(Some("12.6"), Some("12.599999999999994")));
+        assert!(same_number(Some("21.0"), Some("21")));
+        assert!(same_number(Some("0"), Some("0")));
+        assert!(!same_number(Some("12.6"), Some("12.65")));
+        assert!(!same_number(Some("12.6"), None));
+        assert!(!same_number(Some("Idle"), Some("0")));
+        assert!(!same_number(Some("0"), Some("0.000001")));
+    }
 }

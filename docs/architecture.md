@@ -119,7 +119,7 @@ memory, and gives the same dictionary and the same issues as
 [`bite-wasm`](../bite-wasm) compiles it for `wasm32-unknown-unknown` and gives
 it a JavaScript interface. `make wasm` writes the module to `site/pkg/`, and
 [`site/decoder/`](../site/decoder) is a static page that uses it: it loads the
-three example dictionaries or a folder the visitor chooses, decodes a payload,
+example dictionaries or a folder the visitor chooses, decodes a payload,
 and draws the payload bit by bit with the bits of each field marked. Nothing is
 sent anywhere; the page needs only a static file server.
 

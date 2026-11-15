@@ -1,0 +1,17 @@
+# The source document and anything extracted from it stay out of the repository
+# unless its handling allows a copy here.
+*.pdf
+*.docx
+*.doc
+icd-extract/
+
+# Captures of real traffic.
+*.pcap
+*.pcapng
+*.cap
+
+# Spreadsheet lock and backup files.
+~$*
+.~lock.*
+*.bak
+.DS_Store

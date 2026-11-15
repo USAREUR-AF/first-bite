@@ -1,0 +1,23 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "01080c1102932e002500096f4e332020",
+    "expect": {
+        "message_type": "Zone Status",
+        "fields": {
+            "message_id": "1",
+            "message_length": "8",
+            "zone_number": "3",
+            "sequence_number": "17",
+            "time_of_day": "43200000",
+            "operating_mode": "Automatic",
+            "door_open": "false",
+            "heating_active": "true",
+            "irrigation_active": "false",
+            "alarm_present": "true",
+            "spare_72": "0",
+            "supply_voltage": "24.15",
+            "zone_label": "N3"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.1."
+}

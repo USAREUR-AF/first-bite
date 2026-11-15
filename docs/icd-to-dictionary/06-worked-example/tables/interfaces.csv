@@ -1,0 +1,3 @@
+interface,description,port,network,transport,type_start,type_stop,length_start,length_stop,word_bits,bit0,first_word,first_bit,word_order,source_section
+ZONE,Zone controller to supervisor: status and measurements.,47010,ip,udp,0,8,8,16,16,lsb,1,0,big,5
+SUPV,Supervisor to zone controller: setpoints and commands.,47011,ip,udp,0,8,8,16,16,lsb,1,0,big,6

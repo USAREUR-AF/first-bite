@@ -1,0 +1,17 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "06090c14029339b802001102123412021240",
+    "expect": {
+        "message_type": "Event Log",
+        "fields": {
+            "message_id": "6",
+            "message_length": "9",
+            "zone_number": "3",
+            "sequence_number": "20",
+            "time_of_day": "43203000",
+            "record_count": "2",
+            "spare_72": "0"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.6."
+}

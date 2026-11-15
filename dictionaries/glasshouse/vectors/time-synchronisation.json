@@ -1,0 +1,21 @@
+{
+    "interface": "SUPV",
+    "payload_hex": "04070c0800000000356ffe200000",
+    "expect": {
+        "message_type": "Time Synchronisation",
+        "fields": {
+            "message_id": "4",
+            "message_length": "7",
+            "zone_number": "3",
+            "sequence_number": "8",
+            "time_of_day": "0",
+            "year": "26",
+            "month": "11",
+            "day": "15",
+            "utc_offset": "-480",
+            "daylight_saving_active": "false",
+            "spare_97": "0"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.10."
+}

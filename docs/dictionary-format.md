@@ -3,20 +3,22 @@
 A dictionary tells `bite` how to decode the messages of one or more
 interfaces. It is a directory of JSON files; nothing about a message set is
 compiled into the decoder. `bite check <dir>` validates a dictionary and runs
-its test vectors.
+its test vectors. Writing one from an interface control document is covered
+by [icd-to-dictionary](icd-to-dictionary/README.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/frame-to-record-dark.svg">
   <img src="img/frame-to-record.svg" width="100%" alt="The 23 bytes of a weather-station Observation message, 0200174b583700fb2e18bcda9b4236000004030201beef, with the bit range of each of its nine fields marked. A table gives the dictionary entry for each field (start bit, stop bit, type, options) and the value it decodes to: message_type Observation, message_length 23, station_id KX7, temperature -12.34, pressure 101325, wind_direction 271.5, humidity 45.5, sample_serial 16909060, checksum beef.">
 </picture>
 
-Three dictionaries ship in [`dictionaries/`](../dictionaries):
+Four dictionaries ship in [`dictionaries/`](../dictionaries):
 
 | Dictionary | Shows |
 |---|---|
 | `weather-station` | UDP messages identified by a payload field; signed, scaled, float, boolean, text, little-endian and non-byte-aligned fields |
 | `vehicle-can` | CAN frames identified by the frame identifier; little-endian signals in `lsb0` numbering |
 | `toot` | the minimal form: integer fields with value labels |
+| `glasshouse` | two interfaces transcribed from a synthetic interface document, with a source for every field, a declared length for every message and a vector for each: the [worked example](icd-to-dictionary/06-worked-example/README.md) |
 
 ## Layout
 
@@ -41,6 +43,8 @@ telling the messages apart: one ICD, one CAN bus, one serial link.
 | `name` | string | dictionary name |
 | `version` | string | dictionary version |
 | `description` | string | free text |
+| `source` | object | the document the dictionary was transcribed from, see [Keys for authoring](#keys-for-authoring) |
+| `lint` | object | units added to the vocabulary and findings allowed with a reason, see [Keys for authoring](#keys-for-authoring) |
 
 ## `metadata.json`
 
@@ -54,6 +58,9 @@ telling the messages apart: one ICD, one CAN bus, one serial link.
 | `description` (or `mission`) | string | none | free text |
 | `icd` | `{version, date}` | none | the document the interface was transcribed from |
 | `protocol` | `{network, transport}` | none | informational |
+| `source` | object | none | where the interface is defined in the document |
+| `note` | string | none | a remark for the next maintainer |
+| `icd_numbering` | object | none | how the document numbers words and bits, see [Keys for authoring](#keys-for-authoring) |
 
 ### `message_type`
 
@@ -74,6 +81,9 @@ file in `messages/` is identified but not decoded; `bite check` warns about it.
 |---|---|---|
 | `description` | string | free text |
 | `fields` | object | field name to field definition |
+| `declared_bits` | integer | the length the document gives the message, in bits; `bite coverage` measures gaps against it |
+| `source` | object | where the message is defined in the document |
+| `note` | string | a remark for the next maintainer |
 
 ### Field
 
@@ -87,6 +97,8 @@ file in `messages/` is identified but not decoded; `bite check` warns about it.
 | `values` | object | none | raw integer to label |
 | `unit` | string | none | informational |
 | `description` | string | none | informational |
+| `source` | object | the message's | where the field is defined in the document |
+| `note` | string | none | a remark for the next maintainer: an erratum, an encoding the format cannot express |
 
 | Type | Width | Decodes to |
 |---|---|---|
@@ -145,6 +157,76 @@ Each file in `vectors/` is a payload and what it must decode to:
 | `frame_id` | frame identifier, for `frame_id` interfaces |
 | `expect.message_type` | expected message name |
 | `expect.fields` | field name to expected value as text: the label where the field has one, the value otherwise, `null` for a field beyond the payload. Fields not listed are not checked. |
+| `source`, `note` | where the expected values come from |
+
+An expected value is compared as text, except for a field that decodes to a
+float (type `float`, or any field with `scale` or `offset`): there the two are
+compared as numbers to nine significant digits, so a vector can say `12.6`, as
+the document does, where the decoder computes `12.599999999999994`.
+
+## Keys for authoring
+
+The decoder ignores these keys; a dictionary without them decodes the same.
+They are read by `bite coverage`, `bite lint`, `bite diff`, `bite range` and
+the CSV commands, and
+[the conventions](icd-to-dictionary/02-conventions.md) say when each is
+required.
+
+### `source`
+
+Where a definition was transcribed from. Allowed in `dictionary.json`,
+`metadata.json`, a message, a field and a vector. A member that is absent is
+taken from the level above: a field from its message, a message from its
+interface, an interface from the dictionary.
+
+| Key | Meaning |
+|---|---|
+| `document` | the document's identifier |
+| `revision` | its revision |
+| `section` | section number |
+| `table` | table number |
+| `page` | page number |
+
+Each member is text; a number is accepted and written as text by `bite fmt`.
+A source is complete when it resolves a `document`, a `revision` and at least
+one of `section`, `table` and `page`.
+
+### `icd_numbering`
+
+In `metadata.json`: how the document addresses bits, so that `bite range`,
+`bite import-csv` and `bite export-csv` can convert between its "word 3,
+bits 12-5" and `[start, stop)`.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `word_bits` | integer | required | word size in bits, 1 to 64 |
+| `bit0` | `"msb"` or `"lsb"` | required | which end of a word the document numbers first |
+| `first_word` | `0` or `1` | required | the number of the first word |
+| `first_bit` | `0` or `1` | `0` | the number of the first bit of a word |
+| `word_order` | `"big"` or `"little"` | `"big"` | `big`: a word is sent most significant byte first, and ranges are under `"bit_order": "msb0"`. `little`: least significant byte first, and ranges are under `"bit_order": "lsb0"`. |
+
+### `lint`
+
+In `dictionary.json`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `units` | list of strings | units accepted in addition to the [unit vocabulary](icd-to-dictionary/02-conventions.md#units) |
+| `allow` | list of objects | findings that are accepted, each with a reason |
+
+An entry of `allow`:
+
+| Key | Meaning |
+|---|---|
+| `rule` | the rule's identifier, such as `C004` |
+| `at` | the location the entry covers, with everything under it: `ZONE`, `ZONE/Alarm` or `ZONE/Alarm/severity`. Everywhere when absent. |
+| `reason` | why the finding is accepted; required |
+
+`bite lint` and `bite coverage` leave an allowed finding out of their failures
+and report an entry that matches nothing. `bite check --strict` honours an
+entry for the three warnings that have a rule: overlapping fields (`C002`), a
+message named and not defined (`C004`), a message defined and not named
+(`C005`).
 
 ## Limits
 
@@ -182,4 +264,10 @@ JSON. A key or label quoted in a finding is cut to 80 characters.
 | warning | label that is not text, or a label on a `float`, `bytes` or `ascii` field | label ignored |
 
 `bite check` exits non-zero on any error or failed vector; `--strict` also
-fails on warnings.
+fails on warnings that `lint.allow` does not cover.
+
+The loader reads each file with the last of two equal keys winning, so a field
+name written twice in one message loses a field without a warning.
+`bite fmt` refuses such a file. `bite coverage` reports the bits no field
+covers, and `bite lint` the conventions; see
+[bite/README.md](../bite/README.md) for every command.
