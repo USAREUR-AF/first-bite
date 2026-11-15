@@ -134,5 +134,23 @@ A local file written with `encoding: cbor` is a CBOR sequence
 ([RFC 8742](https://www.rfc-editor.org/rfc/rfc8742)): one item after another
 with nothing between them.
 
+## Building a consumer
+
+A consumer of the `rest` sink can be written and tested with no capture and no
+`mind` running. [`examples/weather-station.records.jsonl`](../examples/weather-station.records.jsonl)
+holds the five records `mind` publishes for
+[`examples/weather-station.pcap`](../examples/weather-station.pcap), one per
+line, and [`tools/replay-records.py`](../tools/replay-records.py) POSTs each
+line of such a file to a URL as the sink does: one request per record,
+compact JSON, `Content-Type: application/json`. `--rate 50` sends 50 records
+per second and `--loop` starts again at the end of the file. A `local`
+subscriber writes a file of this form from live traffic. The tool needs
+Python 3 and nothing else:
+
+```bash
+python3 mocks/echo/echo.py &        # or your consumer
+tools/replay-records.py examples/weather-station.records.jsonl http://127.0.0.1:5001/records --rate 5
+```
+
 Sizes and encode times are in [performance.md](performance.md#record-size-and-encoding).
 The goat sink writes JSON only ([goat/contract.md](goat/contract.md)).

@@ -21,6 +21,7 @@ not compiled in, or a missing key stops startup with an error naming the entry.
 | [`publishers.local.yml`](publishers.local.yml) | The built-in publisher. Compiled into the binary. |
 | [`subscribers.local.yml`](subscribers.local.yml) | Local development against the emulators in [`mocks/`](../../mocks): Azurite, an S3 mock, a message-rate counter and a local log file. |
 | [`subscribers.example.yml`](subscribers.example.yml) | One entry per remote sink (REST, Azure Blob Storage, S3, Zenoh) with placeholder addresses and credentials written as references. |
+| [`subscribers.tak.example.yml`](subscribers.tak.example.yml) | Cursor-on-Target events to a TAK server over TLS, and to TAK clients on multicast. |
 | [`goat.example.yml`](goat.example.yml) | Optional: the settings for joining a goat data fabric, read only by a build with the `goat` feature. |
 | [`subpubs.local.yml`](subpubs.local.yml) | Local development: weather-station `Position` records to Cursor-on-Target on port 12001. |
 | [`subpubs.example.yml`](subpubs.example.yml) | The same transform with every key explained. |
@@ -178,7 +179,15 @@ Keys every subscriber has:
 | `subscriber_type`, `subtype` | Which sink; see the table below. |
 | `encoding` | How the sink writes each record: `json` (default) or `cbor`. See [Encoding](#encoding). |
 | `zmq_url`, `zmq_port` | Host and port of the publisher socket to read. |
-| `topics` | Topics to keep. A topic must match exactly. `*` or `all` keeps everything. |
+| `topics` | Topics to keep. An entry matches the topic it spells, exactly: `WX/Position`. An entry that ends in `/` matches every topic that begins with it: `WX/` is every message of interface `WX`. `*` or `all` keeps everything. |
+
+At start-up `mind` warns for each entry that matches no message of the loaded
+dictionary, and names the nearest topics that exist:
+
+```text
+subscriber ToFile: topic "WX/Possition" matches no message of the dictionary, so nothing will arrive on it; nearest: WX/Position, WX/Observation, WX/Heartbeat. An entry matches a topic exactly, or as a prefix when it ends in `/`
+```
+
 
 A subscriber accepts messages of up to 16 MiB; a record is well under 1 MiB.
 A publisher that sends a larger message is disconnected, and that subscriber
@@ -193,6 +202,8 @@ Sinks:
 | `rest` | any; not used | HTTP POST of the record as JSON | always built |
 | `local` | unset or `locallog` | append to a local file, one record per line | always built |
 | `stateful` | unset or `messagerates` | records per topic, written every ten seconds | always built |
+| `udp` | unset | one datagram per record to each destination, unicast or multicast; with a `cot:` block, a Cursor-on-Target event | always built |
+| `tcp` | unset | a stream to each destination, optionally inside TLS; with a `cot:` block, Cursor-on-Target events for a TAK server | always built |
 | `zenoh` | unset | Zenoh put | `zenoh` |
 | `goat` | unset | Zenoh put on a goat data fabric; optional, off by default. Its settings are in the file `GOAT_CONFIG_PATH` names ([`goat.example.yml`](goat.example.yml), [docs/goat/joining.md](../../docs/goat/joining.md)) | `goat` |
 
@@ -283,6 +294,53 @@ verification off.
 |---|---|
 | `local_logfile` | optional: file the counts go to; default `messagerates.log` in the working directory |
 
+### `udp` and `tcp`
+
+Each record on the subscriber's topics is sent to every destination listed.
+Nothing is sent anywhere else: `destinations` is required and has no default.
+
+What is sent:
+
+| Subscriber has | Payload | On `udp` | On `tcp` |
+|---|---|---|---|
+| a `cot:` block | the Cursor-on-Target event built from the record ([`cotify/README.md`](../../cotify/README.md)), as XML | one event per datagram | events one after another, as a TAK server's streaming input reads them |
+| no `cot:` block | the record, in the subscriber's `encoding` | one record per datagram | JSON: one record per line. CBOR: one item after another |
+
+| Key | |
+|---|---|
+| `destinations` | required: a list, each entry an `address` and options |
+| `destinations[].address` | `host:port`; an IPv6 address is written `[address]:port`. A name that resolves to several addresses: `tcp` tries each in turn until one connects; `udp` sends to the first and logs it at start-up, so prefer a literal address for `udp` ([docs/cot-to-tak.md](../../docs/cot-to-tak.md#a-destination-given-by-name)) |
+| `destinations[].source_port` | optional: the local port to send from. A TAK server can tell inputs apart by it. Unset: the system chooses |
+| `destinations[].ttl` | `udp` to a multicast group: routers a datagram may cross. Default 1, the local network |
+| `destinations[].interface` | `udp` to a multicast group: the interface to send from, as its IPv4 address (its index for an IPv6 group). Unset: the system's choice |
+| `cot` | optional: the mapping from fields to a Cursor-on-Target event |
+| `tls` | `tcp` only, optional: run the stream inside TLS |
+| `tls.ca_file` | PEM file of the authorities the server's certificate is checked against. No other authority is trusted. Left out: `ca_bundle` of the security block; one of the two is required |
+| `tls.client_cert_file`, `tls.client_key_file` | optional, together: PEM certificate and key presented to the server. Left out: `client_cert` and `client_key` of the security block, when it has them |
+| `tls.server_name` | optional: the name the server's certificate must carry. Default: the destination's host |
+| `queue` | `tcp` only: payloads held per destination while its connection is down. Default 1000 |
+
+A `udp` subscriber sends and keeps nothing. A `tcp` subscriber keeps one
+connection per destination. While a connection is down its payloads wait in
+the queue, the connection is retried after 1 s, 2 s, 4 s and so on up to 30 s,
+and a payload that finds the queue full is dropped and counted. Every minute
+in which a count changed, one log line per destination reports it:
+
+```text
+subscriber PositionsToTakServer: tcp tak.example.org:8089: 1204 sent, 0 dropped with the queue full, 0 failed, 1 reconnections
+```
+
+A record the mapping cannot use (a message without the mapped fields, a
+packet that did not decode) is reported and not sent; select the messages
+with `topics`.
+
+`udp`, and `tcp` without `tls`, are not encrypted. Under a `security` block
+at level `tls` or `mtls` they are refused for a destination on another host
+unless the subscriber carries `security: { transport: unenforced, reason: … }`
+([docs/security/transport.md](../../docs/security/transport.md)). [`subscribers.tak.example.yml`](subscribers.tak.example.yml)
+has both forms, and [docs/cot-to-tak.md](../../docs/cot-to-tak.md) is the
+worked example.
+
 ### `zenoh`
 
 | Key | |
@@ -320,6 +378,8 @@ subscriber opens one session.
 | `objectstorage` | object `….json`, content type `application/json` | object `….cbor`, content type `application/cbor` |
 | `rest` | body JSON, `Content-Type: application/json` | body CBOR, `Content-Type: application/cbor` |
 | `local` | one record per line | a CBOR sequence (RFC 8742): one item after another |
+| `udp`, `tcp` without `cot` | the record as JSON; on `tcp`, one per line | the record as one CBOR item |
+| `udp`, `tcp` with `cot` | refused at startup: the event is XML | refused at startup |
 | `zenoh` | Zenoh encoding `application/json` | Zenoh encoding `application/cbor` |
 | `goat` | JSON | refused at startup: the schema declared for each record is a JSON Schema |
 | `stateful` | counts only | refused at startup: no record is stored |

@@ -15,6 +15,7 @@ use async_trait::async_trait;
 use log::{debug, info};
 use serde::Deserialize;
 use std::path::PathBuf;
+use std::time::Duration;
 use tokio::sync::OnceCell;
 use zenoh::bytes::Encoding;
 
@@ -287,6 +288,16 @@ impl Sink for ZenohSink {
             .map_err(zenoh_error)?;
         debug!("put a record on {key}");
         Ok(())
+    }
+
+    /// Close the session, which sends what Zenoh has batched.
+    async fn finish(&self, _within: Duration) -> u64 {
+        if let Some(session) = self.session.get() {
+            if let Err(e) = session.close().await {
+                log::warn!("Zenoh session did not close cleanly: {e}");
+            }
+        }
+        0
     }
 }
 

@@ -292,6 +292,16 @@ impl Sink for GoatSink {
         Ok(())
     }
 
+    /// Close the session, which sends what Zenoh has batched.
+    async fn finish(&self, _within: Duration) -> u64 {
+        if let Some(session) = self.session.get() {
+            if let Err(e) = session.close().await {
+                warn!("goat: the Zenoh session did not close cleanly: {e}");
+            }
+        }
+        0
+    }
+
     async fn send(&self, _topic: &str, record: &str) -> Result<(), SinkError> {
         let Some(key) = self.key_for(record)? else {
             self.counters.undecoded.fetch_add(1, Ordering::Relaxed);

@@ -11,6 +11,7 @@ pub mod run;
 pub mod security;
 pub mod source;
 pub mod splash;
+pub mod topics;
 
 pub use crate::error::Error;
 pub use crate::pipeline::{Decapsulation, Pipeline};

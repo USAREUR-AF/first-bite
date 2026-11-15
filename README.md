@@ -27,8 +27,8 @@ the software their owner authorises.** It listens on a network tap or a
 switch mirror port, local or tunnelled (ERSPAN, GRE or VXLAN), decodes each
 fixed-layout message against a dictionary, and publishes one record per
 message on a ZeroMQ PUB socket: typed values, as JSON by default or CBOR. Sinks forward the records to S3-compatible
-storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
-transform emits Cursor-on-Target. Records stay on the machine until its owner
+storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and
+deliver Cursor-on-Target events to a TAK server or to TAK clients. Records stay on the machine until its owner
 configures a destination: the record socket binds loopback by default and no
 sink runs unless one is configured. The record socket is plaintext and
 unauthenticated and stays on the host; other hosts are served by the Zenoh
@@ -220,6 +220,7 @@ sudo BITE_DICT_PATH=/path/to/dictionary ./target/release/mind eth0
 | `--env-file <file>` | load `KEY=VALUE` lines into the environment first |
 | `--output` | also write every record to `completelog_<time>.log` |
 | `--activate-subpubs` | run the transforms in the subpub configuration |
+| `--drain-seconds <n>` | when input ends or the process is told to stop, give the sinks this long to deliver what was already published; default 30. [docs/deployment.md](docs/deployment.md#when-a-run-ends) |
 
 Configuration read from the environment:
 
@@ -334,6 +335,13 @@ one that kept the latest status of every source on a board. The dictionary
 format, the Cursor-on-Target output and the
 [hello-galaxy-record-consumers](https://github.com/USAREUR-AF/hello-galaxy-record-consumers)
 example all descend from that work.
+
+Others built the pieces around it. Nel Abdiel wrote an early decoder and the
+first HTTP service around the dictionary. Ben built the first gateway from
+decoded tracks to another system and fixed a test that differed between
+processors. Chris Gilmer wrote the collector that came before this one, with
+its in-process test of multicast delivery. Jonah wrote the first script that
+sent events to a TAK server, which showed what detail a TAK client reads.
 
 ## Contributing
 

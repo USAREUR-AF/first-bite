@@ -30,13 +30,17 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends libpcap0.8 ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --system --user-group --no-create-home --home-dir /var/lib/first-bite \
+    && groupadd --system --gid 10001 firstbite \
+    && useradd --system --uid 10001 --gid 10001 --no-create-home --home-dir /var/lib/first-bite \
         --shell /usr/sbin/nologin firstbite \
     && install -d -o firstbite -g firstbite /var/lib/first-bite
 COPY --from=builder /src/target/release/mind /src/target/release/bite /usr/local/bin/
 COPY dictionaries /usr/share/first-bite/dictionaries
 COPY LICENSE NOTICE INTENT.md /usr/share/doc/first-bite/
-USER firstbite
+# The user `firstbite`, by number: a runtime that must check the user is not
+# root before it starts the container (Kubernetes `runAsNonRoot`) can do so
+# only for a numeric user.
+USER 10001:10001
 # --output and a local-file sink write relative paths here.
 WORKDIR /var/lib/first-bite
 # ZeroMQ PUB socket of the default publisher; UDP socket of --mock.

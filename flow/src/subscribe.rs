@@ -2,12 +2,15 @@
 //! topics to one sink.
 
 use crate::config::{load_subscriber_configs, SubscriberConfig};
+use crate::delivery::{Account, SinkReport, Tracker};
 use crate::error::{ConfigError, Error};
-use crate::feed::{Feed, FeedConfig};
+use crate::feed::{Feed, FeedConfig, Polled};
 use crate::security::Security;
 use crate::sink::{build_sink_secured, Sink, SinkError};
 use log::{error, info, warn};
+use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 use tokio::runtime::{Builder, Handle};
 
 /// Worker threads for sink I/O. Sinks spend their time waiting on the
@@ -74,12 +77,26 @@ impl Subscribers {
         self.subscribers.is_empty()
     }
 
-    /// Run every subscriber on its own thread. Returns at once when there are
-    /// none; otherwise blocks for the life of the process.
-    pub fn run(self) -> Result<(), Error> {
-        if self.subscribers.is_empty() {
-            return Ok(());
-        }
+    /// Each subscriber's name, the local port it reads (when it reads this
+    /// machine) and its topic entries; empty entries mean every topic.
+    pub fn topics(&self) -> Vec<(String, Option<String>, Vec<String>)> {
+        self.subscribers
+            .iter()
+            .map(|subscriber| {
+                let feed = &subscriber.feed;
+                (
+                    feed.name.clone(),
+                    feed.local.then(|| feed.port.clone()),
+                    feed.filter.entries().to_vec(),
+                )
+            })
+            .collect()
+    }
+
+    /// Start every subscriber on its own thread and return at once. The
+    /// subscribers run until [`Running::drain`] is called or the process
+    /// ends.
+    pub fn start(self) -> Result<Running, Error> {
         let workers = thread::available_parallelism()
             .map_or(1, |n| n.get())
             .min(MAX_SINK_WORKERS);
@@ -91,19 +108,51 @@ impl Subscribers {
             .map_err(Error::Runtime)?;
         let context = zmq::Context::new();
 
+        let accounts: Vec<Arc<Account>> = self
+            .subscribers
+            .iter()
+            .map(|subscriber| {
+                let feed = &subscriber.feed;
+                Arc::new(Account::new(
+                    &feed.name,
+                    feed.local.then(|| feed.port.clone()),
+                    feed.filter.clone(),
+                    feed.filter.subscriptions(),
+                ))
+            })
+            .collect();
+        let tracker = Arc::new(Tracker::new(accounts.clone()));
+
         let mut threads = Vec::new();
-        for Subscriber { feed, sink } in self.subscribers {
+        for (Subscriber { feed, sink }, account) in self.subscribers.into_iter().zip(accounts) {
             let feed = feed.connect(&context)?;
             let handle = runtime.handle().clone();
+            let tracker = Arc::clone(&tracker);
             let name = format!("sub-{}", feed.name());
             let thread = thread::Builder::new()
                 .name(name.clone())
-                .spawn(move || forward(&feed, sink.as_ref(), &handle))
+                .spawn(move || forward(&feed, sink.as_ref(), &handle, &tracker, &account))
                 .map_err(|source| Error::Thread { name, source })?;
             threads.push(thread);
         }
-        info!("running {} subscriber(s)", threads.len());
-        for thread in threads {
+        if !threads.is_empty() {
+            info!("running {} subscriber(s)", threads.len());
+        }
+        Ok(Running {
+            tracker,
+            threads,
+            _runtime: runtime,
+        })
+    }
+
+    /// Run every subscriber and block for the life of the process. Returns at
+    /// once when there are none.
+    pub fn run(self) -> Result<(), Error> {
+        if self.subscribers.is_empty() {
+            return Ok(());
+        }
+        let running = self.start()?;
+        for thread in running.threads {
             if thread.join().is_err() {
                 error!("a subscriber thread panicked");
             }
@@ -112,23 +161,88 @@ impl Subscribers {
     }
 }
 
+/// The subscribers of a process, running.
+pub struct Running {
+    tracker: Arc<Tracker>,
+    threads: Vec<thread::JoinHandle<()>>,
+    _runtime: tokio::runtime::Runtime,
+}
+
+impl Running {
+    /// The account the publishers add to; see [`crate::Publishers::feed`].
+    pub fn tracker(&self) -> Arc<Tracker> {
+        Arc::clone(&self.tracker)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.threads.is_empty()
+    }
+
+    /// Input has ended. Give every subscriber up to `within` to deliver what
+    /// was published for it and what its sink holds, stop them, and report
+    /// what each did. A subscriber still inside a delivery when the time runs
+    /// out is left behind and reported as it stands.
+    pub fn drain(self, within: Duration) -> Vec<SinkReport> {
+        let reports = self.tracker.drain(within);
+        for thread in self.threads {
+            if thread.is_finished() && thread.join().is_err() {
+                error!("a subscriber thread panicked");
+            }
+        }
+        reports
+    }
+}
+
+/// How long a subscriber waits for a record before it looks at whether the
+/// run is ending.
+const POLL_INTERVAL: Duration = Duration::from_millis(100);
+
 /// Prepare the sink, then pass it every record the feed delivers. The socket
 /// is already connected, so records that arrive during preparation wait in
-/// its queue.
-fn forward(feed: &Feed, sink: &dyn Sink, runtime: &Handle) {
+/// its queue. Once the run is ending the subscriber goes on until it has
+/// handed over everything published for it, lets the sink finish, and stops.
+fn forward(feed: &Feed, sink: &dyn Sink, runtime: &Handle, tracker: &Tracker, account: &Account) {
     let name = feed.name();
     if let Err(e) = runtime.block_on(sink.prepare()) {
         error!("subscriber {name}: cannot prepare the sink: {e}");
     }
     let mut failures = Failures::default();
-    while let Some((topic, record)) = feed.next() {
-        match runtime.block_on(sink.send(&topic, &record)) {
-            Ok(()) => failures.recovered(name),
-            Err(e) => failures.failed(name, &topic, &e),
+    loop {
+        if tracker.is_expired() {
+            break;
+        }
+        match feed.poll(POLL_INTERVAL) {
+            Polled::Record(topic, record) => match runtime.block_on(sink.send(&topic, &record)) {
+                Ok(()) => {
+                    account.delivered();
+                    failures.recovered(name);
+                }
+                Err(e) => {
+                    account.failed();
+                    failures.failed(name, &topic, &e);
+                }
+            },
+            Polled::Closed => break,
+            Polled::Idle if tracker.is_draining() => {
+                // With no account of what is owed, a quiet socket is the
+                // only sign that nothing more is coming.
+                if account.caught_up() || !account.is_tracked() {
+                    break;
+                }
+            }
+            Polled::Idle => {}
         }
     }
+    // What the sink accepted and has not sent yet gets the time that is left.
+    let left = tracker.time_left().unwrap_or(FINISH_WITHIN);
+    let held = runtime.block_on(sink.finish(left));
+    account.finish(held, sink.lost());
     info!("subscriber {name} stopped");
 }
+
+/// What a sink is given to send what it holds when its subscriber stops
+/// with no drain in progress.
+const FINISH_WITHIN: Duration = Duration::from_secs(10);
 
 /// Keeps a sink that is down from writing one log line per record.
 #[derive(Default)]

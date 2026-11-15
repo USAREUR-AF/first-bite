@@ -5,10 +5,13 @@
 //! JSON text or, for a publisher with `encoding: cbor`, as one CBOR item.
 
 use crate::config::{load_publisher_configs, PublisherConfig};
+use crate::delivery::Tracker;
 use crate::encoding::{Encoding, EncodingError};
 use crate::error::{ConfigError, Error, Problem};
 use log::{debug, info, warn};
 use serde::Deserialize;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 pub(crate) const TOPIC_DELIMITER: char = '|';
 
@@ -67,6 +70,14 @@ pub struct Publisher {
     rule: TopicRule,
     topic_suffix: Option<String>,
     encoding: Encoding,
+    /// The port the socket is bound to, as written in the address.
+    port: String,
+    /// Subscriptions heard so far, and how many the subscribers of this
+    /// process will make.
+    subscriptions: std::cell::Cell<u64>,
+    expected_subscriptions: u64,
+    /// Whether the socket hears subscriptions: a PUB socket does, PUSH not.
+    listens: bool,
 }
 
 /// `<topic>|<payload>`.
@@ -86,7 +97,9 @@ impl Publisher {
             problem: Problem::InvalidValue { key, reason },
         };
         let socket_type = match config.publisher_type.as_str() {
-            "PUB" => zmq::PUB,
+            // XPUB sends as PUB does and also hears each subscription, so the
+            // process can tell when its own subscribers are listening.
+            "PUB" => zmq::XPUB,
             "PUSH" => zmq::PUSH,
             other => {
                 return Err(invalid(
@@ -132,6 +145,12 @@ impl Publisher {
         socket
             .set_linger(0)
             .map_err(Error::zmq(describe("configure the socket for")))?;
+        if socket_type == zmq::XPUB {
+            // Every subscription is reported, not only the first for a topic.
+            socket
+                .set_xpub_verbose(true)
+                .map_err(Error::zmq(describe("configure the socket for")))?;
+        }
         socket
             .bind(&config.address)
             .map_err(Error::zmq(describe("bind")))?;
@@ -154,6 +173,15 @@ impl Publisher {
             rule,
             topic_suffix: config.topic_suffix.clone(),
             encoding,
+            port: config
+                .address
+                .rsplit(':')
+                .next()
+                .unwrap_or_default()
+                .to_string(),
+            subscriptions: std::cell::Cell::new(0),
+            expected_subscriptions: 0,
+            listens: socket_type == zmq::XPUB,
         })
     }
 
@@ -169,12 +197,14 @@ impl Publisher {
     /// derives from it.
     pub fn publish(&self, record: &str) -> Result<(), PublishError> {
         self.publish_encoded(record, &self.encoding.encode(record)?)
+            .map(|_| ())
     }
 
     /// Publish a record whose bytes in this publisher's encoding are already
     /// at hand. `record` is the same record as JSON text; the topic is read
     /// from it.
-    fn publish_encoded(&self, record: &str, payload: &[u8]) -> Result<(), PublishError> {
+    /// Returns the topic the record went out on.
+    fn publish_encoded(&self, record: &str, payload: &[u8]) -> Result<String, PublishError> {
         let topic = match self.rule {
             TopicRule::Catchall => "catchall".to_string(),
             TopicRule::Location => {
@@ -209,7 +239,18 @@ impl Publisher {
         }
         message.extend_from_slice(payload);
         debug!("publisher {} sending on {}", self.name, self.address);
-        Ok(self.socket.send(message, 0)?)
+        self.socket.send(message, 0)?;
+        Ok(topic)
+    }
+
+    /// Read the subscriptions that have arrived on the socket.
+    fn hear_subscriptions(&self) {
+        // A subscription is one frame: 1, then the topic.
+        while let Ok(frame) = self.socket.recv_bytes(zmq::DONTWAIT) {
+            if frame.first() == Some(&1) {
+                self.subscriptions.set(self.subscriptions.get() + 1);
+            }
+        }
     }
 
     /// Publish `payload`, a JSON document, on `topic`, extended by this
@@ -243,6 +284,8 @@ fn binds_this_machine_only(address: &str) -> bool {
 /// sockets close when it is dropped.
 pub struct Publishers {
     publishers: Vec<Publisher>,
+    /// The account of what each subscriber of this process is owed.
+    tracker: Option<Arc<Tracker>>,
 }
 
 impl Publishers {
@@ -260,7 +303,78 @@ impl Publishers {
             .iter()
             .map(|config| Publisher::bind(&context, config))
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Publishers { publishers })
+        Ok(Publishers {
+            publishers,
+            tracker: None,
+        })
+    }
+
+    /// Tell the publishers which subscribers of this process they feed, so
+    /// that each record sent is added to what those subscribers are owed.
+    pub fn feed(&mut self, tracker: Arc<Tracker>) {
+        for publisher in &mut self.publishers {
+            if publisher.listens {
+                publisher.expected_subscriptions = tracker.feed_from(&publisher.port);
+            }
+        }
+        self.tracker = Some(tracker);
+    }
+
+    /// Wait until the subscribers of this process have subscribed, or
+    /// `timeout` has passed. A PUB socket discards what it sends before a
+    /// subscription arrives. Returns whether all were heard.
+    pub fn wait_for_subscribers(&self, timeout: Duration) -> bool {
+        let deadline = Instant::now() + timeout;
+        loop {
+            let mut ready = true;
+            for publisher in &self.publishers {
+                if publisher.listens {
+                    publisher.hear_subscriptions();
+                }
+                ready &= publisher.subscriptions.get() >= publisher.expected_subscriptions;
+            }
+            if ready {
+                return true;
+            }
+            if Instant::now() >= deadline {
+                return false;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    }
+
+    /// The port each publisher is bound to and how it forms topics: `*`,
+    /// `location`, `message_type` or `subsystem/message_type`.
+    pub fn topic_rules(&self) -> Vec<(String, &'static str)> {
+        self.publishers
+            .iter()
+            .map(|publisher| {
+                let rule = match publisher.rule {
+                    TopicRule::Catchall => "*",
+                    TopicRule::Location => "location",
+                    TopicRule::MessageType => "message_type",
+                    TopicRule::SubsystemMessageType => "subsystem/message_type",
+                };
+                (publisher.port.clone(), rule)
+            })
+            .collect()
+    }
+
+    /// Close the sockets, giving what is queued for a connected consumer up
+    /// to `linger` to leave. Without this a socket is closed at once and what
+    /// it had not yet sent is discarded.
+    pub fn close(self, linger: Duration) {
+        let milliseconds = i32::try_from(linger.as_millis()).unwrap_or(i32::MAX);
+        for publisher in &self.publishers {
+            if let Err(e) = publisher.socket.set_linger(milliseconds) {
+                warn!(
+                    "publisher {}: cannot set the linger time: {e}",
+                    publisher.name
+                );
+            }
+        }
+        // Dropping the sockets and their context waits for the linger time.
+        drop(self);
     }
 
     pub fn len(&self) -> usize {
@@ -295,8 +409,13 @@ impl Publishers {
                     }
                 }
             };
-            if let Err(e) = sent {
-                warn!("publisher {}: {e}", publisher.name);
+            match sent {
+                Ok(topic) => {
+                    if let Some(tracker) = &self.tracker {
+                        tracker.published(&publisher.port, &topic);
+                    }
+                }
+                Err(e) => warn!("publisher {}: {e}", publisher.name),
             }
         }
     }

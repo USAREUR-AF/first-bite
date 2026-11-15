@@ -303,8 +303,10 @@ README.
 
 Each release publishes an image for `linux/amd64` and `linux/arm64` with
 `mind` as the entry point, `bite` beside it, and the example dictionaries in
-`/usr/share/first-bite/dictionaries`. It runs as the non-root user `firstbite`
-and, started with no arguments, prints the options of `mind` and exits.
+`/usr/share/first-bite/dictionaries`. It runs as the non-root user `firstbite`,
+which the image declares by number, `10001:10001`, so Kubernetes can enforce
+`runAsNonRoot: true` without a `runAsUser` of your own. Started with no
+arguments, it prints the options of `mind` and exits.
 
 ```bash
 docker pull ghcr.io/usareur-af/first-bite:<version>
@@ -414,6 +416,52 @@ tell cargo to use it.
 
 The offline machine needs the Rust toolchain, a C and C++ compiler, CMake and
 the libpcap headers (`libpcap-dev`) installed beforehand.
+
+## When a run ends
+
+A run ends when a capture file is exhausted (`--pcap-file`) or the process
+receives SIGINT or SIGTERM. `mind` then stops reading and gives the sinks up
+to `--drain-seconds` (default 30) to deliver the records already published.
+Each sink stops as soon as it has delivered what was published for it, so a
+run whose sinks are keeping up ends at once. The log then states, per sink:
+
+```text
+sink ToCollector: 18 delivered, 0 failed, 0 abandoned
+```
+
+| Count | Meaning |
+|---|---|
+| delivered | the sink handed the record over: the endpoint answered, the object was stored, the line was written |
+| failed | the sink tried and the destination refused or did not answer, after the sink's own retries |
+| abandoned | published for the sink and not delivered when the time ran out, or lost before it reached the sink |
+
+| Exit status | Meaning |
+|---|---|
+| 0 | the input was read, and every sink delivered what was published for it, or failed some records and delivered others |
+| 3 | the input was read, and a sink abandoned records or delivered none of those it was given |
+| 1 | the run could not start, or the source failed |
+
+Set `--drain-seconds` above the longest a sink may take to make its first
+delivery: a first name lookup or TLS handshake of several seconds is common in
+a cluster. A job that replays a capture file should treat status 3 as a
+failure; the records can be replayed again.
+
+During a file replay `mind` reads no faster than the sinks deliver: when a
+sink is more than 500 records behind, reading waits for it. A sink that
+delivers nothing for five seconds is no longer waited for, and the log says
+so. Live capture is never held up by a sink.
+
+The record socket is closed last and waits up to half a second for a consumer
+in another process to take what is queued for it.
+
+## A site that allows capture only
+
+Where a site permits a box that records traffic and no live decoder or
+uplink, [`deployment/capture-node`](../deployment/capture-node/README.md)
+captures to a ring of files bounded by size and age and, where storage is
+reachable, copies completed files to an S3-compatible bucket. The files are
+decoded afterwards with `mind --pcap-file`. Built; measured in a container,
+not on a physical tap.
 
 ## Status
 

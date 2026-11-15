@@ -1,0 +1,50 @@
+# Copy completed capture files to S3-compatible storage, once. The timer of
+# the same name starts it. install.sh copies this to
+# /etc/systemd/system/first-bite-capture-mirror.service.
+[Unit]
+Description=first-bite capture node: mirror completed capture files to object storage
+Documentation=https://github.com/USAREUR-AF/first-bite/tree/main/deployment/capture-node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fbcapture
+Group=fbcapture
+EnvironmentFile=/etc/first-bite-capture/capture.env
+# The access key is read by systemd, as root, from a file only root can read,
+# and handed to this service alone. It is never in this unit, in the
+# environment file or on a command line.
+LoadCredential=s3:/etc/first-bite-capture/s3-credentials
+ExecStart=/usr/bin/python3 /usr/local/lib/first-bite-capture/mirror.py
+StandardOutput=append:/var/log/first-bite-capture/mirror.log
+StandardError=append:/var/log/first-bite-capture/mirror.log
+# A run that is still uploading when the next is due is left to finish.
+TimeoutStartSec=6h
+
+StateDirectory=first-bite-capture
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/first-bite-capture
+
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/log/first-bite-capture
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+RemoveIPC=yes
+SystemCallArchitectures=native
+UMask=0027

@@ -1,0 +1,14 @@
+# Start the mirror every five minutes. install.sh copies this to
+# /etc/systemd/system/first-bite-capture-mirror.timer and enables it only when
+# a storage endpoint is configured.
+[Unit]
+Description=first-bite capture node: mirror completed capture files every five minutes
+Documentation=https://github.com/USAREUR-AF/first-bite/tree/main/deployment/capture-node
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

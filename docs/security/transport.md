@@ -31,6 +31,8 @@ some of those paths are fit to cross a network.
 | ZeroMQ PUB socket (`publishers.yml`, default `tcp://127.0.0.1:12000`) | plaintext, no authentication | consumers on the same host only |
 | REST sink, Azure Blob sink, S3 sink over `https://` | TLS, optionally with a client certificate | consumers and stores on other hosts |
 | Zenoh sink over `tls/` or `quic/` | TLS, optionally with a client certificate | consumers on other hosts |
+| `tcp` sink with a `tls` block | TLS, optionally with a client certificate | a TAK server on another host |
+| `udp` sink, `tcp` sink without `tls` | plaintext, no authentication | a destination on the same host; another host only with a reasoned override |
 | local file sinks | no network | this host |
 
 **A consumer on another host reads records through the Zenoh sink or an HTTPS
@@ -181,6 +183,8 @@ Every refusal happens before a socket is bound or a frame is read, and
 | | ``security: `quic: required` needs a binary built with the cargo feature `quic`; this one was built with: azure, aws, pqc`` |
 | `http://` endpoint under `tls` or `mtls` | ``subscriber ToCollector: level `tls` needs an https:// endpoint; `endpoint_url` gives http://203.0.113.10:5001/records`` |
 | emulator over `http://` under `tls` | ``subscriber ToBlobEmulator: level `tls` needs an https:// endpoint; `cloud_address` gives http://127.0.0.1:10000/devstoreaccount1; for a local emulator give this subscriber `security: { transport: loopback-plaintext, reason: ... }` `` |
+| `udp` to another host under `tls` or `mtls` | ``subscriber ToTak: level `tls` needs TLS, and a `udp` subscriber sends plaintext datagrams; `destinations` gives 203.0.113.10:8087. Use a `tcp` subscriber with a `tls` block, or give this subscriber `security: { transport: unenforced, reason: ... }` `` |
+| `tcp` to another host without `tls`, under `tls` or `mtls` | ``subscriber ToTak: level `tls` needs TLS; `destinations` gives 203.0.113.10:8087 and the subscriber has no `tls` block. Add one, or give this subscriber `security: { transport: unenforced, reason: ... }` `` |
 | off-host sink under `loopback-plaintext` | ``subscriber ToCollector: level `loopback-plaintext` refuses a sink that leaves this host; `endpoint_url` gives https://collector.example/records`` |
 | `mtls` with no identity | ``subscriber ToCollector: level `mtls` needs `client_cert` and `client_key`, in the security block or in this subscriber's `security` `` |
 | `mtls` with a service that takes no client certificate | ``subscriber ToBlob: level `mtls` needs a client certificate, and the public Azure Blob service authorises requests by Shared Key and takes no client certificate; to accept server-only TLS for this sink give it `security: { transport: tls, reason: ... }` `` |
@@ -467,6 +471,8 @@ from the block's `min_tls` and `key_exchange`, before anything can connect.
 | S3 request signature | `hmac` and `sha2`, inside `aws-sigv4` | unchanged; it cannot be redirected, and the posture report says so on every S3 sink | `aws-sigv4` 1.4.3 `Cargo.toml` |
 | Zenoh sink over `tls/` (`zenoh` 1.9.0, `zenoh-link-tls`) | Zenoh installs `ring` as the process default if none exists, then builds from the default; TLS 1.2 and 1.3 without a client certificate, 1.3 only with one; X25519, P-256, P-384 | the process default is already aws-lc-rs when Zenoh starts, so Zenoh's install is a no-op (the first provider installed wins; goatcore `docs/design/zenoh-pqc-tls.md` section 1 uses the same seam) | `zenoh-link-tls` `src/utils.rs` lines 360 to 432 |
 | Zenoh sink over `quic/` | not compiled | feature `quic` enables `transport_quic` (`zenoh-link-quic`, `quinn` 0.11.12); same process default; TLS 1.3 | `zenoh-link-commons` `src/quic/utils.rs` lines 329 to 452 |
+| `tcp` sink with a `tls` block (`tokio-rustls` 0.26) | did not exist | a rustls configuration on aws-lc-rs from the same builder as the HTTP sinks: the block's `min_tls` and `key_exchange`; trusts `tls.ca_file` or the block's `ca_bundle` and nothing else; presents `tls.client_cert_file` or the block's `client_cert` | `flow/src/sink/network.rs` |
+| `udp` sink, `tcp` sink without `tls` | did not exist | plaintext; destinations checked against the level | `admit` in `flow/src/sink/network.rs` |
 | ZeroMQ sockets | plaintext | plaintext; bind and feed addresses checked | `flow/src/security/mod.rs` |
 
 `ring` 0.17.14 is no longer in the tree of a default build. It remains in a

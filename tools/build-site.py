@@ -40,12 +40,13 @@ UNPUBLISHED_FOLDERS = {"img", "brief"}
 # Optional: order of the top-level pages, shorter navigation labels, the line
 # on the landing-page card and group names. Pages not named here follow in
 # alphabetical order.
-ORDER = ["architecture", "record", "dictionary-format", "performance", "tap", "deployment", "goat-integration", "related-projects"]
+ORDER = ["architecture", "record", "cot-to-tak", "dictionary-format", "performance", "tap", "deployment", "goat-integration", "related-projects"]
 LABEL = {"tap": "Tap or mirror port", "goat-integration": "Zenoh data fabric", "related-projects": "Related projects",
          "README": "Overview"}
 ABOUT = {
     "architecture": "The crates, the path from frame to record, sinks and transforms.",
     "record": "The published record: its fields, its two versions, JSON and CBOR.",
+    "cot-to-tak": "Decode a message, make a Cursor-on-Target event, deliver it to a TAK server.",
     "dictionary-format": "Every key of a dictionary and everything bite check reports.",
     "performance": "The measured figures and the command behind each.",
     "tap": "Taps, mirror ports and tunnelled mirrors; capture interfaces; loss counters.",

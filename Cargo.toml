@@ -51,6 +51,8 @@ libc = "0.2"
 log = "0.4"
 pcap = "2"
 quick-xml = "0.42"
+# Test certificates, made when the tests run: no key is kept in the tree.
+rcgen = "0.14"
 # `-no-provider`: reqwest brings no crypto library of its own; the TLS
 # configuration it is handed carries the process's one provider.
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls-manual-roots-no-provider"] }
@@ -65,8 +67,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_norway = "0.9"
 sha2 = "0.11"
+socket2 = "0.6"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "io-util", "net"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["logging", "tls12"] }
 webpki-roots = "1"
 x509-parser = "0.18"
 zenoh = { version = "=1.9.0", default-features = false, features = ["transport_tcp", "transport_tls"] }
