@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-bite: technical brief</title>
+<meta name="description" content="What first-bite does, how it performs, and what putting it on a network involves.">
+<link rel="stylesheet" href="brief.css">
+</head>
+<body>
+
+<!-- 1 -->
+<section class="page cover">
+  <div class="lockup"><img src="../../icon/first-bite-dark.svg" alt=""><div><b>first-bite</b><span>the first bite of every byte,<br>before it reaches its addressee</span></div></div>
+  <p class="kicker">Technical brief</p>
+  <h1>Binary messages off the wire, decoded and published, without touching the link</h1>
+  <p class="lede">first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to anyone who subscribes. The systems exchanging the messages are not delayed, blocked or altered.</p>
+  <figure><img src="../img/how-it-works.svg" alt="A tap copies the link; first-bite decodes the copy and publishes it."></figure>
+  <div class="numbers">
+    <div><b>340,000 / s</b><span>packets through the whole pipeline on one core</span></div>
+    <div><b>0.3%</b><span>of one core for a link carrying 1,000 messages per second</span></div>
+    <div><b>0</b><span>frames sent on the capture interface</span></div>
+  </div>
+  <div class="meta"><span>Open source, Apache License 2.0</span><span>github.com/USAREUR-AF/first-bite</span></div>
+</section>
+
+<!-- 2 -->
+<section class="page">
+  <p class="kicker">1. The problem</p>
+  <h1>The data is on the wire, and only two systems can read it</h1>
+  <p class="lede">A fixed-layout binary interface is built for the two systems at its ends. Everyone else who needs the data has to become a third end, and each one that does adds work for the native system and risk to the link.</p>
+  <figure><img src="../img/one-decode-many-consumers.svg" alt="Point-to-point integrations against one tap with publish and subscribe."><figcaption><b>Four consumers, two ways.</b> Left: each implements the binary interface and connects to a native system. Right: a tap, one decode, and consumers that read JSON.</figcaption></figure>
+  <div class="cols c2">
+    <div>
+      <h2>What opening the interface costs today</h2>
+      <ul>
+        <li><strong>A parser per consumer.</strong> Each one transcribes the interface document into code: bit offsets, scale factors, value labels. The copies drift apart when the interface changes.</li>
+        <li><strong>A connection per consumer.</strong> The native system has to accept, serve and account for every new peer, and it was sized for the peers it already has.</li>
+        <li><strong>A change to the operational system.</strong> Adding a peer means reconfiguring, retesting and often re-accrediting something that is in use.</li>
+        <li><strong>A message set frozen into software.</strong> When the layout is compiled in, a new field is a new release of every consumer.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What a tap and one decoder change</h2>
+      <ul>
+        <li><strong>The native systems are not touched.</strong> No new peer, no configuration change, no added load. The copy is taken from the link.</li>
+        <li><strong>The layout is written once, as data.</strong> A dictionary of JSON files holds every bit range and label, with test vectors that prove it.</li>
+        <li><strong>Consumers read JSON from a socket</strong>, or from storage, an HTTP endpoint or a data fabric. Adding the tenth consumer costs the native systems what adding the first did: nothing.</li>
+      </ul>
+      <p>first-bite was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it.</p>
+    </div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 3 -->
+<section class="page">
+  <p class="kicker">2. How it works</p>
+  <h1>Tap, decode, publish: it listens, and the link cannot tell</h1>
+  <p class="lede">first-bite is one process that reads frames from a capture interface, decodes them and publishes records on a different interface. Nothing it does can reach the link it listens to.</p>
+  <div class="cols c3">
+    <div class="card tint"><h2>It only reads</h2><p>The capture interface is opened for reading. first-bite never sends on it, and the interface carries no address and answers no protocol.</p></div>
+    <div class="card tint"><h2>There is no way back</h2><p>On a passive tap there is no path from the monitor ports to the link. Nothing downstream of the tap can delay, block or alter a frame.</p></div>
+    <div class="card tint"><h2>It can stop</h2><p>If first-bite stalls, crashes or is switched off, the link carries on exactly as before. The native systems cannot tell it was there.</p></div>
+  </div>
+  <figure class="gap"><img src="../img/tap-placement.svg" alt="Breakout tap, aggregating tap and mirror port compared."><figcaption><b>Three ways to take the copy.</b> A breakout tap gives each direction its own monitor port; first-bite captures on both interfaces at once and merges the frames in arrival order.</figcaption></figure>
+  <div class="cols c3">
+    <div class="step"><i>1</i><p><strong>Capture.</strong> libpcap on one or more interfaces, promiscuous, with an optional kernel filter such as <code>udp port 40100</code>. A capture file or a UDP socket can stand in for the interface.</p></div>
+    <div class="step"><i>2</i><p><strong>Decode.</strong> Find the interface by port and the message by its type field, then extract every field the dictionary names. A packet on a port no interface claims is still published, undecoded.</p></div>
+    <div class="step"><i>3</i><p><strong>Publish.</strong> One JSON record per packet on a ZeroMQ PUB socket, under the topic <code>interface/message</code>. The record also carries the timestamp, addresses, ports and the raw bytes.</p></div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 4 -->
+<section class="page">
+  <p class="kicker">3. From frame to record</p>
+  <h1>Twenty-three bytes in, nine named values out</h1>
+  <p class="lede">The worked example is a test vector that ships with the project: one <code>Observation</code> message from the example weather-station dictionary. Every number in the figure comes from the dictionary file or from decoding these bytes.</p>
+  <figure><img src="../img/frame-to-record.svg" alt="The Observation test vector, its fields, their dictionary entries and decoded values."><figcaption><b>One message, field by field.</b> The fields include a signed scaled integer (4), a 20-bit value that is not byte-aligned (5), a float (7) and a little-endian integer (8).</figcaption></figure>
+  <div class="cols c2">
+    <div>
+      <h2>The command</h2>
+<pre><code>$ bite decode dictionaries/weather-station \
+  --port 40100 \
+  0200174b583700fb2e18bcda9b4236000004030201beef</code></pre>
+      <h2>How a message is found and read</h2>
+      <ol>
+        <li>The UDP or TCP port selects the interface: one hash lookup.</li>
+        <li>Bits 0 to 8 of the payload give the message type, here 2: one more lookup.</li>
+        <li>Each field is one bit extraction, then the scale, the byte order or the label the entry asks for.</li>
+        <li>A field that reaches past the end of a short payload decodes to <code>null</code>; the others still decode.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>What it prints</h2>
+<pre><code>{
+  "fields": {
+    "checksum": "beef",
+    "humidity": 45.5,
+    "message_length": 23,
+    "message_type": "Observation",
+    "pressure": 101325,
+    "sample_serial": 16909060,
+    "station_id": "KX7",
+    "temperature": -12.34,
+    "wind_direction": 271.5
+  },
+  "interface": "WX",
+  "message_type": "Observation"
+}</code></pre>
+    </div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 5 -->
+<section class="page">
+  <p class="kicker">4. The dictionary</p>
+  <h1>The message set is data, with its own tests</h1>
+  <p class="lede">Nothing about a message set is compiled in. A dictionary is a directory of JSON files, loaded once at start, and it carries the test vectors that prove it.</p>
+  <div class="cols c2">
+    <div>
+      <h2>A directory of JSON files</h2>
+<pre><code>weather-station/
+  dictionary.json          name, version
+  WX/
+    metadata.json          port, message type
+    messages/
+      Heartbeat.json
+      Observation.json
+      Position.json
+  vectors/
+    observation.json       payload, expected values</code></pre>
+    </div>
+    <div>
+      <h2>A test vector</h2>
+<pre><code>{
+  "interface": "WX",
+  "payload_hex": "01000c4b5837000001518060",
+  "expect": {
+    "message_type": "Heartbeat",
+    "fields": {"station_id": "KX7",
+               "uptime": "86400",
+               "mode": "Calibrating"}
+  }
+}</code></pre>
+    </div>
+  </div>
+  <h2>A message file: each field is a bit range, a type and its labels</h2>
+<pre><code>{
+  "description": "Sent every ten seconds while the station is powered.",
+  "fields": {
+    "uptime":       {"start": 56, "stop": 88, "unit": "s"},
+    "battery_low":  {"start": 88, "stop": 89, "type": "bool"},
+    "mode":         {"start": 90, "stop": 92, "values": {"0": "Idle", "1": "Sampling", "2": "Calibrating"}}
+  }
+}</code></pre>
+  <div class="cols c2 gap">
+    <div>
+      <h2>What a field can be</h2>
+      <p><code>uint</code> and <code>int</code> of 1 to 64 bits at any alignment, <code>float</code>, <code>bool</code>, <code>bytes</code> and <code>ascii</code>, with a scale and offset, big or little byte order, and <code>msb0</code> or <code>lsb0</code> bit numbering. A value can carry labels, and a message is identified by a payload field or by a frame identifier.</p>
+      <h2>Where the vectors come from</h2>
+      <p>Vectors are computed independently of the decoder, by hand or with a few lines of Python, never by pasting the decoder's output. <code>bite check</code> runs every vector each time, and the installer runs the same check and installs nothing if it fails.</p>
+      <h2>A dictionary you may not publish</h2>
+      <p>Point <code>BITE_DICT_PATH</code> at any directory. The public decoder tests a private dictionary without its contents entering the repository.</p>
+    </div>
+    <div>
+      <h2>What <code>bite check</code> catches</h2>
+      <table>
+        <tr><td class="st n">error</td><td>a file that is not valid JSON or lacks a required key</td></tr>
+        <tr><td class="st n">error</td><td>an empty or inverted bit range; an integer wider than 64 bits; a float that is not 32 or 64 bits</td></tr>
+        <tr><td class="st n">error</td><td>a text or little-endian field that is not byte-aligned</td></tr>
+        <tr><td class="st n">error</td><td>two interfaces claiming one port</td></tr>
+        <tr><td class="st n">failure</td><td>a vector that does not decode to what it expects</td></tr>
+        <tr><td class="st d">warning</td><td>overlapping fields; a message no type value names; a type value with no message file</td></tr>
+      </table>
+      <p>Each finding names the file and the field.</p>
+    </div>
+  </div>
+<pre><code>$ bite check dictionaries/weather-station --strict
+1 interfaces, 3 messages, 0 errors, 0 warnings, 5/5 vectors passed</code></pre>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 6 -->
+<section class="page">
+  <p class="kicker">5. Performance</p>
+  <h1>One core is far more than a link needs</h1>
+  <p class="lede">The whole pipeline takes 2.9 microseconds per packet on one core, so the decoder is not what limits a deployment. Every figure below was produced by a command in the repository and can be reproduced on your hardware.</p>
+  <figure><img src="../img/performance.svg" alt="Decoder throughput, time per packet and share of one core."></figure>
+  <div class="cols c32">
+    <div>
+      <h2>Measured</h2>
+      <table>
+        <tr><td class="num">0.69 µs</td><td>to decode one message: 1.45 million messages, 9.3 million fields per second</td></tr>
+        <tr><td class="num">2.9 µs</td><td>for the whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the JSON record, publish. 340,000 packets per second, over 2,000,000 packets</td></tr>
+        <tr><td class="num">10.7 MB</td><td>resident memory while replaying a 145 MB capture</td></tr>
+        <tr><td class="num">500 of 500</td><td>packets decoded in live capture on two interfaces at once, none dropped</td></tr>
+        <tr><td class="num">194 to 1,700,000</td><td>messages per second: this project's first decoder against the current one, on the same 1,658 recorded messages</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>How</h2>
+      <p>One core of an AMD Ryzen 7 8845HS, a 2024 laptop-class processor, under Linux, with a release build. The load is the weather-station vectors repeated; the pipeline is one thread.</p>
+      <p>The cost per packet does not grow with the dictionary: the interface and the message are each one hash lookup.</p>
+      <h2>Not measured</h2>
+      <p>Live capture at high packet rates on a physical tap, where the network card, the kernel buffer and the sinks set the limit. The loss counters on page 8 show when one of them does.</p>
+    </div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 7 -->
+<section class="page">
+  <p class="kicker">6. One decode, many consumers</p>
+  <h1>Decoded once, delivered wherever it is needed</h1>
+  <p class="lede">Records leave first-bite on a ZeroMQ PUB socket. A consumer subscribes to the topics it wants, or reads what a sink forwarded. Adding a consumer changes nothing on the tapped link and nothing in the decoder.</p>
+  <figure><img src="../img/components.svg" alt="The six crates and what crosses each boundary."><figcaption><b>The parts.</b> <code>mind</code> is the process; <code>bite</code> is the decoder and knows nothing about networks; <code>flow</code> publishes and forwards.</figcaption></figure>
+  <div class="cols c32">
+    <div>
+      <h2>Where records can go</h2>
+      <table>
+        <tr><th>Destination</th><th>How</th><th>Status</th></tr>
+        <tr><td>Any ZeroMQ subscriber</td><td>SUB socket with a topic filter</td><td class="st b">built</td></tr>
+        <tr><td>S3-compatible storage</td><td>sink</td><td class="st b">built</td></tr>
+        <tr><td>Azure Blob Storage</td><td>sink</td><td class="st b">built</td></tr>
+        <tr><td>HTTP endpoint</td><td>sink, one POST per record</td><td class="st b">built</td></tr>
+        <tr><td>Zenoh data fabric</td><td>sink, one key per interface and message</td><td class="st b">built</td></tr>
+        <tr><td>Local file</td><td>sink</td><td class="st b">built</td></tr>
+        <tr><td>Cursor-on-Target</td><td>transform, republished on its own socket</td><td class="st b">built</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>On a Zenoh fabric</h2>
+      <p>Each record is put under a key built from the deployment and the dictionary, with every part sanitised so a value cannot add a level or a wildcard:</p>
+<pre><code>telemetry/&lt;system&gt;/&lt;location&gt;/
+          &lt;interface&gt;/&lt;message&gt;</code></pre>
+      <h2>Cursor-on-Target</h2>
+      <p>A mapping in the configuration says which decoded fields give the identifier, the type and the position; the transform emits one event per record.</p>
+      <h2>A schema for consumers</h2>
+      <p><code>bite schema</code> prints a JSON Schema per message, with bounds, labels and units.</p>
+    </div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 8 -->
+<section class="page">
+  <p class="kicker">7. Deployment</p>
+  <h1>One binary beside the link, installed in one command</h1>
+  <p class="lede">A deployment is a tap, a small Linux host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary needs only glibc and libpcap on the host.</p>
+  <figure><img src="../img/platforms.svg" alt="Where first-bite runs: release tarball, container, from source, offline build."></figure>
+  <div class="cols c2">
+    <div>
+      <h2>Install as a service</h2>
+<pre><code>$ sha256sum --check --ignore-missing SHA256SUMS
+$ tar -xzf first-bite-&lt;version&gt;-&lt;target&gt;.tar.gz
+$ sudo deployment/install.sh \
+    --interface enp3s0 \
+    --dictionary /path/to/dictionary</code></pre>
+      <p>The installer asks no questions, checks the interface, libpcap and the dictionary before it changes anything, and prints what it installed. Settings live in <code>/etc/first-bite/first-bite.env</code>, where a second capture interface is added to <code>FIRST_BITE_INTERFACE</code>; an upgrade keeps them.</p>
+      <h2>Prepare the capture interfaces</h2>
+      <p>A capture interface carries nothing of its own: no address, no ARP, no offloading that merges or splits frames. <code>docs/tap.md</code> has the commands and the netplan stanza that keeps them across reboots.</p>
+    </div>
+    <div>
+      <h2>Know whether frames were lost</h2>
+      <p>Every minute and at shutdown <code>mind</code> logs one line per interface, at warning level when a count has grown:</p>
+<pre><code>capture enp3s0: 1200344 seen by kernel,
+  0 dropped by kernel, 0 by interface,
+  0 in queue</code></pre>
+      <table>
+        <tr><th>Counter grows</th><th>Meaning</th><th>Do</th></tr>
+        <tr><td>dropped by kernel</td><td>capture buffer full</td><td>raise <code>--buffer-mb</code>, add a filter</td></tr>
+        <tr><td>by interface</td><td>card or driver discarded frames</td><td>raise the receive ring</td></tr>
+        <tr><td>in queue</td><td>pipeline behind; a sink is blocking</td><td>check the sink</td></tr>
+      </table>
+      <p>The record socket binds loopback by default. To serve other hosts, bind it to an address on a network you trust, never to a capture interface.</p>
+    </div>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 9 -->
+<section class="page">
+  <p class="kicker">8. Trust</p>
+  <h1>What you can verify before it goes near a network</h1>
+  <p class="lede">Putting a new box beside an operational link is a decision about risk. These are the properties that bound it, and where to check each one.</p>
+  <div class="cols c2">
+    <div class="card">
+      <h2>It listens only</h2>
+      <p>The capture path opens interfaces for reading and has no code that sends on them. On a passive tap the monitor ports have no path back to the link, whatever the software does.</p>
+      <p>Check: <code>mind/src/source.rs</code>; <code>docs/tap.md</code>.</p>
+    </div>
+    <div class="card">
+      <h2>It runs with two capabilities</h2>
+      <p>The service runs as its own system user with <code>CAP_NET_RAW</code> and <code>CAP_NET_ADMIN</code> and no others. Its configuration is readable by root and that user only, because it can hold storage credentials.</p>
+      <p>Check: <code>deployment/first-bite.service</code>.</p>
+    </div>
+    <div class="card">
+      <h2>The record socket is yours to place</h2>
+      <p>The ZeroMQ socket is unauthenticated and unencrypted, so it binds <code>127.0.0.1</code> by default. Access control and encryption come from the transport you forward to: the Zenoh sink joins a fabric with the TLS certificate the fabric issued to it.</p>
+      <p>Check: <code>docs/deployment.md</code>, "The record socket".</p>
+    </div>
+    <div class="card">
+      <h2>The build is checked and traceable</h2>
+      <p>Every code change is formatted, linted with warnings as errors, and tested on Linux and macOS. Dependencies pass a licence policy (cargo-deny) and an advisory scan (cargo-audit). Each release carries an SPDX SBOM, checksums and a build provenance attestation.</p>
+      <p>Check: <code>gh attestation verify &lt;tarball&gt;</code>.</p>
+    </div>
+    <div class="card">
+      <h2>It builds without the internet</h2>
+      <p><code>make vendor</code> copies every dependency into the tree, and the offline machine builds with <code>cargo build --locked --offline</code>. What you review is what you run.</p>
+      <p>Check: <code>docs/deployment.md</code>, "Build without internet access".</p>
+    </div>
+    <div class="card">
+      <h2>The licence is Apache-2.0</h2>
+      <p>Use, modify and redistribute it, including inside a closed system. The repository holds the decoder, the pipeline, the sinks and three synthetic example dictionaries.</p>
+      <p>It holds no dictionary for a restricted message set, no capture of real traffic and no identifier of a real deployment; a gate in CI refuses them.</p>
+    </div>
+  </div>
+  <div class="card soft gap">
+    <h2>Verify a release before you unpack it</h2>
+<pre><code>$ sha256sum --check --ignore-missing SHA256SUMS
+$ gh attestation verify first-bite-&lt;version&gt;-&lt;target&gt;.tar.gz --repo USAREUR-AF/first-bite</code></pre>
+  </div>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+<!-- 10 -->
+<section class="page">
+  <p class="kicker">9. Status and next steps</p>
+  <h1>What is built, and how to try it</h1>
+  <div class="cols c2">
+    <table>
+      <tr><th>Built</th><th>Status</th></tr>
+      <tr><td>Dictionary-driven decoder; <code>bite check</code>, <code>decode</code>, <code>schema</code></td><td class="st b">built, measured</td></tr>
+      <tr><td>Capture on several interfaces, loss counters, clean stop</td><td class="st b">built, measured</td></tr>
+      <tr><td>Decoding CAN-style frames</td><td class="st b">built, measured</td></tr>
+      <tr><td>Installer and container image</td><td class="st b">built, measured</td></tr>
+      <tr><td>Sinks: S3, Azure Blob, HTTP, file, Zenoh; Cursor-on-Target</td><td class="st b">built</td></tr>
+      <tr><td>VLAN-tagged frames (802.1Q, QinQ)</td><td class="st b">built</td></tr>
+      <tr><td>systemd unit (verified; not yet run under systemd)</td><td class="st b">built</td></tr>
+    </table>
+    <table>
+      <tr><th>Not yet</th><th>Status</th></tr>
+      <tr><td>Interactive decoder in the browser; static binary; macOS and Windows builds</td><td class="st d">in progress</td></tr>
+      <tr><td>SocketCAN capture source</td><td class="st d">designed, not built</td></tr>
+      <tr><td>Typed records and schemas published on the fabric</td><td class="st d">designed, not built</td></tr>
+      <tr><td>Which interface, and so which direction, a record came from</td><td class="st n">not built</td></tr>
+      <tr><td>Reassembly of fragmented IP datagrams and TCP streams</td><td class="st n">not built</td></tr>
+      <tr><td>Hardware timestamps; DBC import; MIL-STD-1553 and ARINC 429 sources</td><td class="st n">not built</td></tr>
+    </table>
+  </div>
+  <div class="card soft gap">
+    <div class="cols c32">
+      <div>
+        <h2>Try it in five minutes</h2>
+<pre><code>make build
+cargo run -p bite -- check dictionaries/weather-station
+cargo run -p mind -- \
+    --pcap-file examples/weather-station.pcap \
+    --dictionary dictionaries/weather-station --output</code></pre>
+        <p>Needs a Rust toolchain, a C/C++ compiler, CMake and the libpcap headers. The last command replays a capture through the whole pipeline and publishes on <code>tcp://*:12000</code>.</p>
+      </div>
+      <div>
+        <h2>To put it on a link</h2>
+        <ol>
+          <li>Write the dictionary for your interface, with vectors.</li>
+          <li>Fit a tap; prepare two capture interfaces.</li>
+          <li>Install the tarball; watch the loss counters.</li>
+          <li>Point a sink at where the data is needed.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <figure class="gap"><img src="../img/beyond-ip.svg" alt="What is built, designed and not built for IP, CAN and other buses."></figure>
+  <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
+</section>
+
+</body>
+</html>

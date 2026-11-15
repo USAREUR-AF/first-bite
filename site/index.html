@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>first-bite: binary messages off the wire, decoded and published</title>
+<meta name="description" content="first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary and publishes each as a JSON record, without touching the link it listens to.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+<!-- header -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/mark-dark.svg"><img src="img/mark-light.svg" alt="" width="30" height="30"></picture>first-bite</a>
+    <nav aria-label="Site">
+      <ul>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="index.html#performance">Performance</a></li>
+        <li><a href="decoder/">Interactive decoder</a></li>
+        <li><a href="architecture.html">Documentation</a></li>
+        <li><a href="https://github.com/USAREUR-AF/first-bite">GitHub</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<!-- /header -->
+
+<main id="content" class="wrap">
+  <section class="hero">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="img/wordmark-dark.svg"><img class="wordmark" src="img/wordmark-light.svg" width="380" height="128" alt="first-bite: the first bite of every byte, before it reaches its addressee"></picture>
+    <p class="eyebrow">Open source, Apache-2.0</p>
+    <h1>Binary messages off the wire, decoded, for anyone who needs them</h1>
+    <p class="lede"><strong>first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record that any number of consumers can subscribe to.</strong> It never transmits on the capture interface, so the systems exchanging the messages are not delayed, blocked or altered, and one core handles 340,000 packets per second.</p>
+    <p class="actions">
+      <a class="button primary" href="decoder/">Interactive decoder</a>
+      <a class="button" href="architecture.html">Read the documentation</a>
+      <a class="button" href="first-bite-brief.pdf">Ten-page brief (PDF)</a>
+    </p>
+    <!-- figure: how-it-works -->
+  </section>
+
+  <section aria-labelledby="numbers">
+    <h2 id="numbers" class="eyebrow">Measured on one core</h2>
+    <ul class="numbers">
+      <li><b>0.69 µs</b><span>to decode one message: identify it, extract every field, render the values</span></li>
+      <li><b>340,000 / s</b><span>packets through the whole pipeline, from frame read to record published</span></li>
+      <li><b>0.3%</b><span>of one core for a link carrying 1,000 messages per second</span></li>
+      <li><b>500 of 500</b><span>packets decoded in live capture on two interfaces at once, none dropped</span></li>
+      <li><b>10.7 MB</b><span>resident memory while replaying a 145 MB capture</span></li>
+      <li><b>16.5 MB</b><span>one binary that needs only glibc</span></li>
+    </ul>
+    <p class="source">AMD Ryzen 7 8845HS, release build. <a href="performance.html">The command behind each figure</a>.</p>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-h">
+    <h2 id="how-h">It listens, and the link cannot tell</h2>
+    <p>first-bite opens the capture interface for reading and never sends on it. On a passive tap there is no path from the monitor ports back to the link, so nothing first-bite does can delay, block or alter the traffic between the native systems, and if it stops, the link is unaffected.</p>
+    <p>It was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it. A breakout tap gives each direction its own monitor port and loses nothing; a switch mirror port works where a tap cannot be fitted.</p>
+    <!-- figure: tap-placement | Three ways to take the copy. <a href="tap.html">Running on a tap</a> covers interface preparation and the loss counters. -->
+  </section>
+
+  <section class="section" aria-labelledby="dict-h">
+    <h2 id="dict-h">The message set is data, not code</h2>
+    <p>A dictionary is a directory of JSON files that gives the bit range, type and value labels of every field. The same binary decodes a weather station's UDP reports, the frames on a vehicle CAN bus or a message set of your own, and <code>bite check</code> validates a dictionary and runs the test vectors it carries.</p>
+    <!-- figure: frame-to-record | The weather-station <code>Observation</code> test vector, field by field. Paste your own bytes into the <a href="decoder/">interactive decoder</a>, or read the <a href="dictionary-format.html">dictionary format</a>. -->
+  </section>
+
+  <section class="section" id="performance" aria-labelledby="perf-h">
+    <h2 id="perf-h">One core is far more than a link needs</h2>
+    <p>The whole pipeline (read a frame, parse Ethernet, IP and UDP, decode, build the JSON record, publish) takes 2.9 µs per packet. A link carrying 1,000 messages per second therefore uses about 0.3% of one core, and a record is on the bus about three microseconds after its frame is read.</p>
+    <p>The project's first decoder managed 194 messages per second. The current one decodes 1,700,000 on the same recorded messages, and also decodes the fields the first returned as null.</p>
+    <!-- figure: performance | Every figure comes from a command in the repository: <a href="performance.html">performance</a>. -->
+  </section>
+
+  <section class="section" aria-labelledby="fan-h">
+    <h2 id="fan-h">One decode, any number of consumers</h2>
+    <p>Without a tap, each consumer of a binary interface writes its own parser and holds its own connection to the native system. With first-bite the decode happens once: consumers subscribe to a ZeroMQ socket and read JSON, or read what a sink wrote to S3-compatible storage, Azure Blob, an HTTP endpoint, a <a href="goat-integration.html">Zenoh data fabric</a> or a file. A transform emits Cursor-on-Target.</p>
+    <!-- figure: one-decode-many-consumers -->
+  </section>
+
+  <section class="section" aria-labelledby="run-h">
+    <h2 id="run-h">Where it runs, and what it reads</h2>
+    <p>One process, <code>mind</code>, installed as a systemd service from a release tarball or run in a container. The same decoder reads CAN-style frames; a SocketCAN capture source is <span class="status planned">designed, not built</span>.</p>
+    <!-- figure: platforms | <a href="deployment.html">Deployment</a> covers the tarball, the service, the container and building without internet access. -->
+    <!-- figure: beyond-ip -->
+  </section>
+
+  <section class="section" aria-labelledby="try-h">
+    <h2 id="try-h">Try it in five minutes</h2>
+    <p>Needs a Rust toolchain, a C/C++ compiler, CMake and the libpcap headers.</p>
+<pre tabindex="0"><code>git clone https://github.com/USAREUR-AF/first-bite &amp;&amp; cd first-bite
+make build
+
+# Validate a dictionary and run its test vectors.
+cargo run -p bite -- check dictionaries/weather-station
+
+# Decode one payload by hand.
+cargo run -p bite -- decode dictionaries/weather-station --port 40100 \
+    0200174b583700fb2e18bcda9b4236000004030201beef
+
+# Replay a capture file through the whole pipeline.
+cargo run -p mind -- --pcap-file examples/weather-station.pcap \
+    --dictionary dictionaries/weather-station --output</code></pre>
+  </section>
+
+  <section class="section" aria-labelledby="docs-h">
+    <h2 id="docs-h">Documentation</h2>
+    <div class="cards"><!-- docs-cards --></div>
+  </section>
+</main>
+
+<!-- footer -->
+<footer class="site-footer">
+  <div class="wrap">
+    <span>first-bite, Apache License 2.0</span>
+    <a href="https://github.com/USAREUR-AF/first-bite">Source on GitHub</a>
+    <a href="first-bite-brief.pdf">Ten-page brief (PDF)</a>
+    <a href="decoder/">Interactive decoder</a>
+  </div>
+</footer>
+<!-- /footer -->
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}} · first-bite</title>
+<meta name="description" content="{{description}}">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+{{header}}
+<div class="wrap doc">
+  <nav class="doc-nav" aria-label="Documentation">
+    <ul class="pages">{{nav}}</ul>
+    <div class="toc">
+      <h2>On this page</h2>
+      <ul class="contents">{{contents}}</ul>
+    </div>
+  </nav>
+  <main class="prose" id="content">
+{{content}}
+    <nav class="pager" aria-label="Previous and next page">{{prev_next}}</nav>
+    <p class="edit">The source of this page is <a href="{{source}}">a Markdown file in the repository</a>.</p>
+  </main>
+</div>
+{{footer}}
+</body>
+</html>

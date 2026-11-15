@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 444" width="760" height="444" role="img" aria-labelledby="components-title components-desc" aria-label="Six crates: frames go in on the left, records come out on the right">
+<title id="components-title">Six crates: frames go in on the left, records come out on the right</title>
+<desc id="components-desc">Frames come from a network interface, a capture file or a UDP socket into the mind binary. Its source hands each frame to its pipeline, which passes the payload to the bite library; bite decodes it against the dictionary and returns typed fields. The pipeline hands a record to the flow library, whose ZeroMQ publisher feeds sinks and transforms; the Cursor-on-Target transform uses the cotify library. The datamodels crate holds the record type and logger the log format.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="443" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">Six crates: frames go in on the left, records come out on the right</text>
+<text x="24" y="76" font-size="13" font-weight="700" class="q">Frame sources</text>
+<rect x="24" y="88" width="134" height="50" rx="8" class="bx"/>
+<text x="91" y="107.9" font-size="13" font-weight="700" text-anchor="middle" class="t">Network interface</text>
+<text x="91" y="125.9" font-size="13" text-anchor="middle" class="q">libpcap</text>
+<rect x="24" y="144" width="134" height="50" rx="8" class="bx"/>
+<text x="91" y="163.9" font-size="13" font-weight="700" text-anchor="middle" class="t">Capture file</text>
+<text x="91" y="181.9" font-size="13" text-anchor="middle" class="q">pcap, pcapng</text>
+<rect x="24" y="200" width="134" height="50" rx="8" class="bx"/>
+<text x="91" y="219.9" font-size="13" font-weight="700" text-anchor="middle" class="t">UDP socket</text>
+<text x="91" y="237.9" font-size="13" text-anchor="middle" class="q">needs no privileges</text>
+<rect x="190" y="60" width="236" height="220" rx="12" class="bxa"/>
+<path d="M158 113L174 113" class="lna" data-lint="nohead"/>
+<path d="M158 169L174 169" class="lna" data-lint="nohead"/>
+<path d="M158 225L174 225" class="lna" data-lint="nohead"/>
+<path d="M174 113L174 225" class="lna" data-lint="nohead"/>
+<path d="M174 126L197 126" class="lna"/><path d="M206 126L196 131L196 121z" class="fa"/>
+<text x="206" y="86" font-size="15" font-weight="700" class="a">mind</text>
+<text x="246" y="86" font-size="13" class="q">binary</text>
+<rect x="206" y="100" width="204" height="52" rx="8" class="bx"/>
+<text x="308" y="121.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Source</text>
+<text x="308" y="139.4" font-size="13" text-anchor="middle" class="q">the next frame</text>
+<rect x="206" y="196" width="204" height="52" rx="8" class="bx"/>
+<text x="308" y="217.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Pipeline</text>
+<text x="308" y="235.4" font-size="13" text-anchor="middle" class="q">frame to record</text>
+<path d="M308 152L308 187" class="lna"/><path d="M308 196L303 186L313 186z" class="fa"/>
+<text x="320" y="179" font-size="13" class="q">frame</text>
+<rect x="24" y="322" width="134" height="56" rx="8" class="bxd"/>
+<text x="91" y="345.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Dictionary</text>
+<text x="91" y="363.4" font-size="13" text-anchor="middle" class="q">JSON, read at start</text>
+<rect x="190" y="322" width="236" height="56" rx="8" class="bxa"/>
+<text x="308" y="345.5" font-size="15" font-weight="700" text-anchor="middle" class="a">bite</text>
+<text x="308" y="363.9" font-size="13" text-anchor="middle" class="q">library and CLI: the decoder</text>
+<path d="M158 350L181 350" class="lnd"/><path d="M190 350L180 355L180 345z" class="fl"/>
+<path d="M308 257L308 313" class="lna"/><path d="M308 322L303 312L313 312z" class="fa"/><path d="M308 248L313 258L303 258z" class="fa"/>
+<text x="320" y="305" font-size="13" class="q">payload in, fields out</text>
+<rect x="480" y="60" width="256" height="220" rx="12" class="bxa"/>
+<text x="496" y="86" font-size="15" font-weight="700" class="a">flow</text>
+<text x="532" y="86" font-size="13" class="q">library</text>
+<rect x="496" y="94" width="224" height="50" rx="8" class="bx"/>
+<text x="608" y="114.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Sinks</text>
+<text x="608" y="132.4" font-size="13" text-anchor="middle" class="q">storage, HTTP, Zenoh, file</text>
+<rect x="496" y="166" width="224" height="50" rx="8" class="bx"/>
+<text x="608" y="186.2" font-size="14" font-weight="700" text-anchor="middle" class="t">ZeroMQ PUB</text>
+<text x="608" y="204.4" font-size="13" text-anchor="middle" class="q">topic interface/message</text>
+<rect x="496" y="236" width="224" height="34" rx="8" class="bx"/>
+<text x="608" y="257.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Transforms</text>
+<path d="M608 166L608 153" class="lna"/><path d="M608 144L613 154L603 154z" class="fa"/>
+<path d="M608 216L608 227" class="lna"/><path d="M608 236L603 226L613 226z" class="fa"/>
+<path d="M410 206L487 206" class="lna"/><path d="M496 206L486 211L486 201z" class="fa"/>
+<text x="453" y="196" font-size="13" font-weight="700" text-anchor="middle" class="a">record</text>
+<rect x="480" y="322" width="256" height="56" rx="8" class="bxa"/>
+<text x="608" y="345.5" font-size="15" font-weight="700" text-anchor="middle" class="a">cotify</text>
+<text x="608" y="363.9" font-size="13" text-anchor="middle" class="q">library: Cursor-on-Target XML</text>
+<path d="M608 279L608 313" class="lna"/><path d="M608 322L603 312L613 312z" class="fa"/><path d="M608 270L613 280L603 280z" class="fa"/>
+<text x="620" y="305" font-size="13" class="q">record, mapping</text>
+<rect x="24" y="394" width="402" height="34" rx="8" class="bxp"/>
+<text x="225" y="414.9" font-size="13" text-anchor="middle" class="t">datamodels: the record type that crosses crate boundaries</text>
+<rect x="480" y="394" width="256" height="34" rx="8" class="bxp"/>
+<text x="608" y="414.9" font-size="13" text-anchor="middle" class="t">logger: the log line format</text>
+</svg>

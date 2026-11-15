@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 500" width="760" height="500" role="img" aria-labelledby="frame-to-record-title frame-to-record-desc" aria-label="A dictionary entry turns a bit range into a named value">
+<title id="frame-to-record-title">A dictionary entry turns a bit range into a named value</title>
+<desc id="frame-to-record-desc">The 23 bytes of a weather-station Observation message, 0200174b583700fb2e18bcda9b4236000004030201beef, with the bit range of each of its nine fields marked. A table gives the dictionary entry for each field (start bit, stop bit, type, options) and the value it decodes to: message_type Observation, message_length 23, station_id KX7, temperature -12.34, pressure 101325, wind_direction 271.5, humidity 45.5, sample_serial 16909060, checksum beef.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="499" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">A dictionary entry turns a bit range into a named value</text>
+<text x="35" y="64" font-size="13" data-role="note" class="q">Observation payload: 23 bytes in hex, with the start bit of each field above</text>
+<rect x="35" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="42.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="50" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="57.5" y="114" font-size="14" text-anchor="middle" class="t m">2</text>
+<rect x="65" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="72.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="80" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="87.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="95" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="102.5" y="114" font-size="14" text-anchor="middle" class="t m">1</text>
+<rect x="110" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="117.5" y="114" font-size="14" text-anchor="middle" class="t m">7</text>
+<rect x="125" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="132.5" y="114" font-size="14" text-anchor="middle" class="t m">4</text>
+<rect x="140" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="147.5" y="114" font-size="14" text-anchor="middle" class="t m">b</text>
+<rect x="155" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="162.5" y="114" font-size="14" text-anchor="middle" class="t m">5</text>
+<rect x="170" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="177.5" y="114" font-size="14" text-anchor="middle" class="t m">8</text>
+<rect x="185" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="192.5" y="114" font-size="14" text-anchor="middle" class="t m">3</text>
+<rect x="200" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="207.5" y="114" font-size="14" text-anchor="middle" class="t m">7</text>
+<rect x="215" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="222.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="230" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="237.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="245" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="252.5" y="114" font-size="14" text-anchor="middle" class="t m">f</text>
+<rect x="260" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="267.5" y="114" font-size="14" text-anchor="middle" class="t m">b</text>
+<rect x="275" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="282.5" y="114" font-size="14" text-anchor="middle" class="t m">2</text>
+<rect x="290" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="297.5" y="114" font-size="14" text-anchor="middle" class="t m">e</text>
+<rect x="305" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="312.5" y="114" font-size="14" text-anchor="middle" class="t m">1</text>
+<rect x="320" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="327.5" y="114" font-size="14" text-anchor="middle" class="t m">8</text>
+<rect x="335" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="342.5" y="114" font-size="14" text-anchor="middle" class="t m">b</text>
+<rect x="350" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="357.5" y="114" font-size="14" text-anchor="middle" class="t m">c</text>
+<rect x="365" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="372.5" y="114" font-size="14" text-anchor="middle" class="t m">d</text>
+<rect x="380" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="387.5" y="114" font-size="14" text-anchor="middle" class="t m">a</text>
+<rect x="395" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="402.5" y="114" font-size="14" text-anchor="middle" class="t m">9</text>
+<rect x="410" y="92" width="15" height="34" rx="0" class="f1"/>
+<text x="417.5" y="114" font-size="14" text-anchor="middle" class="t m">b</text>
+<rect x="425" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="432.5" y="114" font-size="14" text-anchor="middle" class="t m">4</text>
+<rect x="440" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="447.5" y="114" font-size="14" text-anchor="middle" class="t m">2</text>
+<rect x="455" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="462.5" y="114" font-size="14" text-anchor="middle" class="t m">3</text>
+<rect x="470" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="477.5" y="114" font-size="14" text-anchor="middle" class="t m">6</text>
+<rect x="485" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="492.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="500" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="507.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="515" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="522.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="530" y="92" width="15" height="34" rx="0" class="f2"/>
+<text x="537.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="545" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="552.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="560" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="567.5" y="114" font-size="14" text-anchor="middle" class="t m">4</text>
+<rect x="575" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="582.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="590" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="597.5" y="114" font-size="14" text-anchor="middle" class="t m">3</text>
+<rect x="605" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="612.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="620" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="627.5" y="114" font-size="14" text-anchor="middle" class="t m">2</text>
+<rect x="635" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="642.5" y="114" font-size="14" text-anchor="middle" class="t m">0</text>
+<rect x="650" y="92" width="15" height="34" rx="0" class="f3"/>
+<text x="657.5" y="114" font-size="14" text-anchor="middle" class="t m">1</text>
+<rect x="665" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="672.5" y="114" font-size="14" text-anchor="middle" class="t m">b</text>
+<rect x="680" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="687.5" y="114" font-size="14" text-anchor="middle" class="t m">e</text>
+<rect x="695" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="702.5" y="114" font-size="14" text-anchor="middle" class="t m">e</text>
+<rect x="710" y="92" width="15" height="34" rx="0" class="f0"/>
+<text x="717.5" y="114" font-size="14" text-anchor="middle" class="t m">f</text>
+<path d="M65 92L65 126" class="lnr" data-lint="nohead"/>
+<path d="M95 92L95 126" class="lnr" data-lint="nohead"/>
+<path d="M125 92L125 126" class="lnr" data-lint="nohead"/>
+<path d="M155 92L155 126" class="lnr" data-lint="nohead"/>
+<path d="M185 92L185 126" class="lnr" data-lint="nohead"/>
+<path d="M215 92L215 126" class="lnr" data-lint="nohead"/>
+<path d="M245 92L245 126" class="lnr" data-lint="nohead"/>
+<path d="M275 92L275 126" class="lnr" data-lint="nohead"/>
+<path d="M305 92L305 126" class="lnr" data-lint="nohead"/>
+<path d="M335 92L335 126" class="lnr" data-lint="nohead"/>
+<path d="M365 92L365 126" class="lnr" data-lint="nohead"/>
+<path d="M395 92L395 126" class="lnr" data-lint="nohead"/>
+<path d="M425 92L425 126" class="lnr" data-lint="nohead"/>
+<path d="M455 92L455 126" class="lnr" data-lint="nohead"/>
+<path d="M485 92L485 126" class="lnr" data-lint="nohead"/>
+<path d="M515 92L515 126" class="lnr" data-lint="nohead"/>
+<path d="M545 92L545 126" class="lnr" data-lint="nohead"/>
+<path d="M575 92L575 126" class="lnr" data-lint="nohead"/>
+<path d="M605 92L605 126" class="lnr" data-lint="nohead"/>
+<path d="M635 92L635 126" class="lnr" data-lint="nohead"/>
+<path d="M665 92L665 126" class="lnr" data-lint="nohead"/>
+<path d="M695 92L695 126" class="lnr" data-lint="nohead"/>
+<text x="35" y="84" font-size="13" class="q">0</text>
+<path d="M38 132v5H62v-5" class="ln s0" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="50" cy="154" r="10" class="c0"/>
+<text x="50" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">1</text>
+<text x="65" y="84" font-size="13" text-anchor="middle" class="q">8</text>
+<path d="M68 132v5H122v-5" class="ln s1" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="95" cy="154" r="10" class="c1"/>
+<text x="95" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">2</text>
+<text x="125" y="84" font-size="13" text-anchor="middle" class="q">24</text>
+<path d="M128 132v5H242v-5" class="ln s2" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="185" cy="154" r="10" class="c2"/>
+<text x="185" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">3</text>
+<text x="245" y="84" font-size="13" text-anchor="middle" class="q">56</text>
+<path d="M248 132v5H302v-5" class="ln s3" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="275" cy="154" r="10" class="c3"/>
+<text x="275" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">4</text>
+<text x="305" y="84" font-size="13" text-anchor="middle" class="q">72</text>
+<path d="M308 132v5H377v-5" class="ln s0" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="342.5" cy="154" r="10" class="c0"/>
+<text x="342.5" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">5</text>
+<text x="380" y="84" font-size="13" text-anchor="middle" class="q">92</text>
+<path d="M383 132v5H422v-5" class="ln s1" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="402.5" cy="154" r="10" class="c1"/>
+<text x="402.5" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">6</text>
+<text x="425" y="84" font-size="13" text-anchor="middle" class="q">104</text>
+<path d="M428 132v5H542v-5" class="ln s2" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="485" cy="154" r="10" class="c2"/>
+<text x="485" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">7</text>
+<text x="545" y="84" font-size="13" text-anchor="middle" class="q">136</text>
+<path d="M548 132v5H662v-5" class="ln s3" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="605" cy="154" r="10" class="c3"/>
+<text x="605" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">8</text>
+<text x="665" y="84" font-size="13" text-anchor="middle" class="q">168</text>
+<path d="M668 132v5H722v-5" class="ln s0" style="stroke-width:1.5" data-lint="nohead"/>
+<circle cx="695" cy="154" r="10" class="c0"/>
+<text x="695" y="158.6" font-size="13" font-weight="700" text-anchor="middle" class="on">9</text>
+<text x="725" y="84" font-size="13" text-anchor="end" class="q">184</text>
+<text x="68" y="188" font-size="13" font-weight="700" data-role="note" class="t">Dictionary entry: WX/messages/Observation.json</text>
+<text x="560" y="188" font-size="13" font-weight="700" class="t">Decoded record</text>
+<rect x="546" y="202" width="179" height="288" rx="8" class="bxa"/>
+<text x="68" y="222" font-size="13" class="q">field</text>
+<text x="232" y="222" font-size="13" text-anchor="end" class="q">start</text>
+<text x="282" y="222" font-size="13" text-anchor="end" class="q">stop</text>
+<text x="304" y="222" font-size="13" class="q">type</text>
+<text x="366" y="222" font-size="13" class="q">options</text>
+<text x="560" y="222" font-size="13" class="q">value</text>
+<text x="672" y="222" font-size="13" class="q">unit</text>
+<path d="M35 232L534 232" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="249.4" r="10" class="c0"/>
+<text x="47" y="254" font-size="13" font-weight="700" text-anchor="middle" class="on">1</text>
+<text x="68" y="254" font-size="13" font-weight="700" class="t m">message_type</text>
+<text x="232" y="254" font-size="13" text-anchor="end" class="t m">0</text>
+<text x="282" y="254" font-size="13" text-anchor="end" class="t m">8</text>
+<text x="304" y="254" font-size="13" class="t m">uint</text>
+<text x="366" y="254" font-size="13" class="t">values: 2 is Observation</text>
+<text x="560" y="254" font-size="13" font-weight="700" class="t m">&quot;Observation&quot;</text>
+<path d="M35 264L534 264" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="277.4" r="10" class="c1"/>
+<text x="47" y="282" font-size="13" font-weight="700" text-anchor="middle" class="on">2</text>
+<text x="68" y="282" font-size="13" font-weight="700" class="t m">message_length</text>
+<text x="232" y="282" font-size="13" text-anchor="end" class="t m">8</text>
+<text x="282" y="282" font-size="13" text-anchor="end" class="t m">24</text>
+<text x="304" y="282" font-size="13" class="t m">uint</text>
+<text x="366" y="282" font-size="13" class="t"></text>
+<text x="560" y="282" font-size="13" font-weight="700" class="t m">23</text>
+<text x="672" y="282" font-size="13" class="q">bytes</text>
+<path d="M35 292L534 292" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="305.4" r="10" class="c2"/>
+<text x="47" y="310" font-size="13" font-weight="700" text-anchor="middle" class="on">3</text>
+<text x="68" y="310" font-size="13" font-weight="700" class="t m">station_id</text>
+<text x="232" y="310" font-size="13" text-anchor="end" class="t m">24</text>
+<text x="282" y="310" font-size="13" text-anchor="end" class="t m">56</text>
+<text x="304" y="310" font-size="13" class="t m">ascii</text>
+<text x="366" y="310" font-size="13" class="t"></text>
+<text x="560" y="310" font-size="13" font-weight="700" class="t m">&quot;KX7&quot;</text>
+<path d="M35 320L534 320" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="333.4" r="10" class="c3"/>
+<text x="47" y="338" font-size="13" font-weight="700" text-anchor="middle" class="on">4</text>
+<text x="68" y="338" font-size="13" font-weight="700" class="t m">temperature</text>
+<text x="232" y="338" font-size="13" text-anchor="end" class="t m">56</text>
+<text x="282" y="338" font-size="13" text-anchor="end" class="t m">72</text>
+<text x="304" y="338" font-size="13" class="t m">int</text>
+<text x="366" y="338" font-size="13" class="t">scale 0.01</text>
+<text x="560" y="338" font-size="13" font-weight="700" class="t m">-12.34</text>
+<text x="672" y="338" font-size="13" class="q">degC</text>
+<path d="M35 348L534 348" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="361.4" r="10" class="c0"/>
+<text x="47" y="366" font-size="13" font-weight="700" text-anchor="middle" class="on">5</text>
+<text x="68" y="366" font-size="13" font-weight="700" class="t m">pressure</text>
+<text x="232" y="366" font-size="13" text-anchor="end" class="t m">72</text>
+<text x="282" y="366" font-size="13" text-anchor="end" class="t m">92</text>
+<text x="304" y="366" font-size="13" class="t m">uint</text>
+<text x="366" y="366" font-size="13" class="t">not byte-aligned</text>
+<text x="560" y="366" font-size="13" font-weight="700" class="t m">101325</text>
+<text x="672" y="366" font-size="13" class="q">Pa</text>
+<path d="M35 376L534 376" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="389.4" r="10" class="c1"/>
+<text x="47" y="394" font-size="13" font-weight="700" text-anchor="middle" class="on">6</text>
+<text x="68" y="394" font-size="13" font-weight="700" class="t m">wind_direction</text>
+<text x="232" y="394" font-size="13" text-anchor="end" class="t m">92</text>
+<text x="282" y="394" font-size="13" text-anchor="end" class="t m">104</text>
+<text x="304" y="394" font-size="13" class="t m">uint</text>
+<text x="366" y="394" font-size="13" class="t">scale 0.1, not byte-aligned</text>
+<text x="560" y="394" font-size="13" font-weight="700" class="t m">271.5</text>
+<text x="672" y="394" font-size="13" class="q">deg</text>
+<path d="M35 404L534 404" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="417.4" r="10" class="c2"/>
+<text x="47" y="422" font-size="13" font-weight="700" text-anchor="middle" class="on">7</text>
+<text x="68" y="422" font-size="13" font-weight="700" class="t m">humidity</text>
+<text x="232" y="422" font-size="13" text-anchor="end" class="t m">104</text>
+<text x="282" y="422" font-size="13" text-anchor="end" class="t m">136</text>
+<text x="304" y="422" font-size="13" class="t m">float</text>
+<text x="366" y="422" font-size="13" class="t"></text>
+<text x="560" y="422" font-size="13" font-weight="700" class="t m">45.5</text>
+<text x="672" y="422" font-size="13" class="q">%</text>
+<path d="M35 432L534 432" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="445.4" r="10" class="c3"/>
+<text x="47" y="450" font-size="13" font-weight="700" text-anchor="middle" class="on">8</text>
+<text x="68" y="450" font-size="13" font-weight="700" class="t m">sample_serial</text>
+<text x="232" y="450" font-size="13" text-anchor="end" class="t m">136</text>
+<text x="282" y="450" font-size="13" text-anchor="end" class="t m">168</text>
+<text x="304" y="450" font-size="13" class="t m">uint</text>
+<text x="366" y="450" font-size="13" class="t">byte_order little</text>
+<text x="560" y="450" font-size="13" font-weight="700" class="t m">16909060</text>
+<path d="M35 460L534 460" class="lnr" data-lint="nohead"/>
+<circle cx="47" cy="473.4" r="10" class="c0"/>
+<text x="47" y="478" font-size="13" font-weight="700" text-anchor="middle" class="on">9</text>
+<text x="68" y="478" font-size="13" font-weight="700" class="t m">checksum</text>
+<text x="232" y="478" font-size="13" text-anchor="end" class="t m">168</text>
+<text x="282" y="478" font-size="13" text-anchor="end" class="t m">184</text>
+<text x="304" y="478" font-size="13" class="t m">bytes</text>
+<text x="366" y="478" font-size="13" class="t"></text>
+<text x="560" y="478" font-size="13" font-weight="700" class="t m">&quot;beef&quot;</text>
+</svg>

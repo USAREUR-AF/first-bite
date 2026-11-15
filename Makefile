@@ -22,7 +22,7 @@ DECODER_TARGETS ?= aarch64-apple-ios aarch64-linux-android x86_64-pc-windows-msv
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build release portable portable-check portable-dir static static-check static-dir decoder-targets test wasm fmt lint deny audit vendor run mock replay mockplay echo blob bucket ports clean
+.PHONY: help build release portable portable-check portable-dir static static-check static-dir decoder-targets test wasm fmt lint deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
 
 help: ## list the targets
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -134,6 +134,16 @@ ports: ## show what is listening on the ports the mocks and mind use
 	@for port in 5001 9090 10000 12000 12001 12002; do \
 		lsof -nP -iTCP:$$port -sTCP:LISTEN || echo "nothing listening on $$port"; \
 	done
+
+figures: ## write the illustrations in docs/img (light and dark SVG)
+	python3 docs/img/build.py
+
+site: ## build the documentation site into site/_build
+	python3 docs/img/build.py --check
+	python3 tools/build-site.py
+
+brief: ## print docs/brief/brief.html to docs/brief/first-bite-brief.pdf (needs Chrome or Chromium)
+	python3 docs/brief/build.py
 
 clean: ## remove build output and Python caches
 	cargo clean
