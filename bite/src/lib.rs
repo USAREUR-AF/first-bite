@@ -10,9 +10,9 @@
 //! ```no_run
 //! use bite::Dictionary;
 //!
-//! let dictionary = Dictionary::load("dictionaries/toot")?;
-//! let interface = dictionary.interface_for_port(22200).expect("known port");
-//! let payload = [0u8; 14];
+//! let dictionary = Dictionary::load("dictionaries/weather-station")?;
+//! let interface = dictionary.interface_for_port(40100).expect("known port");
+//! let payload = hex::decode("01000c4b5837000001518060")?;
 //! let decoded = interface.decode(&payload)?;
 //! println!("{}: {}", decoded.message_type(), serde_json::to_string(&decoded)?);
 //! # Ok::<(), Box<dyn std::error::Error>>(())

@@ -297,6 +297,29 @@ mod tests {
         Session::load(shipped(name, "")).unwrap()
     }
 
+    /// The least a dictionary can be: one interface, no `dictionary.json`
+    /// and so no name, one message defined and one named without a file.
+    fn minimal() -> BTreeMap<String, String> {
+        let files = [
+            (
+                "LINK/metadata.json",
+                r#"{"port": 40200, "message_type": {"start": 0, "stop": 8, "values": {"0": "None", "1": "Alert"}}}"#,
+            ),
+            (
+                "LINK/messages/Alert.json",
+                r#"{"fields": {"kind": {"start": 0, "stop": 8}, "level": {"start": 8, "stop": 16, "values": {"2": "High"}}}}"#,
+            ),
+            (
+                "vectors/link-alert.json",
+                r#"{"interface": "LINK", "payload_hex": "0102", "expect": {"message_type": "Alert", "fields": {"level": "High"}}}"#,
+            ),
+        ];
+        files
+            .into_iter()
+            .map(|(path, text)| (path.to_string(), text.to_string()))
+            .collect()
+    }
+
     #[test]
     fn decode_is_the_json_the_command_line_prints() {
         let session = session("weather-station");
@@ -419,9 +442,9 @@ mod tests {
 
     #[test]
     fn a_message_with_no_file_is_listed_as_not_defined() {
-        let interfaces = session("toot").interfaces();
+        let interfaces = Session::load(minimal()).unwrap().interfaces();
         let messages = interfaces[0]["messages"].as_array().unwrap();
-        assert_eq!(messages[0]["name"], "FOMO Report Message");
+        assert_eq!(messages[0]["name"], "Alert");
         assert_eq!(messages[1]["name"], "None");
         assert_eq!(messages[1]["defined"], false);
         assert_eq!(messages[1]["ids"], json!([0]));
@@ -429,9 +452,16 @@ mod tests {
 
     #[test]
     fn every_shipped_vector_passes_and_is_listed() {
-        for (name, count) in [("weather-station", 5), ("vehicle-can", 2), ("toot", 1)] {
-            let session = session(name);
-            assert_eq!(session.info()["name"] == Value::Null, name == "toot");
+        let shipped = [("weather-station", 5), ("vehicle-can", 2), ("ntp", 10)];
+        let unnamed = Session::load(minimal()).unwrap();
+        assert_eq!(unnamed.info()["name"], Value::Null);
+        for (name, count) in shipped.into_iter().chain([("", 1)]) {
+            let session = if name.is_empty() {
+                Session::load(minimal()).unwrap()
+            } else {
+                session(name)
+            };
+            assert_eq!(session.info()["name"] == Value::Null, name.is_empty());
             let results = session.run_vectors();
             let results = results.as_array().unwrap();
             assert_eq!(results.len(), count, "{name}");
@@ -450,8 +480,11 @@ mod tests {
 
     #[test]
     fn issues_and_broken_vectors_are_reported() {
-        let mut files = shipped("toot", "");
-        files.insert("FAE/messages/Spare.json".into(), r#"{"fields": {}}"#.into());
+        let mut files = minimal();
+        files.insert(
+            "LINK/messages/Spare.json".into(),
+            r#"{"fields": {}}"#.into(),
+        );
         files.insert("vectors/broken.json".into(), "{".into());
         let session = Session::load(files).unwrap();
         let issues = session.issues();
@@ -460,9 +493,9 @@ mod tests {
             issues[0],
             json!({
                 "severity": "warning",
-                "location": "FAE/Spare",
+                "location": "LINK/Spare",
                 "message": "no message_type value maps to this message; it can never be selected",
-                "text": "warning: FAE/Spare: no message_type value maps to this message; it can never be selected",
+                "text": "warning: LINK/Spare: no message_type value maps to this message; it can never be selected",
             })
         );
         assert_eq!(session.run_vectors()[0]["passed"], false);
@@ -486,9 +519,9 @@ mod tests {
         assert_eq!(interfaces[0]["name"], "WX");
 
         // A dictionary of one interface and nothing else is already at the top.
-        let mut files = shipped("toot", "");
-        files.retain(|path, _| path.starts_with("FAE/"));
+        let mut files = minimal();
+        files.retain(|path, _| path.starts_with("LINK/"));
         let session = Session::load(files).unwrap();
-        assert_eq!(session.interfaces()[0]["name"], "FAE");
+        assert_eq!(session.interfaces()[0]["name"], "LINK");
     }
 }

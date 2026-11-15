@@ -1,0 +1,21 @@
+{
+    "name": "ntp",
+    "version": "1.0.0",
+    "description": "The Network Time Protocol packet header of RFC 5905: the 48 bytes on UDP port 123 that almost every network already carries.",
+    "source": {
+        "document": "RFC 5905",
+        "revision": "June 2010"
+    },
+    "lint": {
+        "units": [
+            "log2(s)"
+        ],
+        "allow": [
+            {
+                "rule": "C004",
+                "at": "NTP/NTP control message",
+                "reason": "Mode 6 has a layout of its own, defined in RFC 1305 appendix B and RFC 9327, which is not transcribed here."
+            }
+        ]
+    }
+}

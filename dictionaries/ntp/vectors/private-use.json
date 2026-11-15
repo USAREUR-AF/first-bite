@@ -1,0 +1,9 @@
+{
+    "interface": "NTP",
+    "payload_hex": "1700000000000000",
+    "expect": {
+        "message_type": "7",
+        "fields": {}
+    },
+    "note": "First byte packed by dictionaries/ntp/vectors.py as version 2, mode 7, reserved for private use (RFC 5905 Figure 10): the message type is the number and no field is decoded."
+}

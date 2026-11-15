@@ -148,6 +148,18 @@ The decode command prints:
 }
 ```
 
+To decode traffic your own network already carries, capture the Network Time
+Protocol with [`dictionaries/ntp`](dictionaries/ntp/README.md#try-it-on-your-own-network):
+
+```bash
+sudo ./target/debug/mind eth0 --dictionary dictionaries/ntp --filter "udp port 123"
+```
+
+Each time a machine on the link sets its clock, `mind` logs two records: the
+request (`"message_type":"client"`) and the server's reply, with its stratum,
+its timestamps and its distance from a reference clock. `sntp pool.ntp.org`,
+`ntpdate -q pool.ntp.org` or `sudo chronyc burst 1/1` provokes one.
+
 ## Install a release
 
 Download the archive for the machine from the releases page; none needs a
@@ -281,7 +293,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`mind/`](mind) | the `mind` binary: sources, pipeline, capture loop |
 | [`flow/`](flow) | ZeroMQ publishers, sinks and transforms |
 | [`cotify/`](cotify) | Cursor-on-Target output |
-| [`dictionaries/`](dictionaries) | example dictionaries with vectors |
+| [`dictionaries/`](dictionaries) | example dictionaries with vectors: [`ntp`](dictionaries/ntp) (real traffic you already have), [`weather-station`](dictionaries/weather-station) (every field type), [`vehicle-can`](dictionaries/vehicle-can) (frame identifier as discriminator, little-endian), [`glasshouse`](dictionaries/glasshouse) (transcribed from a document; the worked example) |
 | [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [from an ICD to a dictionary](docs/icd-to-dictionary/README.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
 | [`site/`](site) | the documentation site; `make site` builds it |
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |

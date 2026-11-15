@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "240106ec000000000000001047505300ed13553f80000000ed13554040000000ed13554041000000ed13554041400000",
+    "expect": {
+        "message_type": "server",
+        "fields": {
+            "leap_indicator": "no warning",
+            "version_number": "4",
+            "mode": "server",
+            "stratum": "primary server (e.g., equipped with a GPS receiver)",
+            "poll": "6",
+            "precision": "-20",
+            "root_delay": "0",
+            "root_dispersion": "0.000244140625",
+            "reference_id": "47505300",
+            "reference_timestamp_seconds": "3977467199",
+            "reference_timestamp_fraction": "0.5",
+            "origin_timestamp_seconds": "3977467200",
+            "origin_timestamp_fraction": "0.25",
+            "receive_timestamp_seconds": "3977467200",
+            "receive_timestamp_fraction": "0.25390625",
+            "transmit_timestamp_seconds": "3977467200",
+            "transmit_timestamp_fraction": "0.2548828125"
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. The reply of a stratum 1 server whose reference clock is GPS (Figure 12)."
+}

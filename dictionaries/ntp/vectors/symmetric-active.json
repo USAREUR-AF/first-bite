@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "61020aee000180000000ffffcb007109edeed2f0ffffffffedeed6c500010000edeed6c680000001edeed6c77fffffff",
+    "expect": {
+        "message_type": "symmetric active",
+        "fields": {
+            "leap_indicator": "last minute of the day has 61 seconds",
+            "version_number": "4",
+            "mode": "symmetric active",
+            "stratum": "2",
+            "poll": "10",
+            "precision": "-18",
+            "root_delay": "1.5",
+            "root_dispersion": "0.9999847412109375",
+            "reference_id": "cb007109",
+            "reference_timestamp_seconds": "3991851760",
+            "reference_timestamp_fraction": "0.9999999997671694",
+            "origin_timestamp_seconds": "3991852741",
+            "origin_timestamp_fraction": "1.52587890625e-05",
+            "receive_timestamp_seconds": "3991852742",
+            "receive_timestamp_fraction": "0.5000000002328306",
+            "transmit_timestamp_seconds": "3991852743",
+            "transmit_timestamp_fraction": "0.49999999976716936"
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. Values chosen to exercise the fields: a leap second announced, poll 10, a root delay of 1.5 s."
+}

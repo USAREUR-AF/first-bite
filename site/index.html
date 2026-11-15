@@ -103,6 +103,7 @@ cargo run -p bite -- decode dictionaries/weather-station --port 40100 \
 # Replay a capture file through the whole pipeline.
 cargo run -p mind -- --pcap-file examples/weather-station.pcap \
     --dictionary dictionaries/weather-station --output</code></pre>
+    <p>To decode traffic your own network already carries, capture the Network Time Protocol with the <a href="https://github.com/USAREUR-AF/first-bite/tree/main/dictionaries/ntp#try-it-on-your-own-network"><code>ntp</code> dictionary</a>: <code>sudo ./target/debug/mind eth0 --dictionary dictionaries/ntp --filter "udp port 123"</code>.</p>
   </section>
 
   <section class="section" aria-labelledby="docs-h">

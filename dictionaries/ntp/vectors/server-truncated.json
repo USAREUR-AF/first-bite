@@ -1,0 +1,27 @@
+{
+    "interface": "NTP",
+    "payload_hex": "240206e90000060000000a80c0000201ed135500c0000000ed13554040000000ed13554043000000",
+    "expect": {
+        "message_type": "server",
+        "fields": {
+            "leap_indicator": "no warning",
+            "version_number": "4",
+            "mode": "server",
+            "stratum": "2",
+            "poll": "6",
+            "precision": "-23",
+            "root_delay": "0.0234375",
+            "root_dispersion": "0.041015625",
+            "reference_id": "c0000201",
+            "reference_timestamp_seconds": "3977467136",
+            "reference_timestamp_fraction": "0.75",
+            "origin_timestamp_seconds": "3977467200",
+            "origin_timestamp_fraction": "0.25",
+            "receive_timestamp_seconds": "3977467200",
+            "receive_timestamp_fraction": "0.26171875",
+            "transmit_timestamp_seconds": null,
+            "transmit_timestamp_fraction": null
+        }
+    },
+    "note": "Packed with Python struct by dictionaries/ntp/vectors.py from the layout of RFC 5905 Figure 8; the values are chosen there. The reply in server.json cut to its first 40 bytes: the transmit timestamp is past the end."
+}

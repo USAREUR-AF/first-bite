@@ -58,8 +58,28 @@ fn vehicle_can() {
 }
 
 #[test]
-fn toot() {
-    assert_clean("toot", 1);
+fn ntp() {
+    let dictionary = assert_clean("ntp", 10);
+    assert_eq!(dictionary.interface_for_port(123).unwrap().name, "NTP");
+    // RFC 5905 has one header for modes 1 to 5, and the format wants one file
+    // per message name: the five files must hold the same fields.
+    let fields = |mode: &str| -> serde_json::Value {
+        let path = shipped("ntp")
+            .join("NTP/messages")
+            .join(format!("{mode}.json"));
+        let text = std::fs::read_to_string(path).unwrap();
+        serde_json::from_str::<serde_json::Value>(&text).unwrap()["fields"].take()
+    };
+    let client = fields("client");
+    assert_eq!(client.as_object().unwrap().len(), 17);
+    for mode in [
+        "symmetric active",
+        "symmetric passive",
+        "server",
+        "broadcast",
+    ] {
+        assert_eq!(fields(mode), client, "{mode}");
+    }
 }
 
 #[test]

@@ -1,0 +1,9 @@
+{
+    "interface": "NTP",
+    "payload_hex": "160200010000000000000000",
+    "expect": {
+        "message_type": "NTP control message",
+        "fields": {}
+    },
+    "note": "First byte packed by dictionaries/ntp/vectors.py as version 2, mode 6 (RFC 5905 Figure 10). The message is named and has no definition here, so no field is decoded."
+}

@@ -16,7 +16,7 @@ use bite::Dictionary;
 use std::fs;
 use std::path::PathBuf;
 
-const SHIPPED: [&str; 4] = ["glasshouse", "toot", "vehicle-can", "weather-station"];
+const SHIPPED: [&str; 4] = ["glasshouse", "ntp", "vehicle-can", "weather-station"];
 
 fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
@@ -359,7 +359,7 @@ fn encode_then_decode_gives_back_every_shipped_vector() {
             checked += 1;
         }
     }
-    assert_eq!(checked, 10 + 1 + 2 + 4);
+    assert_eq!(checked, 10 + 8 + 2 + 4);
 }
 
 #[test]

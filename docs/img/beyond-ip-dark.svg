@@ -15,7 +15,7 @@
 <text x="24" y="289" font-size="13" class="q">avionics data buses</text>
 <rect x="232" y="90" width="246" height="132" rx="8" class="bxa"/>
 <path d="M246 156L464 156" class="lnr" data-lint="nohead"/>
-<text x="246" y="116" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="g" font-weight="700">Built</tspan><tspan class="t">: weather-station, toot</tspan></text>
+<text x="246" y="116" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="g" font-weight="700">Built</tspan><tspan class="t">: weather-station, ntp</tspan></text>
 <text x="246" y="135" font-size="13" class="q">measured 1.45 million messages/s</text>
 <text x="246" y="188" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="g" font-weight="700">Built</tspan><tspan class="t">: vehicle-can</tspan></text>
 <text x="246" y="207" font-size="13" class="q">measured 1.40 million frames/s</text>
