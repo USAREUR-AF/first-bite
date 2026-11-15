@@ -28,7 +28,14 @@ flow = { path = "flow" }
 logger = { path = "logger" }
 
 async-trait = "0.1"
-aws-sdk-s3 = { version = "1", default-features = false, features = ["rt-tokio", "default-https-client", "behavior-version-latest"] }
+# No `default-https-client`: the S3 sink's HTTP client is built in
+# flow/src/security/ from the same TLS configuration as every other sink.
+aws-sdk-s3 = { version = "1", default-features = false, features = ["rt-tokio", "behavior-version-latest"] }
+aws-smithy-runtime-api = { version = "1", features = ["client"] }
+aws-smithy-types = "1"
+# The crypto library behind the rustls provider; named here for the request
+# signature of the Azure sink and for the version and FIPS-mode queries.
+aws-lc-rs = { version = "1.19", default-features = false }
 base64 = "0.23"
 chrono = "0.4"
 ciborium = "0.2"
@@ -44,17 +51,23 @@ libc = "0.2"
 log = "0.4"
 pcap = "2"
 quick-xml = "0.42"
+# `-no-provider`: reqwest brings no crypto library of its own; the TLS
+# configuration it is handed carries the process's one provider.
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls-manual-roots-no-provider"] }
+# The one TLS library and, through `aws_lc_rs`, the one crypto provider.
+rustls = { version = "0.23.22", default-features = false, features = ["aws_lc_rs", "logging", "std", "tls12"] }
+rustls-native-certs = "0.8"
 # Certificate checks for the optional `goat` feature: these two and
 # x509-parser are already built by the Zenoh TLS transport, at these versions.
 rustls-pki-types = "1"
 rustls-webpki = { version = "0.103", default-features = false, features = ["std", "ring"] }
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_norway = "0.9"
 sha2 = "0.11"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "io-util", "net"] }
+webpki-roots = "1"
 x509-parser = "0.18"
 zenoh = { version = "=1.9.0", default-features = false, features = ["transport_tcp", "transport_tls"] }
 zmq = "0.10"

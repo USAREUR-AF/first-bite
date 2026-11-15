@@ -2,11 +2,14 @@
 //! that speaks the S3 API.
 
 use super::object_path::{time_then_topic, topic_then_time};
-use super::{required, required_secret, Sink, SinkError};
+use super::{required, required_secret, Built, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::encoding::Encoding;
 use crate::error::Problem;
 use crate::secret::scrub;
+use crate::security::http::{secure, HttpSink, Roots};
+use crate::security::s3_client::S3HttpClient;
+use crate::security::{PathPosture, Policy, ProbeTarget, Security};
 use async_trait::async_trait;
 use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
 use aws_sdk_s3::error::{DisplayErrorContext, ProvideErrorMetadata, SdkError};
@@ -30,6 +33,19 @@ pub struct S3Sink {
 
 impl S3Sink {
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
+        Self::build(config, &Security::unstated().base).map(|(sink, _, _)| sink)
+    }
+
+    /// The sink held to `policy`; see [`crate::security`].
+    pub(crate) fn secured(config: &SubscriberConfig, policy: &Policy) -> Result<Built, Problem> {
+        let (sink, posture, target) = Self::build(config, policy)?;
+        Ok(Built::new(sink, posture, target))
+    }
+
+    fn build(
+        config: &SubscriberConfig,
+        policy: &Policy,
+    ) -> Result<(Self, PathPosture, Option<ProbeTarget>), Problem> {
         let access_key_id = required_secret(&config.aws_access_key_id, "aws_access_key_id")?;
         let secret_access_key =
             required_secret(&config.aws_secret_access_key, "aws_secret_access_key")?;
@@ -37,8 +53,38 @@ impl S3Sink {
         let endpoint = required(&config.aws_s3_endpoint, "aws_s3_endpoint")?;
         let bucket = required(&config.aws_bucket_name, "aws_bucket_name")?;
 
+        // The AWS services themselves take no client certificate; a store
+        // of the adopter's own that speaks the S3 API may.
+        let aws_service = reqwest::Url::parse(endpoint)
+            .ok()
+            .and_then(|url| url.host_str().map(str::to_ascii_lowercase))
+            .is_some_and(|host| {
+                host.ends_with(".amazonaws.com") || host.ends_with(".amazonaws.com.cn")
+            });
+        let mut secured = secure(
+            &HttpSink {
+                name: &config.name,
+                kind: "objectstorage/awsobject",
+                key: "aws_s3_endpoint",
+                url: endpoint,
+                roots: Roots::System,
+                // The SDK's own client offered the hybrid group first.
+                unstated_key_exchange: Some(crate::security::provider::default_key_exchange()),
+                no_client_certificate: aws_service
+                    .then_some("the AWS S3 service takes no client certificate"),
+                outside_provider: Some(
+                    "request signing (SigV4, computed by the AWS SDK with the `hmac` and `sha2` \
+                     crates)",
+                ),
+            },
+            policy,
+        )?;
+        let posture = secured.posture.clone();
+        let target = secured.target.take();
+
         let sdk_config = aws_sdk_s3::Config::builder()
             .behavior_version(BehaviorVersion::latest())
+            .http_client(S3HttpClient::new(secured))
             .region(Region::new(region.to_string()))
             .credentials_provider(Credentials::new(
                 access_key_id.trim(),
@@ -49,7 +95,7 @@ impl S3Sink {
             ))
             .endpoint_url(endpoint)
             .build();
-        Ok(S3Sink {
+        let sink = S3Sink {
             client: Client::from_conf(sdk_config),
             bucket: bucket.to_string(),
             region: region.to_string(),
@@ -58,7 +104,8 @@ impl S3Sink {
                 access_key_id.trim().to_string(),
                 secret_access_key.trim().to_string(),
             ],
-        })
+        };
+        Ok((sink, posture, target))
     }
 
     /// The SDK's error with its whole cause chain; its own `Display` says

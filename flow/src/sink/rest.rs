@@ -1,9 +1,11 @@
 //! POST each record as JSON to an HTTP endpoint.
 
-use super::{quoted, read_body, required, Sink, SinkError};
+use super::{quoted, read_body, required, Built, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::encoding::{json_to_cbor, Encoding};
 use crate::error::Problem;
+use crate::security::http::{secure, HttpSink, Roots};
+use crate::security::{Policy, Security};
 use async_trait::async_trait;
 use log::{debug, warn};
 use std::time::Duration;
@@ -28,6 +30,21 @@ impl RestSink {
     /// The endpoint is `endpoint_url:endpoint_port` followed by
     /// `endpoint_path`. A URL without a scheme is taken as `http://`.
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
+        Self::build(config, &Security::unstated().base).map(|(sink, _)| sink)
+    }
+
+    /// The sink held to `policy`: the endpoint is checked against the level,
+    /// and the HTTP client carries the policy's TLS configuration and, when
+    /// one is configured, its client certificate.
+    pub(crate) fn secured(config: &SubscriberConfig, policy: &Policy) -> Result<Built, Problem> {
+        let (sink, secured) = Self::build(config, policy)?;
+        Ok(Built::new(sink, secured.posture, secured.target))
+    }
+
+    fn build(
+        config: &SubscriberConfig,
+        policy: &Policy,
+    ) -> Result<(Self, crate::security::http::Secured), Problem> {
         let host = required(&config.endpoint_url, "endpoint_url")?;
         let port = required(&config.endpoint_port, "endpoint_port")?;
         let path = config.endpoint_path.as_deref().unwrap_or("");
@@ -36,16 +53,6 @@ impl RestSink {
         } else {
             "http://"
         };
-        // Records go to the endpoint that was configured and nowhere else:
-        // a redirect is an error, not an instruction to post them again.
-        let client = reqwest::Client::builder()
-            .timeout(REQUEST_TIMEOUT)
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .map_err(|e| Problem::InvalidValue {
-                key: "endpoint_url",
-                reason: format!("cannot build the HTTP client: {e}"),
-            })?;
         // The parser's error does not quote the text, which may hold a
         // password.
         let url = reqwest::Url::parse(&format!("{scheme}{host}:{port}{path}")).map_err(|e| {
@@ -56,13 +63,38 @@ impl RestSink {
                 ),
             }
         })?;
-        Ok(RestSink {
+        let secured = secure(
+            &HttpSink {
+                name: &config.name,
+                kind: "rest",
+                key: "endpoint_url",
+                url: url.as_str(),
+                roots: Roots::BuiltIn,
+                unstated_key_exchange: None,
+                no_client_certificate: None,
+                outside_provider: None,
+            },
+            policy,
+        )?;
+        // Records go to the endpoint that was configured and nowhere else:
+        // a redirect is an error, not an instruction to post them again.
+        let client = secured
+            .client_builder()
+            .timeout(REQUEST_TIMEOUT)
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|e| Problem::InvalidValue {
+                key: "endpoint_url",
+                reason: format!("cannot build the HTTP client: {e}"),
+            })?;
+        let sink = RestSink {
             client,
             shown: shown(&url),
             url,
             encoding: Encoding::from_config(config.encoding.as_deref())?,
             first_retry_wait: FIRST_RETRY_WAIT,
-        })
+        };
+        Ok((sink, secured))
     }
 
     async fn post(&self, body: &[u8]) -> Result<(), SinkError> {

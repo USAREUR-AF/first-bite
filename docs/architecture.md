@@ -86,6 +86,15 @@ a cargo feature of `flow`, forwarded by `mind`.
 | Zenoh | `zenoh` | `zenoh` | built |
 | Zenoh on a goat data fabric (optional, off by default; [goat/joining.md](goat/joining.md)) | `goat` | `goat` | built |
 
+The ZeroMQ sockets are plaintext and stay on the host; the HTTP sinks and the
+Zenoh sink are the paths that cross a network. A `security` block in the
+configuration states the level every path is held to (plaintext on loopback
+only, TLS, or mutual TLS, with a minimum TLS version, a key-exchange policy
+and an optional requirement for the FIPS module), `mind` refuses to start
+when a path cannot meet it, and `mind security show` prints what each path
+will use. All TLS goes through one crypto provider installed at start.
+[security/transport.md](security/transport.md) is the guide.
+
 A subpub is a subscriber, a transform and a publisher: it reads records, turns
 each into something else, and publishes the result on another ZeroMQ socket.
 The one transform is Cursor-on-Target (`subtype: cot`), driven by a mapping in

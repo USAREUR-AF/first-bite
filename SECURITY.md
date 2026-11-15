@@ -57,4 +57,9 @@ CodeQL and Scorecard run only while the repository is public; both workflows
 skip on a private repository, and a release or image made then has no
 provenance. [docs/security/threat-model.md](docs/security/threat-model.md)
 states what the design protects and what it does not;
+[docs/security/transport.md](docs/security/transport.md) is the guide to
+transport security: the `security` block, the levels it enforces at startup,
+and `mind security show`, which prints what each outbound path uses. The
+local ZeroMQ record socket is plaintext and unauthenticated; under a
+`security` block it is refused off loopback.
 [docs/security/](docs/security/) holds the assessments.

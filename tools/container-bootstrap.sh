@@ -8,6 +8,8 @@
 set -eu
 
 RUSTUP_VERSION=1.29.3
+# Go for the FIPS variant on a glibc image; see below.
+GO_VERSION=1.26.11
 
 if [ ! -d /src ] || [ ! -d /cache ] || [ -z "${CARGO_TARGET_DIR:-}" ]; then
   echo "container-bootstrap: run through tools/build-in-container.sh" >&2
@@ -27,6 +29,40 @@ elif command -v apk >/dev/null 2>&1; then
 else
   echo "container-bootstrap: this image has neither apt-get nor apk" >&2
   exit 1
+fi
+# The build of the FIPS module runs Go, 1.17.13 or later. Alpine packages a
+# current release. Ubuntu 20.04 packages 1.13, so on a glibc image the
+# release archive is fetched, checked against the digest recorded here, and
+# kept in /cache.
+if [ "${BUILD_VARIANT:-}" = fips ]; then
+  if [ "$libc" = musl ]; then
+    apk add --no-cache --quiet go
+  else
+    go_root="/cache/go-$GO_VERSION"
+    if [ ! -x "$go_root/bin/go" ]; then
+      case "$(uname -m)" in
+        x86_64)
+          go_arch=amd64
+          go_sum=9849f4e04ee35303714e34fbc3ac8ab44ea3e448a95aa182f91e3b9b79c710ec
+          ;;
+        aarch64)
+          go_arch=arm64
+          go_sum=6c2f29b458b5add0835f18b776f69c8881a6d88428f1484a6da55755e620757e
+          ;;
+        *)
+          echo "container-bootstrap: no Go checksum recorded for $(uname -m)" >&2
+          exit 1
+          ;;
+      esac
+      curl -fsSL -o /tmp/go.tar.gz "https://go.dev/dl/go$GO_VERSION.linux-$go_arch.tar.gz"
+      echo "$go_sum  /tmp/go.tar.gz" | sha256sum -c - >/dev/null
+      mkdir -p "$go_root"
+      tar -xzf /tmp/go.tar.gz -C "$go_root" --strip-components 1
+      rm /tmp/go.tar.gz
+    fi
+    export PATH="$go_root/bin:$PATH"
+  fi
+  go version
 fi
 
 export RUSTUP_HOME=/cache/rustup

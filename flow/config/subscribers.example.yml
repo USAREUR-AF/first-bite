@@ -8,6 +8,11 @@
 # 0640, root:firstbite). A reference is the whole value. Instead of a
 # reference, the key's `_file` variant names a file that holds the value, for
 # example one that systemd provides with LoadCredential=.
+#
+# A top-level `security:` key here (or a file named by SECURITY_CONFIG_PATH)
+# states the level every entry is held to; security.example.yml shows it.
+# Under `transport: tls` the first entry below is refused until its
+# endpoint is an https:// URL.
 
 subscribers:
   # POST each record as JSON to http://203.0.113.10:5001/records.

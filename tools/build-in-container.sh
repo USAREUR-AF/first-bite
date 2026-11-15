@@ -21,6 +21,9 @@
 # Environment:
 #   CONTAINER_ENGINE   docker (default) or podman
 #   CARGO_BUILD_JOBS   passed through; limits cargo and make
+#   BUILD_VARIANT      names a second build from the same image: output goes
+#                      to target/<name>-<variant>/. The variant `fips` also
+#                      installs Go, which the FIPS module's build runs.
 set -euo pipefail
 
 if [ "$#" -lt 2 ]; then
@@ -33,17 +36,20 @@ shift
 root="$(cd "$(dirname "$0")/.." && pwd)"
 engine="${CONTAINER_ENGINE:-docker}"
 name="$(printf '%s' "${image%@*}" | tr ':/' '--')"
+variant="${BUILD_VARIANT:-}"
+out="$name${variant:+-$variant}"
 
 args=(run --rm
   --volume "$root:/src"
   --volume "first-bite-build-$name:/cache"
   --workdir /src
-  --env "CARGO_TARGET_DIR=/src/target/$name")
+  --env "BUILD_VARIANT=$variant"
+  --env "CARGO_TARGET_DIR=/src/target/$out")
 if [ -n "${CARGO_BUILD_JOBS:-}" ]; then
   args+=(--env "CARGO_BUILD_JOBS=$CARGO_BUILD_JOBS")
 fi
 
 # Created here so that it belongs to the invoking user, not to the container's.
-mkdir -p "$root/target/$name"
-echo "build-in-container: $* in $image, output in target/$name/"
+mkdir -p "$root/target/$out"
+echo "build-in-container: $* in $image, output in target/$out/"
 exec "$engine" "${args[@]}" "$image" sh tools/container-bootstrap.sh "$@"

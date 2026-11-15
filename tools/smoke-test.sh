@@ -13,7 +13,9 @@
 # skips mind, for a platform that has only the dictionary tool.
 #
 # Environment:
-#   CONTAINER_ENGINE   docker (default) or podman
+#   CONTAINER_ENGINE    docker (default) or podman
+#   SMOKE_EXPECT_FIPS   yes: `mind security show` must also report that the
+#                       FIPS module is the active crypto provider
 set -euo pipefail
 
 # `bite check --strict` must succeed and print the first; mind must end its
@@ -21,6 +23,7 @@ set -euo pipefail
 # second: every frame in the file became a decoded record.
 expected_check='0 errors, 0 warnings'
 expected_done='done: ([1-9][0-9]*) frames, \1 records, \1 decoded, 0 not UDP or TCP, 0 malformed'
+expected_fips='FIPS module active yes'
 
 bite_only=no
 if [ "${1:-}" = --bite-only ]; then
@@ -84,4 +87,11 @@ for image in "$@"; do
     exit 1
   }
   expect "$where" mind "$expected_done" "$output"
+  [ "${SMOKE_EXPECT_FIPS:-no}" = yes ] || continue
+  output="$(run "$image" mind security show)" || {
+    printf '%s\n' "$output" >&2
+    echo "smoke-test: mind security show failed in $where" >&2
+    exit 1
+  }
+  expect "$where" mind "$expected_fips" "$output"
 done

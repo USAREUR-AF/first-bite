@@ -41,6 +41,7 @@ way, and `mind` is not built for them.
 |---|---|---|
 | `linux-gnu`, the standard build | the machine runs Ubuntu 20.04 or later, or any distribution with glibc 2.31 or later. This is the default. | with every release |
 | `linux-musl`, the self-contained build | the machine has no glibc or an older one: Alpine, a busybox or `scratch` container image, an embedded or cut-down root filesystem | with the first release of each minor version (`vX.Y.0`), and when the release workflow is run by hand with the input `static` |
+| `linux-gnu-fips`, the standard build with the FIPS module | the configuration sets `fips: required`: the crypto provider is the upstream FIPS module build of AWS-LC ([security/transport.md](security/transport.md#fips)) | with the first release of each minor version (`vX.Y.0`), and when the release workflow is run by hand with the input `fips` |
 
 Both carry libpcap 1.10.7, ZeroMQ and the C++ runtime inside `mind`, so
 neither needs a package installed. The standard build uses the machine's glibc
@@ -245,13 +246,36 @@ to `tcp://127.0.0.1:12000`.
 
 ## The record socket
 
-The ZeroMQ PUB socket is unauthenticated and unencrypted: anything that can
-reach it reads every record. The default publisher binds
-`tcp://127.0.0.1:12000`, which only processes on the same host can reach. To
-serve consumers on other hosts, set `address` in
-`/etc/first-bite/config/publishers.yml` to an address on a network you trust,
-for example `tcp://192.0.2.10:12000`, and restart the service. Do not bind it
-to an untrusted network.
+The ZeroMQ PUB socket is plaintext and unauthenticated: it cannot check who
+connects, so the only control over it is where it binds. The default
+publisher binds `tcp://127.0.0.1:12000`, which only processes on the same
+host can reach. To serve consumers on other hosts, send records through the
+Zenoh sink or an HTTPS sink ([security/transport.md](security/transport.md)),
+where the receiving service decides who reads them. Binding the socket to
+another address, for example `tcp://192.0.2.10:12000` in
+`/etc/first-bite/config/publishers.yml`, puts the records on that network in
+clear; under a `security` block it is refused unless
+`allow_plaintext_bind: true` is set.
+
+## Transport security
+
+One `security` block in the configuration states how records may leave the
+host: plaintext on loopback only, TLS, or mutual TLS, with a minimum TLS
+version, a key-exchange policy and whether the FIPS module is required.
+`mind` refuses to start when a publisher or sink cannot meet it.
+[security/transport.md](security/transport.md) is the guide: the levels, how
+to choose one, and which archive carries what.
+
+| Task | Command |
+|---|---|
+| see what every publisher and sink will use | `sudo -u firstbite mind security show --env-file /etc/first-bite/first-bite.env` |
+| check a configuration before restarting the service | `sudo -u firstbite mind security check --env-file /etc/first-bite/first-bite.env` |
+| one handshake with a sink's endpoint | `mind security show --probe <subscriber name>` |
+
+Put the block in `/etc/first-bite/config/security.yml` and set
+`SECURITY_CONFIG_PATH` to it in the settings file, or write it at the top of
+`subscribers.yml`. Consumers on other hosts are served by the Zenoh sink or an
+HTTPS sink; the ZeroMQ socket stays on loopback.
 
 ## Upgrade and uninstall
 
@@ -288,11 +312,11 @@ docker pull ghcr.io/usareur-af/first-bite:<version>
 
 | Tag | Is |
 |---|---|
-| `<version>`, for example `1.0.1` | that release, for both platforms |
+| `<version>`, for example `1.1.0` | that release, for both platforms |
 | `<version>-amd64`, `<version>-arm64` | that release, for one platform |
 | `latest` | the newest release that is not a pre-release |
 
-A pre-release has a version with a hyphen, such as `1.0.1-rc.1`; it is
+A pre-release has a version with a hyphen, such as `1.1.0-rc.1`; it is
 published under its own tags and never as `latest`.
 
 The image of a release carries two signed attestations, stored in the registry
@@ -351,6 +375,8 @@ each needs only docker.
 | `make portable-check` | runs them in bare `ubuntu:20.04`, `22.04`, `24.04` and `26.04` containers with no network | one line per image and binary |
 | `make static` | builds the self-contained binaries in an `alpine:3.24` container ([`tools/build-static.sh`](../tools/build-static.sh)) and fails if either has a program interpreter or needs a shared library | `target/alpine-3.24/<arch>-unknown-linux-musl/release/` |
 | `make static-check` | runs them in bare `busybox:musl`, `alpine:3.24` and `ubuntu:20.04` containers with no network | one line per image and binary |
+| `make portable-fips`, `make portable-fips-check` | the standard build with the cargo feature `fips`; the check also requires `mind security show` to report the FIPS module active | `target/ubuntu-20.04-fips/release/` |
+| `make static-fips`, `make static-fips-check` | the self-contained build with the cargo feature `fips`, and the same check | `target/alpine-3.24-fips/<arch>-unknown-linux-musl/release/` |
 | `tools/package-release.sh <platform> <directory>` | assembles the archive | `dist/first-bite-<version>-<platform>.tar.gz` |
 
 The check ([`tools/smoke-test.sh`](../tools/smoke-test.sh)) runs `bite check

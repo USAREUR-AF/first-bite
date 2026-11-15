@@ -112,6 +112,14 @@ impl Publisher {
             )
         })?;
 
+        // A socket any host on a network could reach is refused before it binds.
+        crate::security::permit_bind(config, &crate::security::current()).map_err(|problem| {
+            ConfigError::Publisher {
+                publisher: config.name.clone(),
+                problem,
+            }
+        })?;
+
         let describe = |action: &str| {
             format!(
                 "publisher {}: cannot {action} {}",
@@ -128,7 +136,9 @@ impl Publisher {
             .bind(&config.address)
             .map_err(Error::zmq(describe("bind")))?;
         info!("publisher {} bound to {}", config.name, config.address);
-        if !binds_this_machine_only(&config.address) {
+        // Under a security block the warning that names the override was
+        // logged when the address was permitted.
+        if !binds_this_machine_only(&config.address) && !crate::security::current().stated {
             warn!(
                 "publisher {}: {} is reachable from other machines; the socket has no \
                  authentication and no encryption, so any host that can connect reads every \
@@ -239,6 +249,7 @@ impl Publishers {
     /// Bind the publishers of the configuration file, or the built-in
     /// publisher when there is no file.
     pub fn load() -> Result<Self, Error> {
+        crate::security::activate()?;
         Self::bind(&load_publisher_configs()?)
     }
 

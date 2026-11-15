@@ -98,6 +98,8 @@ pub struct SubscriberConfig {
     pub key_template: Option<String>,
     /// Field mapping for the Cursor-on-Target transform of a subpub.
     pub cot: Option<cotify::Mapping>,
+    /// Where this sink differs from the security block.
+    pub security: Option<crate::security::SinkOverride>,
 }
 
 /// A subscriber whose records are transformed and published again on a
@@ -403,7 +405,7 @@ fn read_subpub_configs() -> Result<Vec<SubPubConfig>, ConfigError> {
 
 /// The file to read: the one the environment variable names, else the default
 /// file beside the executable when it exists.
-fn find(env_var: &str, default_file: &str) -> Option<PathBuf> {
+pub(crate) fn find(env_var: &str, default_file: &str) -> Option<PathBuf> {
     if let Some(path) = env::var_os(env_var).filter(|value| !value.is_empty()) {
         return Some(PathBuf::from(path));
     }
@@ -413,7 +415,7 @@ fn find(env_var: &str, default_file: &str) -> Option<PathBuf> {
     beside_executable.filter(|path| path.is_file())
 }
 
-fn read<T: DeserializeOwned>(path: &Path) -> Result<T, ConfigError> {
+pub(crate) fn read<T: DeserializeOwned>(path: &Path) -> Result<T, ConfigError> {
     let yaml = fs::read_to_string(path).map_err(|source| ConfigError::Read {
         path: path.to_path_buf(),
         source,

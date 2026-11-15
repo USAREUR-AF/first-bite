@@ -5,7 +5,7 @@
 #
 # Away from a tag, that is the version of the mind crate. Under GitHub Actions
 # on a tag, it is the tag without its `v`, and the tag must be v<version> or
-# a pre-release of it, v<version>-<suffix> (v1.0.1-rc.1 for version 1.0.1):
+# a pre-release of it, v<version>-<suffix> (v1.1.0-rc.1 for version 1.1.0):
 # the script fails on any other tag. A pre-release is published under its own
 # name, and its binaries report the version of the crate.
 set -euo pipefail

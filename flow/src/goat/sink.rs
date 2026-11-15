@@ -70,6 +70,11 @@ impl GoatSink {
         })
     }
 
+    /// The Zenoh configuration the publishing session opens with.
+    pub(crate) fn zenoh_config_text(&self) -> Result<String, GoatError> {
+        crate::goat::session::client_config_text(&self.config, true)
+    }
+
     fn from_env() -> Result<Self, GoatError> {
         let config = GoatConfig::from_env()?;
         validate(&config, now_unix())?;

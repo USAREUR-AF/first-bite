@@ -1,0 +1,56 @@
+# The security block: one statement of how records may leave this host, held
+# against every publisher and every subscriber before anything connects.
+# docs/security/transport.md explains the levels and how to choose one.
+#
+# Put the block in a file of its own and name it with
+#   SECURITY_CONFIG_PATH=/etc/first-bite/config/security.yml
+# or write the same `security:` key at the top of the subscriber file. Written
+# in both, startup is refused. With no block nothing is required of any path.
+#
+# Check a configuration without starting a capture:
+#   mind security check
+#   mind security show
+
+security:
+  # unenforced | loopback-plaintext | tls | mtls
+  transport: tls
+
+  # 1.2 | 1.3; default 1.3.
+  min_tls: 1.3
+
+  # classical | hybrid-pqc-preferred | hybrid-pqc-required. The hybrid group
+  # is X25519MLKEM768 and needs a binary built with the cargo feature `pqc`,
+  # which the released binaries have. Default: hybrid-pqc-preferred in such a
+  # binary, classical otherwise.
+  key_exchange: hybrid-pqc-preferred
+
+  # off | required. `required` needs a binary built with the cargo feature
+  # `fips` (the `-fips` release archives).
+  fips: "off"
+
+  # allowed | required: whether the Zenoh sink may, or must, use quic/
+  # endpoints. QUIC needs a binary built with the cargo feature `quic`.
+  quic: allowed
+
+  # Client certificate and key (PEM files) presented by the REST, Azure and S3
+  # sinks; required by `transport: mtls`. The Zenoh sink names its own in its
+  # Zenoh configuration file.
+  # client_cert: /etc/first-bite/tls/client.pem
+  # client_key: /etc/first-bite/tls/client.key
+
+  # Certificate authorities (one PEM file) the REST, Azure and S3 sinks trust,
+  # in place of the public web roots.
+  # ca_bundle: /etc/first-bite/tls/ca.pem
+
+  # A ZeroMQ socket bound to an address other than loopback is refused unless
+  # this is true; with it, startup logs a warning that names the address.
+  allow_plaintext_bind: false
+
+# One subscriber may differ, in the subscriber file, and says why:
+#
+#   subscribers:
+#     - name: ToBlobEmulator
+#       ...
+#       security:
+#         transport: loopback-plaintext
+#         reason: "local emulator on the development machine"

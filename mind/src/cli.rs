@@ -1,10 +1,15 @@
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 /// Capture packets, decode them against a dictionary, publish the records.
 #[derive(Parser, Debug)]
 #[command(name = "mind", version, about)]
 pub struct Opt {
+    /// Without a subcommand `mind` captures; the options below are the
+    /// capture run's.
+    #[command(subcommand)]
+    pub command: Option<Command>,
+
     /// Network interfaces to capture on. Give two for a tap that presents each
     /// direction of the link on its own port.
     pub device_name: Vec<String>,
@@ -68,4 +73,56 @@ pub struct Opt {
     /// Start the subscriber/publisher pairs from the subpub configuration.
     #[arg(long)]
     pub activate_subpubs: bool,
+}
+
+/// What `mind` does instead of capturing.
+#[derive(Subcommand, Debug)]
+pub enum Command {
+    /// Report or check transport security, without capturing or connecting.
+    Security(SecurityOpt),
+}
+
+#[derive(Args, Debug)]
+pub struct SecurityOpt {
+    #[command(subcommand)]
+    pub action: SecurityAction,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum SecurityAction {
+    /// Print what every publisher and sink will use: transport, protocol,
+    /// minimum TLS version, key-exchange groups, client authentication, the
+    /// crypto provider and whether the FIPS module is active.
+    Show(SecurityShow),
+    /// Exit non-zero, with the messages a capture run would stop with, if
+    /// any path does not meet the security block.
+    Check(SecurityCommon),
+}
+
+#[derive(Args, Debug)]
+pub struct SecurityCommon {
+    /// The capture run's env file, so the same configuration is read.
+    #[arg(long, value_name = "FILE")]
+    pub env_file: Option<String>,
+
+    /// Include the publishers of the subpub configuration, as a capture run
+    /// with --activate-subpubs would bind them.
+    #[arg(long)]
+    pub activate_subpubs: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct SecurityShow {
+    #[command(flatten)]
+    pub common: SecurityCommon,
+
+    /// Print the report as JSON.
+    #[arg(long)]
+    pub json: bool,
+
+    /// Perform one TLS handshake with this subscriber's endpoint and report
+    /// the negotiated version, cipher suite and key-exchange group. No
+    /// record is sent.
+    #[arg(long, value_name = "SUBSCRIBER")]
+    pub probe: Option<String>,
 }
