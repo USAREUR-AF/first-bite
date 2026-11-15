@@ -12,7 +12,7 @@
 //!   RADAR/
 //!     metadata.json            InterfaceSpec
 //!     messages/
-//!       Keep Alive Message.json  MessageSpec
+//!       Heartbeat.json  MessageSpec
 //!   vectors/                   optional: test vectors, see `bite check`
 //! ```
 //!
