@@ -1,40 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 311" width="760" height="311" role="img" aria-labelledby="platforms-title platforms-desc" aria-label="One binary, installed from a tarball or run in a container">
-<title id="platforms-title">One binary, installed from a tarball or run in a container</title>
-<desc id="platforms-desc">Where first-bite runs. Built: release tarballs for x86-64 and arm64 Linux with glibc 2.35 or later, holding an installer, a systemd unit and the mind and bite binaries; a container image that runs as a non-root user; a build from source on Linux and macOS, both tested in CI; and a build with no internet access from vendored dependencies. In progress: a fully static Linux binary and release builds for macOS and Windows.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 364" width="760" height="364" role="img" aria-labelledby="platforms-title platforms-desc" aria-label="One archive per platform, and nothing to install on the target">
+<title id="platforms-title">One archive per platform, and nothing to install on the target</title>
+<desc id="platforms-desc">Where first-bite runs. The standard Linux build needs glibc 2.31 or later and is built and run on x86-64 in Ubuntu 20.04, 22.04, 24.04 and 26.04. The self-contained Linux build is fully static, needs only a Linux kernel 3.2 or later, and is built and run on x86-64. Archives for 64-bit Arm Linux, macOS and Windows are built in CI and not run locally. The container image replays a capture file, measured. The decoder library is compile-checked for iOS, Android, Windows, WebAssembly and 64-bit Arm Linux; no application is built. A build with no internet access uses vendored dependencies.</desc>
 <style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
-<rect class="bg" x="0.5" y="0.5" width="759" height="310" rx="12"/>
-<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">One binary, installed from a tarball or run in a container</text>
-<rect x="24" y="60" width="228" height="114" rx="8" class="bx"/>
-<text x="40" y="90" font-size="15" font-weight="700" class="t">Release tarball</text>
-<text x="236" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<rect class="bg" x="0.5" y="0.5" width="759" height="363" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">One archive per platform, and nothing to install on the target</text>
+<rect x="24" y="60" width="228" height="132" rx="8" class="bx"/>
+<text x="40" y="90" font-size="15" font-weight="700" class="t">Standard Linux</text>
 <path d="M40 102L236 102" class="lnr" data-lint="nohead"/>
-<text x="40" y="124" font-size="13" class="t">x86-64 and arm64 Linux</text>
-<text x="40" y="143" font-size="13" class="q">glibc 2.35 or later, systemd</text>
-<text x="40" y="162" font-size="13" class="q">installer, unit, mind, bite</text>
-<rect x="266" y="60" width="228" height="114" rx="8" class="bx"/>
-<text x="282" y="90" font-size="15" font-weight="700" class="t">Container image</text>
-<text x="478" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<text x="40" y="123" font-size="13" class="t">Ubuntu 20.04 to 26.04, x86-64</text>
+<text x="40" y="141" font-size="13" class="q">glibc 2.31 or later</text>
+<text x="40" y="159" font-size="13" class="q">nothing to install</text>
+<text x="40" y="179" font-size="13" font-weight="700" class="g">built and run</text>
+<rect x="266" y="60" width="228" height="132" rx="8" class="bx"/>
+<text x="282" y="90" font-size="15" font-weight="700" class="t">Self-contained Linux</text>
 <path d="M282 102L478 102" class="lnr" data-lint="nohead"/>
-<text x="282" y="124" font-size="13" class="t">mind as the entry point</text>
-<text x="282" y="143" font-size="13" class="q">runs as a non-root user</text>
-<text x="282" y="162" font-size="13" class="q">live capture: host network</text>
-<rect x="508" y="60" width="228" height="114" rx="8" class="bx"/>
-<text x="524" y="90" font-size="15" font-weight="700" class="t">From source</text>
-<text x="720" y="90" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
+<text x="282" y="123" font-size="13" class="t">fully static (musl), x86-64</text>
+<text x="282" y="141" font-size="13" class="q">Linux kernel 3.2 or later</text>
+<text x="282" y="159" font-size="13" class="q">Alpine, busybox, scratch</text>
+<text x="282" y="179" font-size="13" font-weight="700" class="g">built and run</text>
+<rect x="508" y="60" width="228" height="132" rx="8" class="bxd"/>
+<text x="524" y="90" font-size="15" font-weight="700" class="t">Arm, macOS, Windows</text>
 <path d="M524 102L720 102" class="lnr" data-lint="nohead"/>
-<text x="524" y="124" font-size="13" class="t">Linux and macOS</text>
-<text x="524" y="143" font-size="13" class="q">tests run in CI on both</text>
-<text x="524" y="162" font-size="13" class="q">Rust, CMake, libpcap headers</text>
-<rect x="24" y="192" width="349" height="95" rx="8" class="bx"/>
-<text x="40" y="222" font-size="15" font-weight="700" class="t">No internet access</text>
-<text x="357" y="222" font-size="13" font-weight="700" text-anchor="end" class="g">built</text>
-<path d="M40 234L357 234" class="lnr" data-lint="nohead"/>
-<text x="40" y="256" font-size="13" class="t">make vendor copies every dependency</text>
-<text x="40" y="275" font-size="13" class="q">cargo build --offline on the offline machine</text>
-<rect x="387" y="192" width="349" height="95" rx="8" class="bxd"/>
-<text x="403" y="222" font-size="15" font-weight="700" class="t">More platforms</text>
-<text x="720" y="222" font-size="13" font-weight="700" text-anchor="end" class="w">in progress</text>
-<path d="M403 234L720 234" class="lnr" data-lint="nohead"/>
-<text x="403" y="256" font-size="13" class="t">a fully static Linux binary</text>
-<text x="403" y="275" font-size="13" class="q">release builds for macOS and Windows</text>
+<text x="524" y="123" font-size="13" class="t">64-bit Arm Linux, both builds</text>
+<text x="524" y="141" font-size="13" class="q">macOS: Apple silicon and Intel</text>
+<text x="524" y="159" font-size="13" class="q">Windows: the bite tool only</text>
+<text x="524" y="179" font-size="13" font-weight="700" class="w">built in CI; not run locally</text>
+<rect x="24" y="206" width="228" height="132" rx="8" class="bx"/>
+<text x="40" y="236" font-size="15" font-weight="700" class="t">Container image</text>
+<path d="M40 248L236 248" class="lnr" data-lint="nohead"/>
+<text x="40" y="269" font-size="13" class="t">mind as the entry point</text>
+<text x="40" y="287" font-size="13" class="q">runs as a non-root user</text>
+<text x="40" y="305" font-size="13" class="q">replays a capture file</text>
+<text x="40" y="325" font-size="13" font-weight="700" class="g">measured</text>
+<rect x="266" y="206" width="228" height="132" rx="8" class="bxd"/>
+<text x="282" y="236" font-size="15" font-weight="700" class="t">Decoder library</text>
+<path d="M282 248L478 248" class="lnr" data-lint="nohead"/>
+<text x="282" y="269" font-size="13" class="t">iOS, Android, WebAssembly</text>
+<text x="282" y="287" font-size="13" class="q">Windows, 64-bit Arm Linux</text>
+<text x="282" y="305" font-size="13" class="q">no application built</text>
+<text x="282" y="325" font-size="13" font-weight="700" class="w">compile-checked</text>
+<rect x="508" y="206" width="228" height="132" rx="8" class="bx"/>
+<text x="524" y="236" font-size="15" font-weight="700" class="t">No internet access</text>
+<path d="M524 248L720 248" class="lnr" data-lint="nohead"/>
+<text x="524" y="269" font-size="13" class="t">make vendor, copy the tree</text>
+<text x="524" y="287" font-size="13" class="q">cargo build --offline</text>
+<text x="524" y="305" font-size="13" class="q">on the offline machine</text>
+<text x="524" y="325" font-size="13" font-weight="700" class="g">built</text>
 </svg>

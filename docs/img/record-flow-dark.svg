@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 392" width="760" height="392" role="img" aria-labelledby="record-flow-title record-flow-desc" aria-label="A record is published once; each reader takes the topics it filters for">
+<title id="record-flow-title">A record is published once; each reader takes the topics it filters for</title>
+<desc id="record-flow-desc">mind hands each record to the publishers, a ZeroMQ PUB socket on tcp://127.0.0.1:12000 by default. A subscriber reads the socket, keeps the records on its topics and forwards each to one sink: object storage, HTTP, a local file or Zenoh. A subpub reads the socket the same way, transforms each record into Cursor-on-Target and publishes the result on a socket of its own, tcp://127.0.0.1:12001 by default. Any other ZeroMQ SUB socket can read either socket.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="391" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">A record is published once; each reader takes the topics it filters for</text>
+<rect x="24" y="152" width="90" height="72" rx="8" class="bxa"/>
+<text x="69" y="174.5" font-size="15" font-weight="700" text-anchor="middle" class="a">mind</text>
+<text x="69" y="192.9" font-size="13" text-anchor="middle" class="q">a record</text>
+<text x="69" y="210.9" font-size="13" text-anchor="middle" class="q">per packet</text>
+<rect x="150" y="152" width="160" height="72" rx="8" class="bx"/>
+<text x="230" y="174.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Publishers</text>
+<text x="230" y="192.4" font-size="13" text-anchor="middle" class="q">ZeroMQ PUB socket</text>
+<text x="230" y="210.4" font-size="13" text-anchor="middle" class="q">tcp://127.0.0.1:12000</text>
+<path d="M114 188L141 188" class="lna"/><path d="M150 188L140 193L140 183z" class="fa"/>
+<path d="M310 188L330 188" class="lna" data-lint="nohead"/>
+<path d="M330 96L330 280" class="lna" data-lint="nohead"/>
+<path d="M330 96L341 96" class="lna"/><path d="M350 96L340 101L340 91z" class="fa"/>
+<path d="M330 188L341 188" class="lna"/><path d="M350 188L340 193L340 183z" class="fa"/>
+<path d="M330 280L341 280" class="lna"/><path d="M350 280L340 285L340 275z" class="fa"/>
+<rect x="350" y="60" width="170" height="72" rx="8" class="bx"/>
+<text x="435" y="82.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Subscriber</text>
+<text x="435" y="100.4" font-size="13" text-anchor="middle" class="q">keeps its topics, such as</text>
+<text x="435" y="118.4" font-size="13" text-anchor="middle" class="t m">WX/Observation</text>
+<rect x="556" y="60" width="180" height="72" rx="8" class="bx"/>
+<text x="646" y="82.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Sink</text>
+<text x="646" y="100.4" font-size="13" text-anchor="middle" class="q">object storage, HTTP,</text>
+<text x="646" y="118.4" font-size="13" text-anchor="middle" class="q">local file, Zenoh</text>
+<path d="M520 96L547 96" class="lna"/><path d="M556 96L546 101L546 91z" class="fa"/>
+<rect x="350" y="152" width="170" height="72" rx="8" class="bx"/>
+<text x="435" y="174.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Subpub</text>
+<text x="435" y="192.4" font-size="13" text-anchor="middle" class="q">keeps its topics, such as</text>
+<text x="435" y="210.4" font-size="13" text-anchor="middle" class="t m">WX/Position</text>
+<rect x="556" y="152" width="180" height="72" rx="8" class="bx"/>
+<text x="646" y="174.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Transform</text>
+<text x="646" y="192.4" font-size="13" text-anchor="middle" class="q">record to</text>
+<text x="646" y="210.4" font-size="13" text-anchor="middle" class="q">Cursor-on-Target</text>
+<path d="M520 188L547 188" class="lna"/><path d="M556 188L546 193L546 183z" class="fa"/>
+<path d="M646 224L646 235" class="lna"/><path d="M646 244L641 234L651 234z" class="fa"/>
+<rect x="556" y="244" width="180" height="72" rx="8" class="bx"/>
+<text x="646" y="266.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Its own socket</text>
+<text x="646" y="284.4" font-size="13" text-anchor="middle" class="q">ZeroMQ PUB socket</text>
+<text x="646" y="302.4" font-size="13" text-anchor="middle" class="q">tcp://127.0.0.1:12001</text>
+<rect x="350" y="244" width="170" height="72" rx="8" class="bxd"/>
+<text x="435" y="266.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Your subscriber</text>
+<text x="435" y="284.4" font-size="13" text-anchor="middle" class="q">any ZeroMQ SUB socket</text>
+<text x="435" y="302.4" font-size="13" text-anchor="middle" class="q">on either PUB socket</text>
+<text x="24" y="348" font-size="13" data-role="note" class="q">A message on a socket is &lt;topic&gt;|&lt;record JSON&gt;, and the topic is interface/message.</text>
+<text x="24" y="368" font-size="13" data-role="note" class="q">A filter matches a topic exactly; * keeps everything. A subpub publishes on the input topic plus a suffix.</text>
+</svg>
