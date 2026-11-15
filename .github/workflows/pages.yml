@@ -32,15 +32,19 @@ jobs:
         with:
           persist-credentials: false
       # The interactive decoder is the bite decoder compiled to WebAssembly.
-      # The step runs only when the Makefile has a wasm target.
+      # wasm-bindgen-cli must be the version of the wasm-bindgen crate in
+      # Cargo.lock, so it is read from there.
+      - name: Rust toolchain with the WebAssembly target
+        run: rustup toolchain install stable --no-self-update --profile minimal --target wasm32-unknown-unknown
+      - name: wasm-bindgen-cli at the locked version
+        timeout-minutes: 15
+        run: |
+          version=$(awk '/^name = "wasm-bindgen"$/ {getline; gsub(/[^0-9.]/, "", $3); print $3; exit}' Cargo.lock)
+          echo "wasm-bindgen $version"
+          cargo install wasm-bindgen-cli --locked --version "=$version"
       - name: Interactive decoder (make wasm)
         timeout-minutes: 20
-        run: |
-          if grep -q '^wasm:' Makefile; then
-            make wasm
-          else
-            echo "no wasm target in the Makefile: building the site without the decoder"
-          fi
+        run: make wasm
       - name: Build the site
         run: make site
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
