@@ -5,6 +5,18 @@
   <img alt="first-bite: the first bite of every byte, before it reaches its addressee" src="./icon/first-bite-wordmark-light.svg" width="520">
 </picture>
 
+[![CI](https://github.com/USAREUR-AF/first-bite/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/USAREUR-AF/first-bite/badge)](https://scorecard.dev/viewer/?uri=github.com/USAREUR-AF/first-bite)
+[![fuzzing](https://github.com/USAREUR-AF/first-bite/actions/workflows/cflite_batch.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/cflite_batch.yml)
+[![cargo-audit](https://github.com/USAREUR-AF/first-bite/actions/workflows/rust-audit.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/rust-audit.yml)
+[![cargo-deny](https://github.com/USAREUR-AF/first-bite/actions/workflows/cargo-deny.yml/badge.svg?branch=main)](https://github.com/USAREUR-AF/first-bite/actions/workflows/cargo-deny.yml)
+[![licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
+[![docs](https://img.shields.io/badge/docs-usareur--af.github.io-blue.svg)](https://usareur-af.github.io/first-bite/)
+<!-- To add when each exists (docs/security/best-practices-answers.md, docs/security/scorecard.md):
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/<id>/badge)](https://www.bestpractices.dev/projects/<id>)
+[![release](https://img.shields.io/github/v/release/USAREUR-AF/first-bite?sort=semver)](https://github.com/USAREUR-AF/first-bite/releases/latest)
+-->
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/how-it-works-dark.svg">
   <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
@@ -231,7 +243,26 @@ them. A dictionary does not have to live in this repository: point
 `BITE_DICT_PATH` at any directory. Keep a dictionary for a message set you may
 not publish in a repository of your own.
 
-Optional, off by default: built with the cargo feature `goat`, `mind` can join a goat network and publish decoded records on its Zenoh data fabric ([docs/goat/joining.md](docs/goat/joining.md)).
+## With goat
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/on-a-goat-fabric-dark.svg">
+  <img src="docs/img/on-a-goat-fabric.svg" width="100%" alt="With the optional goat feature, first-bite reads a copy of a link from a tap or mirror port, decodes it from a dictionary and publishes records as a Zenoh client holding a certificate the goatnet issued. The goat data fabric owns identity, access rules, routing and delivery, and consumers read from the fabric, not from first-bite. Records land on &lt;prefix&gt;/telemetry/&lt;format&gt;/&lt;site&gt;/&lt;interface&gt;/&lt;message&gt;, with a schema declared at attest/schema/&lt;record key&gt; and an announcement under &lt;prefix&gt;/services/shims. Without goat, which is the default build, the same decoder publishes on a ZeroMQ socket to object storage, HTTP, a file or any Zenoh router.">
+</picture>
+
+goat is a data fabric: a network, its certificate authority, Zenoh routers and
+their access rules. first-bite is not another fabric and not another way to
+manage data. It is one of the ways data gets onto a goat fabric: it turns what
+is on a wire into records and publishes them under a certificate the goatnet
+issued and the key prefix that certificate is granted. Consumers read from the
+fabric, not from first-bite.
+
+goat is optional and off by default. Without it first-bite runs as described
+above, and nothing in the default build depends on goat. Built with the cargo
+feature `goat`, `mind` joins a goatnet ([docs/goat/joining.md](docs/goat/joining.md));
+[docs/goat/contract.md](docs/goat/contract.md) lists what goat requires and
+[docs/related-projects.md](docs/related-projects.md) shows the other ways onto
+the same fabric.
 
 ## Beyond IP
 

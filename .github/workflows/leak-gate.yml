@@ -5,13 +5,14 @@
 # the line and an id of the needle, never the needle.
 #
 # pull_request_target runs with the secret, also for pull requests from forks.
-# Only the base branch's copy of tools/check-public-tree.sh is executed; the
-# pull request is checked out beside it and read as data, never run.
+# The job checks out the base branch only, so the check that runs is
+# tools/check-public-tree.sh as merged. The pull request's commit is fetched
+# into the object store and read from there with --tree: it is never checked
+# out, built or run, so a change to the check takes effect only after it merges.
 name: leak-gate
 
 on:
-  # The trigger is what gives a fork's pull request the needle list. Nothing
-  # from the pull request is executed: see the two checkouts below.
+  # The trigger is what gives a fork's pull request the needle list.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened, synchronize, reopened, ready_for_review]
   push:
@@ -30,20 +31,38 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      # No `ref:`. For pull_request_target the default is the head of the base
+      # branch; for push it is the pushed commit.
       - name: Check out the gate as merged
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
-          path: gate
           persist-credentials: false
-      - name: Check out the tree to scan, as data
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          path: scanned
-          persist-credentials: false
-      - name: Scan
-        working-directory: scanned
+      - name: Fetch the pull request's commit as data
+        if: github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # The token is given to this one command and not stored in the clone.
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=$auth" fetch --no-tags --quiet --depth=1 \
+            origin "+refs/pull/${PR_NUMBER}/head:refs/leak-gate/head"
+          # The run is for one commit; a push that arrived since is another run.
+          fetched="$(git rev-parse refs/leak-gate/head)"
+          if [ "$fetched" != "$HEAD_SHA" ]; then
+            echo "refs/pull/${PR_NUMBER}/head is $fetched, this run is for $HEAD_SHA" >&2
+            exit 1
+          fi
+      - name: Scan the pull request's commit
+        if: github.event_name == 'pull_request_target'
         env:
           LEAK_NEEDLES: ${{ secrets.LEAK_NEEDLES }}
-        run: bash ../gate/tools/check-public-tree.sh
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: tools/check-public-tree.sh --tree "$HEAD_SHA"
+      - name: Scan the pushed commit
+        if: github.event_name == 'push'
+        env:
+          LEAK_NEEDLES: ${{ secrets.LEAK_NEEDLES }}
+        run: tools/check-public-tree.sh

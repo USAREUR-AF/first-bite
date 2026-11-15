@@ -3,19 +3,14 @@
 name: codeql
 
 on:
+  # Every pull request and every push to main, whatever it changes: each
+  # commit that reaches main then has an analysis, which is also what OpenSSF
+  # Scorecard's SAST check counts. The three extractions take a few minutes.
   pull_request:
-    paths:
-      - '**.rs'
-      - '**.py'
-      - '.github/workflows/**'
   # main keeps its own analysis: code scanning compares a pull request's alerts
   # against the default branch's.
   push:
     branches: [main]
-    paths:
-      - '**.rs'
-      - '**.py'
-      - '.github/workflows/**'
   schedule:
     - cron: '23 5 * * 1'
   workflow_dispatch:

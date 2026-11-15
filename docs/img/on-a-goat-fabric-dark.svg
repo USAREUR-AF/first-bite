@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470" role="img" aria-labelledby="on-a-goat-fabric-title on-a-goat-fabric-desc" aria-label="first-bite is a way onto a goat data fabric, not another fabric">
+<title id="on-a-goat-fabric-title">first-bite is a way onto a goat data fabric, not another fabric</title>
+<desc id="on-a-goat-fabric-desc">With the optional goat feature, first-bite reads a copy of a link from a tap or mirror port, decodes it from a dictionary and publishes records as a Zenoh client holding a certificate the goatnet issued. The goat data fabric owns identity, access rules, routing and delivery, and consumers read from the fabric, not from first-bite. Records land on &lt;prefix&gt;/telemetry/&lt;format&gt;/&lt;site&gt;/&lt;interface&gt;/&lt;message&gt;, with a schema declared at attest/schema/&lt;record key&gt; and an announcement under &lt;prefix&gt;/services/shims. Without goat, which is the default build, the same decoder publishes on a ZeroMQ socket to object storage, HTTP, a file or any Zenoh router.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="469" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">first-bite is a way onto a goat data fabric, not another fabric</text>
+<text x="24" y="74" font-size="13" font-weight="700" data-role="note" class="q">With the goat feature: optional, off by default</text>
+<rect x="24" y="86" width="110" height="118" rx="8" class="bx"/>
+<text x="79" y="131.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Equipment</text>
+<text x="79" y="149.4" font-size="13" text-anchor="middle" class="q">its own binary</text>
+<text x="79" y="167.4" font-size="13" text-anchor="middle" class="q">format, on a link</text>
+<path d="M134 145L177 145" class="lna"/><path d="M186 145L176 150L176 140z" class="fa"/>
+<text x="158" y="135" font-size="13" text-anchor="middle" class="q">copy</text>
+<rect x="186" y="86" width="214" height="118" rx="8" class="bxa"/>
+<text x="202" y="110" font-size="15" font-weight="700" class="a">first-bite</text>
+<text x="202" y="132" font-size="13" class="t">capture: tap or mirror port</text>
+<text x="202" y="151" font-size="13" class="t">decode: from a dictionary</text>
+<text x="202" y="170" font-size="13" class="t">publish: as a Zenoh client</text>
+<text x="202" y="189" font-size="13" class="q">certificate: from the goatnet</text>
+<path d="M400 145L461 145" class="lna"/><path d="M470 145L460 150L460 140z" class="fa"/>
+<text x="434" y="135" font-size="13" text-anchor="middle" class="q">records</text>
+<rect x="470" y="86" width="266" height="118" rx="8" class="bx"/>
+<text x="486" y="110" font-size="15" font-weight="700" class="t">goat data fabric</text>
+<text x="486" y="132" font-size="13" class="t">identity: its certificate authority</text>
+<text x="486" y="151" font-size="13" class="t">access: only under a granted prefix</text>
+<text x="486" y="170" font-size="13" class="t">routing: Zenoh routers on its mesh</text>
+<text x="486" y="189" font-size="13" class="t">delivery: to subscribers</text>
+<path d="M603 204L603 219" class="ln"/><path d="M603 228L598 218L608 218z" class="fl"/>
+<rect x="470" y="228" width="266" height="50" rx="8" class="bx"/>
+<text x="603" y="247.9" font-size="13" font-weight="700" text-anchor="middle" class="t">Consumers</text>
+<text x="603" y="265.9" font-size="13" text-anchor="middle" class="q">read from the fabric, not from first-bite</text>
+<text x="24" y="240" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="a" font-weight="700">first-bite: </tspan><tspan class="t">from the wire to a record</tspan></text>
+<text x="24" y="262" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="t" font-weight="700">goat: </tspan><tspan class="t">who may publish, under which keys, and where it goes</tspan></text>
+<rect x="24" y="288" width="712" height="74" rx="8" class="bxp"/>
+<text x="40" y="310" font-size="13" font-weight="700" class="q">Records</text>
+<text x="150" y="310" font-size="13" class="t m">&lt;prefix&gt;/telemetry/&lt;format&gt;/&lt;site&gt;/&lt;interface&gt;/&lt;message&gt;</text>
+<text x="40" y="330" font-size="13" font-weight="700" class="q">Schema</text>
+<text x="150" y="330" font-size="13" class="t m">attest/schema/&lt;record key&gt;</text>
+<text x="40" y="350" font-size="13" font-weight="700" class="q">Announcement</text>
+<text x="150" y="350" font-size="13" class="t m">&lt;prefix&gt;/services/shims/&lt;format&gt;/&lt;instance&gt;/announce</text>
+<text x="720" y="330" font-size="13" text-anchor="end" class="q">&lt;prefix&gt; is the granted identity</text>
+<text x="24" y="392" font-size="13" font-weight="700" data-role="note" class="q">Without goat: the default build</text>
+<rect x="24" y="404" width="130" height="48" rx="8" class="bxa"/>
+<text x="89" y="423.2" font-size="14" font-weight="700" text-anchor="middle" class="a">first-bite</text>
+<text x="89" y="441.4" font-size="13" text-anchor="middle" class="q">the same decoder</text>
+<path d="M154 428L181 428" class="lna"/><path d="M190 428L180 433L180 423z" class="fa"/>
+<rect x="190" y="404" width="170" height="48" rx="8" class="bx"/>
+<text x="275" y="423.2" font-size="14" font-weight="700" text-anchor="middle" class="t">ZeroMQ PUB socket</text>
+<text x="275" y="441.4" font-size="13" text-anchor="middle" class="q">on this host</text>
+<path d="M360 428L387 428" class="lna"/><path d="M396 428L386 433L386 423z" class="fa"/>
+<rect x="396" y="404" width="340" height="48" rx="8" class="bx"/>
+<text x="566" y="423.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Sinks</text>
+<text x="566" y="441.4" font-size="13" text-anchor="middle" class="q">object storage, HTTP, a file, any Zenoh router</text>
+</svg>

@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 # Refuse material that does not belong in this repository.
 #
-#   tools/check-public-tree.sh            scan every tracked file
-#   tools/check-public-tree.sh <path>...  scan the given files
+#   tools/check-public-tree.sh                scan every tracked file
+#   tools/check-public-tree.sh <path>...      scan the given files
+#   tools/check-public-tree.sh --tree <rev>   scan every file of the commit
+#                                             <rev>, read from the object
+#                                             store: nothing of that commit
+#                                             is checked out or run
+#
+# --tree is how the leak gate reads a pull request (leak-gate.yml): the gate is
+# this file as merged, and the pull request is only ever data to it. This file
+# is scanned like any other, so its own patterns are written not to match
+# themselves.
 #
 # Four checks:
 #   1. credential shapes: private keys, cloud access key ids, tokens;
@@ -35,29 +44,72 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
+work="$(mktemp -d "${TMPDIR:-/tmp}/check-public-tree.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+
+# files: every path given, for the checks on names. scan: the files grep
+# reads. names: the path each of them is reported under.
 files=()
-if [ "$#" -gt 0 ]; then
-  files=("$@")
+scan=()
+names=()
+if [ "${1:-}" = "--tree" ]; then
+  [ "$#" -eq 2 ] || { echo "usage: check-public-tree.sh --tree <rev>" >&2; exit 2; }
+  rev="$(git rev-parse --verify --quiet "$2^{commit}")" ||
+    { echo "check-public-tree: $2 is not a commit in this repository" >&2; exit 2; }
+  # Each blob is written under a number, never under its path: a path in a
+  # pull request is data too. A symbolic link is a blob holding its target and
+  # is scanned as that text; a submodule has no blob here and only its path is
+  # checked.
+  store="$work/blobs"
+  mkdir "$store"
+  while IFS= read -r -d '' entry; do
+    path="${entry#*$'\t'}"
+    read -r _ kind object <<<"${entry%%$'\t'*}"
+    files+=("$path")
+    [ "$kind" = blob ] || continue
+    git cat-file blob "$object" >"$store/${#scan[@]}"
+    names+=("$path")
+    scan+=("$store/${#scan[@]}")
+  done < <(git ls-tree -r -z "$rev")
 else
-  while IFS= read -r -d '' f; do files+=("$f"); done < <(git ls-files -z)
+  store=""
+  if [ "$#" -gt 0 ]; then
+    files=("$@")
+  else
+    while IFS= read -r -d '' f; do files+=("$f"); done < <(git ls-files -z)
+  fi
+  # Regular files only. A symbolic link is not followed: what it points to
+  # may be outside the repository.
+  for f in "${files[@]}"; do
+    f="${f#./}"
+    [ -f "$f" ] && [ ! -L "$f" ] && scan+=("$f") && names+=("$f")
+  done
 fi
 
 fail=0
 
-# Scan only regular files, and never this script (it holds the patterns). A
-# symbolic link is not followed: the tree being scanned may be a pull request,
-# and what a link points to is outside it.
-scan=()
-for f in "${files[@]}"; do
-  f="${f#./}"
-  [ -f "$f" ] && [ ! -L "$f" ] && [ "$f" != "tools/check-public-tree.sh" ] && scan+=("$f")
-done
-[ "${#scan[@]}" -gt 0 ] || { echo "check-public-tree: nothing to scan"; exit 0; }
+[ "${#files[@]}" -gt 0 ] || { echo "check-public-tree: nothing to scan"; exit 0; }
+
+# Rewrite the "file:line" lines on standard input to name the path each
+# scanned file is reported under.
+reported() {
+  local hit number
+  if [ -z "$store" ]; then
+    cat
+    return
+  fi
+  while IFS= read -r hit; do
+    hit="${hit#"$store/"}"
+    number="${hit%%:*}"
+    printf '%s:%s\n' "${names[$number]}" "${hit#*:}"
+  done
+}
 
 # Print "file:line" for every match of the grep arguments over the scan set.
 # /dev/null keeps grep printing the file name when one file is scanned.
 matches() {
-  grep -nI "$@" -- "${scan[@]}" /dev/null 2>/dev/null | cut -d: -f1,2 || true
+  [ "${#scan[@]}" -gt 0 ] || return 0
+  grep -nI "$@" -- "${scan[@]}" /dev/null 2>/dev/null | cut -d: -f1,2 | reported || true
 }
 
 # 1. credential shapes
@@ -89,8 +141,7 @@ for f in "${files[@]}"; do
 done
 
 # 3. identifiers by shape
-allowed_lines="$(mktemp "${TMPDIR:-/tmp}/check-public-tree.XXXXXX")"
-trap 'rm -f "$allowed_lines"' EXIT
+allowed_lines="$work/allowed"
 # "file:line" of every line that carries the annotation with a reason.
 matches -E -e 'opsec-allow: *[^ ]' >"$allowed_lines"
 
@@ -116,7 +167,7 @@ shape() {
     grep -nIoE -e "$pattern" -- "$@" /dev/null 2>/dev/null |
       { if [ -n "$exact" ]; then grep -E -e "^[^:]*:[0-9]+:($exact)\$" || true; else cat; fi; } |
       { if [ -n "$allowed" ]; then grep -viE -e "^[^:]*:[0-9]+:($allowed)\$" || true; else cat; fi; } |
-      cut -d: -f1,2 | sort -u
+      cut -d: -f1,2 | reported | sort -u
   )
 }
 
@@ -125,33 +176,32 @@ octet='[0-9]{1,3}'
 dotted='[0-9]+(\.[0-9]+)+'
 shape ssh-public-key \
   '(ssh-(ed25519|rsa|dss)|ecdsa-sha2-nistp[0-9]+|sk-(ssh-ed25519|ecdsa-sha2-nistp256)@openssh\.com) AAAA[A-Za-z0-9+/]{40,}' \
-  '' '' "${scan[@]}"
-shape age-recipient '[a-z0-9]*age1[a-z0-9]{58,}' 'age1[a-z0-9]{58}' '' "${scan[@]}"
+  '' '' ${scan[@]+"${scan[@]}"}
+shape age-recipient '[a-z0-9]*age1[a-z0-9]{58,}' 'age1[a-z0-9]{58}' '' ${scan[@]+"${scan[@]}"}
 shape mac-address "(${hex}|:)*(${hex}{2}:){5}${hex}{2}(${hex}|:)*" "(${hex}{2}:){5}${hex}{2}" \
-  '(ff:){5}ff|(00:){5}00' "${scan[@]}"
+  '(ff:){5}ff|(00:){5}00' ${scan[@]+"${scan[@]}"}
 shape private-ipv4 "$dotted" \
   "(10\\.${octet}|172\\.(1[6-9]|2[0-9]|3[01])|192\\.168|169\\.254)\\.${octet}\\.${octet}" \
-  '' "${scan[@]}"
+  '' ${scan[@]+"${scan[@]}"}
 shape cgnat-ipv4 "$dotted" \
   "100\\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\\.${octet}\\.${octet}" \
-  '' "${scan[@]}"
+  '' ${scan[@]+"${scan[@]}"}
 shape email-address \
   '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}' '' \
-  '.*@([a-z0-9-]+\.)*example\.org|.*@users\.noreply\.github\.com' "${scan[@]}"
+  '.*@([a-z0-9-]+\.)*example\.org|.*@users\.noreply\.github\.com' ${scan[@]+"${scan[@]}"}
 
 # The files that instruct coding assistants name them; nothing else does.
 elsewhere=()
-for f in "${scan[@]}"; do
-  case "$f" in
+for index in "${!scan[@]}"; do
+  case "${names[$index]}" in
     AGENTS.md | CLAUDE.md | */AGENTS.md | */CLAUDE.md | .claude/* | */.claude/*) ;;
-    *) elsewhere+=("$f") ;;
+    *) elsewhere+=("${scan[$index]}") ;;
   esac
 done
-if [ "${#elsewhere[@]}" -gt 0 ]; then
-  shape assistant-reference \
-    'claude\.ai/|anthropic\.com|chatgpt\.com/|chat\.openai\.com/|Claude-Session:|Co-Authored-By:[^<]*(Claude|Copilot|ChatGPT|Codex|Gemini|Cursor|Devin)|Generated (with|by) \[?(Claude|Copilot|ChatGPT|Codex|Gemini|Cursor)' \
-    '' '' "${elsewhere[@]}"
-fi
+# [-] and [:] keep the two trailer patterns from matching this line.
+shape assistant-reference \
+  'claude\.ai/|anthropic\.com|chatgpt\.com/|chat\.openai\.com/|Claude[-]Session:|Co-Authored[-]By:[^<]*(Claude|Copilot|ChatGPT|Codex|Gemini|Cursor|Devin)|Generated (with|by) \[?(Claude|Copilot|ChatGPT|Codex|Gemini|Cursor)' \
+  '' '' ${elsewhere[@]+"${elsewhere[@]}"}
 
 # 4. needles
 needles=""
@@ -191,9 +241,9 @@ else
       [ -n "$hit" ] || continue
       echo "needle $id: path of $hit"
       fail=1
-    done < <(printf '%s\n' "${scan[@]}" | grep "${grep_args[@]}" || true)
+    done < <(printf '%s\n' "${files[@]}" | grep "${grep_args[@]}" || true)
   done <<< "$needles"
-  echo "checked ${#scan[@]} files against $count needles"
+  echo "checked ${#files[@]} files against $count needles"
 fi
 
 if [ "$fail" -ne 0 ]; then

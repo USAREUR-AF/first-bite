@@ -2,6 +2,9 @@
 name = "bite"
 version = "0.2.0"
 edition.workspace = true
+# The decoder library is embedded in other projects; keep it building on this
+# toolchain and newer. CI checks it.
+rust-version = "1.85"
 license.workspace = true
 publish.workspace = true
 description = "decode fixed-layout binary messages against a declarative dictionary"

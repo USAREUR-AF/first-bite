@@ -1,0 +1,5 @@
+# cargo-fuzz output. The seed corpus is written by fuzz/seeds.py.
+/target/
+/corpus/
+/artifacts/
+/coverage/

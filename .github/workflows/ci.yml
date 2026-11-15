@@ -171,3 +171,18 @@ jobs:
       - name: Rust toolchain (as rust-toolchain.toml)
         run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
       - run: make decoder-targets
+
+  # The decoder library is embedded in other projects, so it holds a minimum
+  # Rust version (rust-version in bite/Cargo.toml).
+  decoder-msrv:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust 1.85.1
+        run: rustup toolchain install 1.85.1 --no-self-update --profile minimal
+      - run: cargo +1.85.1 check -p bite --lib --no-default-features --locked

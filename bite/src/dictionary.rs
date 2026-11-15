@@ -752,7 +752,7 @@ fn build_field(
         ));
     }
     let width = spec.stop - spec.start;
-    let aligned = spec.start.is_multiple_of(8) && spec.stop.is_multiple_of(8);
+    let aligned = spec.start % 8 == 0 && spec.stop % 8 == 0;
     let kind = match (spec.kind, spec.signed) {
         (Some(kind), _) => kind,
         (None, Some(true)) => FieldKind::Int,

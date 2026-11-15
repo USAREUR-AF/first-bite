@@ -1,0 +1,36 @@
+# OSV-Scanner configuration, read by the OpenSSF Scorecard "Vulnerabilities"
+# check and by `osv-scanner` itself. Every entry names the dependency path and
+# what removes the entry. cargo-audit has its own list in .cargo/audit.toml;
+# keep the two in step.
+
+# Not this code. The advisory is for the crates.io crate named `bite`; the
+# `bite` in Cargo.lock is the decoder in this workspace (bite/), which is not
+# published. A lock-file entry for a workspace member carries no registry
+# source, and the scanner matches it by name alone.
+[[IgnoredVulns]]
+id = "RUSTSEC-2020-0153"
+reason = "name collision: the workspace's own unpublished crate `bite`, not the crates.io crate the advisory is for"
+
+# The four below are in the tree only when the optional `zenoh` feature is
+# built; the default build and the release binaries do not contain them. zenoh
+# is pinned to =1.9.0 to match the goat fabric. Each entry goes when that pin
+# moves to a zenoh release without the dependency.
+
+# lz4_flex 0.10 (decompression can read uninitialised memory), a dependency of
+# zenoh-transport 1.9.0. Fixed in lz4_flex 0.11.6.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0041"
+reason = "only in the optional zenoh feature (zenoh-transport 1.9.0); not in the default build or the release binaries"
+
+# Notices that a crate is no longer maintained. None reports a vulnerability.
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+reason = "unmaintained notice for paste, a build-time macro used by zenoh-keyexpr 1.9.0 (optional zenoh feature)"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0134"
+reason = "unmaintained notice for rustls-pemfile, used by zenoh-link-tls 1.9.0 (optional zenoh feature)"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0449"
+reason = "unmaintained notice for unsafe-libyaml, used through serde_yaml by zenoh-config 1.9.0 (optional zenoh feature)"

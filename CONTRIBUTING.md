@@ -23,6 +23,7 @@ Every CI check is a command you can run locally before you push.
 | Change touches | Run |
 |---|---|
 | Rust | `make lint` (rustfmt, clippy with warnings as errors) and `make test` |
+| the decoder, the dictionary loader or the frame pipeline (`bite/src/`, `mind/src/pipeline.rs`, `mind/src/decap.rs`) | the fuzz target for it, for a few minutes: [fuzz/README.md](fuzz/README.md). CI fuzzes the pull request too |
 | a dictionary under `dictionaries/` | `cargo run -p bite -- check dictionaries/<name> --strict`, and the same with `fmt --check`, `lint` and `coverage` |
 | `docs/icd-to-dictionary/06-worked-example/` or `dictionaries/glasshouse/` | `docs/icd-to-dictionary/06-worked-example/retrace.sh` |
 | `Cargo.toml` or `Cargo.lock` | `make deny` and `make audit` |
@@ -78,6 +79,10 @@ A change to behaviour updates the document that states that behaviour, in the sa
 | measured | a command ran and produced the stated result |
 | designed | decided, not implemented |
 | not built | nothing exists |
+
+## Tests
+
+A change to behaviour comes with a test of that behaviour in the same pull request, and a fix comes with a test that fails without it. Tests live beside the code (`<crate>/src/`, `<crate>/tests/`); a new message or field of a shipped dictionary gets a test vector in its `vectors/` directory. `make test` runs them all, and CI runs them on every pull request that changes code.
 
 ## Review
 

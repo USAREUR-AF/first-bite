@@ -21,7 +21,7 @@ first-bite reads frames from a network interface or a capture file, decodes fixe
 | `docs/dictionary-format.md` | the dictionary format and everything `bite check` reports |
 | `docs/icd-to-dictionary/` | how to go from an interface control document to a checked, versioned dictionary; `06-worked-example/retrace.sh` redoes the worked example |
 | `tools/dictionary-repo-template/`, `tools/icd-extract/` | the skeleton of a private dictionary repository; an optional local helper that drafts tables from a PDF |
-| `.github/workflows/` | `ci.yml` (fmt, clippy, test, guards), `leak-gate.yml`, `cargo-deny.yml`, `rust-audit.yml`, `codeql.yml`, `scorecard.yml`, `release.yml` |
+| `.github/workflows/` | `ci.yml` (fmt, clippy, test, guards), `leak-gate.yml`, `cargo-deny.yml`, `rust-audit.yml`, `codeql.yml`, `scorecard.yml`, `cflite_pr.yml` and `cflite_batch.yml` (fuzzing; targets in `fuzz/`), `release.yml` |
 | `tools/check-public-tree.sh`, `tools/check-pins.py` | the leak check and the pin check; [SECURITY.md](SECURITY.md) lists what watches the repository |
 | `docs/security/` | the threat model and the security assessments |
 

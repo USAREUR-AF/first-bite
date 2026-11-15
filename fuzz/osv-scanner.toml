@@ -1,0 +1,9 @@
+# OSV-Scanner configuration for fuzz/Cargo.lock; the scanner reads the file
+# beside each lock file. See ../osv-scanner.toml.
+
+# Not this code. The advisory is for the crates.io crate named `bite`; the
+# `bite` in Cargo.lock is the decoder in this repository (../bite), which is
+# not published.
+[[IgnoredVulns]]
+id = "RUSTSEC-2020-0153"
+reason = "name collision: the repository's own unpublished crate `bite`, not the crates.io crate the advisory is for"

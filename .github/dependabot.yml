@@ -18,10 +18,26 @@ updates:
       prefix: "chore(deps)"
     open-pull-requests-limit: 5
 
-  # The base images in the Dockerfile and the images of the mocks are pinned
-  # by digest (tools/check-pins.py); these entries move the pins.
+  # The fuzz targets are their own workspace with their own lock file.
+  - package-ecosystem: cargo
+    directory: /fuzz
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      fuzz:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 2
+
+  # The base images in the Dockerfile, the fuzz builder image and the images
+  # of the mocks are pinned by digest (tools/check-pins.py); these entries
+  # move the pins.
   - package-ecosystem: docker
-    directory: /
+    directories:
+      - "/"
+      - "/.clusterfuzzlite"
     schedule:
       interval: weekly
       day: monday

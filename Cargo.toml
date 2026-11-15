@@ -9,6 +9,9 @@ members = [
     "logger",
     "mind",
 ]
+# The fuzz targets are their own workspace: they need a nightly toolchain and
+# are built by `cargo fuzz` (fuzz/README.md), never by a workspace build.
+exclude = ["fuzz"]
 
 [workspace.package]
 edition = "2021"
