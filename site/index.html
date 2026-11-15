@@ -31,8 +31,8 @@
   <section class="hero">
     <picture><source media="(prefers-color-scheme: dark)" srcset="img/wordmark-dark.svg"><img class="wordmark" src="img/wordmark-light.svg" width="380" height="128" alt="first-bite: the first bite of every byte, before it reaches its addressee"></picture>
     <p class="eyebrow">Open source, Apache-2.0</p>
-    <h1>Binary messages off the wire, decoded, for anyone who needs them</h1>
-    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record that any number of consumers can subscribe to.</strong> It never transmits on the capture interface, and one core handles 340,000 packets per second.</p>
+    <h1>Binary messages off the wire, decoded, for those you authorise</h1>
+    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record for the consumers its owner allows.</strong> It never transmits on the capture interface, and one core handles 340,000 packets per second.</p>
     <p class="actions">
       <a class="button primary" href="decoder/">Interactive decoder</a>
       <a class="button" href="architecture.html">Read the documentation</a>
@@ -75,8 +75,8 @@
   </section>
 
   <section class="section" aria-labelledby="fan-h">
-    <h2 id="fan-h">One decode, any number of consumers</h2>
-    <p>Without a tap, each consumer of a binary interface writes its own parser and holds its own connection to the native system. With first-bite the decode happens once: consumers subscribe to a ZeroMQ socket and read JSON, or read what a sink wrote to S3-compatible storage, Azure Blob, an HTTP endpoint, a <a href="goat-integration.html">Zenoh data fabric</a> or a file. A transform emits Cursor-on-Target.</p>
+    <h2 id="fan-h">One decode, as many consumers as you allow</h2>
+    <p>Without a tap, each consumer of a binary interface writes its own parser and holds its own connection to the native system. With first-bite the decode happens once: consumers subscribe to a ZeroMQ socket and read JSON, or read what a sink wrote to S3-compatible storage, Azure Blob, an HTTP endpoint, a <a href="goat-integration.html">Zenoh data fabric</a> or a file. A transform emits Cursor-on-Target. The owner decides who reads: the record socket binds loopback by default, no sink runs unless it is configured, and HTTPS and storage endpoints are reached over TLS with the certificate checked.</p>
     <!-- figure: one-decode-many-consumers -->
   </section>
 

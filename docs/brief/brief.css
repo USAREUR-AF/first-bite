@@ -88,16 +88,18 @@ tr:last-child td { border-bottom: 0; }
 .tight th, .tight td { padding-top: 1.1mm; padding-bottom: 1.1mm; }
 
 /* opening page: read in a feed at phone width, so few words and large type */
-.open { padding-top: 14mm; }
+.open { padding-top: 11mm; }
+.open .kicker { margin-bottom: 2mm; }
 .nb { white-space: nowrap; }
 .open .lockup.small { padding: 2mm 5mm 2mm 2mm; border-radius: 4mm; gap: 3mm; margin: 0 0 6mm; }
 .open .lockup.small img { width: 11mm; height: 11mm; }
 .open .lockup.small b { font-size: 15pt; margin: 0; }
-.open h1 { font-size: 29pt; line-height: 1.08; max-width: none; margin: 0 0 5mm; }
-.open .big { font-size: 13pt; line-height: 1.34; margin: 0 0 4mm; max-width: none; }
-.open figure { margin: 0 0 4mm; }
-.open .why { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4mm 6mm; margin: 0 0 4.5mm; }
+.open h1 { font-size: 24pt; line-height: 1.08; max-width: none; margin: 0 0 4mm; }
+.open .big { font-size: 12.5pt; line-height: 1.32; margin: 0 0 3.4mm; max-width: none; }
+.open figure { margin: 0 0 3.4mm; }
+.open .why { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 6mm; margin: 0 0 3.4mm; }
 .open .why div { border-left: 1.2mm solid var(--accent); padding: 0.4mm 0 0.4mm 3mm; }
 .open .why b { display: block; font-size: 13pt; line-height: 1.2; }
 .open .why span { display: block; font-size: 10.5pt; line-height: 1.3; color: var(--quiet); }
 .open .next { font-size: 10pt; color: var(--quiet); margin: 0; }
+.open .why .wide { grid-column: 1 / -1; }

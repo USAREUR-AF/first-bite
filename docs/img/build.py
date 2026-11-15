@@ -211,7 +211,7 @@ def how_it_works():
             "Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every "
             "frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and "
             "publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a "
-            "Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. "
+            "Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. "
             "Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.", 500)
     # native link
     f.box(40, 64, 150, 60, [("System A", 15, True, "t"), ("native system", 13, False, "q")])
@@ -245,7 +245,7 @@ def how_it_works():
     f.box(40, 370, 680, 34, [("ZeroMQ PUB socket: one JSON record per message", 14, True, "t")], "bxp")
     xs = [40, 177.5, 315, 452.5, 590]
     labels = [("Object storage", "S3, Azure Blob"), ("HTTP endpoint", "POST per record"),
-              ("Zenoh", "data fabric"), ("Cursor-on-Target", "transform"), ("Your subscriber", "any ZeroMQ SUB")]
+              ("Zenoh", "data fabric"), ("Cursor-on-Target", "transform"), ("Your subscriber", "a ZeroMQ SUB")]
     for x, (head, sub) in zip(xs, labels):
         f.line([(x + 65, 404), (x + 65, 432)], "lna", head="fa")
         f.box(x, 432, 130, 52, [(head, 13, True, "t"), (sub, 13, False, "q")], pad=6)
@@ -558,7 +558,7 @@ def performance():
 # ---------------------------------------------------------------------------
 def one_decode():
     count = 4
-    f = Fig("one-decode-many-consumers", "One decode serves every consumer, and none of them touches the link",
+    f = Fig("one-decode-many-consumers", "One decode serves the consumers you allow, and none touches the link",
             "Left, point to point: each of four consumers implements the binary interface and holds its own "
             "connection to native system A, so there are four parsers and four connections for A to serve. "
             "Right, with a tap: first-bite decodes once and publishes, the four consumers subscribe and read "
@@ -683,7 +683,7 @@ def record_flow():
             "default. A subscriber reads the socket, keeps the records on its topics and forwards each to "
             "one sink: object storage, HTTP, a local file or Zenoh. A subpub reads the socket the same way, "
             "transforms each record into Cursor-on-Target and publishes the result on a socket of its own, "
-            "tcp://127.0.0.1:12001 by default. Any other ZeroMQ SUB socket can read either socket.", 392)
+            "tcp://127.0.0.1:12001 by default. Both sockets bind this host only by default; a ZeroMQ SUB socket of your own can read either.", 392)
     rows = [60, 152, 244]
     f.box(24, 152, 90, 72, [("mind", 15, True, "a"), ("a record", 13, False, "q"), ("per packet", 13, False, "q")], "bxa", pad=6)
     f.box(150, 152, 160, 72, [("Publishers", 14, True, "t"), ("ZeroMQ PUB socket", 13, False, "q"),
@@ -706,7 +706,7 @@ def record_flow():
     f.line([(646, rows[1] + 72), (646, rows[2])], "lna", head="fa")
     f.box(556, rows[2], 180, 72, [("Its own socket", 14, True, "t"), ("ZeroMQ PUB socket", 13, False, "q"),
                                   ("tcp://127.0.0.1:12001", 13, False, "q")], pad=6)
-    f.box(350, rows[2], 170, 72, [("Your subscriber", 14, True, "t"), ("any ZeroMQ SUB socket", 13, False, "q"),
+    f.box(350, rows[2], 170, 72, [("Your subscriber", 14, True, "t"), ("a ZeroMQ SUB socket", 13, False, "q"),
                                   ("on either PUB socket", 13, False, "q")], "bxd", pad=6)
     f.text(24, 348, "A message on a socket is <topic>|<record JSON>, and the topic is interface/message.",
            13, False, "q", role="note")
@@ -1009,11 +1009,11 @@ def quality_gates():
 # Large-type figures for the opening page of the brief: they must read on a phone.
 # ---------------------------------------------------------------------------
 def locked_to_open():
-    f = Fig("locked-to-open", "A copy of a private link becomes values anyone can use",
+    f = Fig("locked-to-open", "A copy of a private link becomes named values, on the owner's machine",
             "Today two machines exchange bytes in a private format and nobody else can read them. With "
             "first-bite the same two machines carry on unchanged; a one-way copy of their traffic goes to "
             "first-bite, which listens and never sends, and turns each message into named values such as "
-            "station KX7, temperature -12.34 and pressure 101325, for any software to read.",
+            "station KX7, temperature -12.34 and pressure 101325, for the software the owner authorises.",
             330, show_title=False)
     f.text(24, 36, "Today: only two machines can read the data", 22, True, "t", role="note")
     f.box(24, 50, 140, 52, [("Machine A", 20, True, "t")], pad=6)
@@ -1022,7 +1022,7 @@ def locked_to_open():
     f.text(450, 72, "02 00 17 4b 58 37 00 fb", 20, False, "q", mono=True)
     f.text(450, 98, "private bytes, unreadable", 20, False, "w")
     f.line([(24, 120), (736, 120)], "lnr")
-    f.text(24, 154, "With first-bite: a copy becomes values anyone can use", 22, True, "a", role="note")
+    f.text(24, 154, "With first-bite: a copy becomes readable, under your control", 22, True, "a", role="note")
     f.box(24, 170, 140, 52, [("Machine A", 20, True, "t")], pad=6)
     f.box(284, 170, 140, 52, [("Machine B", 20, True, "t")], pad=6)
     f.line([(164, 196), (284, 196)], "lnk", nohead=True)
@@ -1035,25 +1035,25 @@ def locked_to_open():
     f.text(468, 198, "Named values", 20, True, "t")
     for k, ln in enumerate(("station KX7", "temperature -12.34", "pressure 101325")):
         f.text(468, 224 + k * 24, ln, 20, False, "t", mono=True, maxw=258)
-    f.text(468, 302, "for any software to read", 20, False, "g", maxw=258)
+    f.text(468, 302, "for software you authorise", 20, False, "g", maxw=258)
     return f
 
 
 def where_it_fits():
     f = Fig("where-it-fits", "first-bite brings old systems onto the goat data fabric",
             "Old systems, unchanged, are read by first-bite, which publishes onto the goat data fabric. New "
-            "systems join the fabric directly. People and programs use the data from the fabric. first-bite "
+            "systems join the fabric directly. People and programs with access use the data from the fabric. first-bite "
             "also runs with no goat at all.", 212, show_title=False)
-    f.box(416, 16, 176, 48, [("New systems", 22, True, "t")], pad=6)
-    f.line([(504, 64), (504, 92)], "ln", head="fl")
-    f.text(606, 47, "join directly", 20, False, "q")
+    f.box(416, 16, 160, 48, [("New systems", 22, True, "t")], pad=4)
+    f.line([(496, 64), (496, 92)], "ln", head="fl")
+    f.text(590, 47, "join directly", 20, False, "q")
     f.box(24, 92, 166, 78, [("Old systems", 22, True, "t"), ("unchanged", 20, False, "q")], pad=6)
     f.line([(190, 131), (226, 131)], "lna", head="fa")
     f.box(226, 92, 154, 78, [("first-bite", 22, True, "a"), ("listens", 20, False, "q")], "bxa", pad=6)
     f.line([(380, 131), (416, 131)], "lna", head="fa")
-    f.box(416, 92, 176, 78, [("goat", 24, True, "t"), ("data fabric", 20, False, "q")], "bxp", pad=6)
-    f.line([(592, 131), (628, 131)], "ln", head="fl")
-    f.box(628, 92, 108, 78, [("People,", 20, True, "t"), ("programs", 20, True, "t")], pad=4)
+    f.box(416, 92, 160, 78, [("goat", 24, True, "t"), ("data fabric", 20, False, "q")], "bxp", pad=6)
+    f.line([(576, 131), (612, 131)], "ln", head="fl")
+    f.box(612, 80, 124, 102, [("People,", 20, True, "t"), ("programs", 20, True, "t"), ("with access", 20, False, "q")], pad=3)
     f.text(24, 198, "Without goat, first-bite still runs on its own.", 20, False, "q", role="note")
     return f
 

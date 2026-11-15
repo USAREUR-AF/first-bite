@@ -19,16 +19,18 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/how-it-works-dark.svg">
-  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
+  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
 </picture>
 
 **first-bite takes binary messages off the wire and hands them, decoded, to
-anything that can read JSON from a socket.** It listens on a network tap or a
+the software their owner authorises.** It listens on a network tap or a
 switch mirror port, local or tunnelled (ERSPAN, GRE or VXLAN), decodes each
 fixed-layout message against a dictionary, and publishes one JSON record per
 message on a ZeroMQ PUB socket. Sinks forward the records to S3-compatible
 storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
-transform emits Cursor-on-Target.
+transform emits Cursor-on-Target. Records stay on the machine until its owner
+configures a destination: the record socket binds loopback by default and no
+sink runs unless one is configured.
 
 The name says what it does: it takes the first bite of every byte while it is
 still on the wire, before the addressee does, and takes nothing from it. It
@@ -98,7 +100,7 @@ interface by port, the message by its type) and one bit extraction per field.
   <img src="docs/img/frame-to-record.svg" width="100%" alt="The 23 bytes of a weather-station Observation message, 0200174b583700fb2e18bcda9b4236000004030201beef, with the bit range of each of its nine fields marked. A table gives the dictionary entry for each field (start bit, stop bit, type, options) and the value it decodes to: message_type Observation, message_length 23, station_id KX7, temperature -12.34, pressure 101325, wind_direction 271.5, humidity 45.5, sample_serial 16909060, checksum beef.">
 </picture>
 
-One decode serves every consumer. A consumer subscribes to the record socket,
+One decode serves every consumer the owner allows. A consumer subscribes to the record socket,
 or reads what a sink wrote; it does not implement the binary interface and
 holds no connection to the systems on the link.
 
