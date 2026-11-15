@@ -1,0 +1,31 @@
+# Subpub for local development with the weather-station example dictionary:
+# Position records become Cursor-on-Target events on port 12001. Use it with
+#   SUBPUB_CONFIG_PATH=flow/config/subpubs.local.yml  and  --activate-subpubs
+# subpubs.example.yml describes every key.
+subpubs:
+  - name: JSON2COT
+    subscriber:
+      note: "This is the input"
+      name: "JSON2COT"
+      subscriber_type: "transformer"
+      subtype: "cot"
+      zmq_url: "127.0.0.1"
+      zmq_port: 12000
+      topics:
+        - "WX/Position"
+      cot:
+        uid: [station_id]
+        type:
+          value: "a-f-G"
+        position:
+          geodetic: [latitude, longitude, altitude]
+        stale_minutes: 60
+    publisher:
+      note: "This is the output"
+      name: "CoT2ZMQ"
+      publisher_type: PUB # PUB, PUSH
+      # Unauthenticated and unencrypted; binding an address other than
+      # 127.0.0.1 exposes every event to that network.
+      address: "tcp://127.0.0.1:12001"
+      topic: "subsystem/message_type"
+      topic_suffix: "JSON2CoT"

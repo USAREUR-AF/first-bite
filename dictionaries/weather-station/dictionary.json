@@ -1,0 +1,5 @@
+{
+    "name": "weather-station",
+    "version": "1.0.0",
+    "description": "Synthetic example: a weather station that reports over UDP. Exercises signed, scaled, float, boolean, text, little-endian and non-byte-aligned fields."
+}

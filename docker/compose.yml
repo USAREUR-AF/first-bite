@@ -1,0 +1,47 @@
+# first-bite in a container, reading frames from a UDP socket (--mock), which
+# needs no capture privileges. From the repository root:
+#
+#   docker compose -f docker/compose.yml up --build
+#   python3 tools/mockplay.py examples/weather-station.pcap
+#
+# Records are published on tcp://127.0.0.1:12000 of the host. The record socket
+# is unauthenticated: publishers.yml binds every interface of the container so
+# the published port works, and `ports` exposes it on the host's loopback only.
+#
+# Live capture needs the host's network namespace and capture capabilities,
+# and root inside the container to use them. Remove `ports`, `volumes` and
+# PUBLISHER_CONFIG_PATH (the default publisher binds the host's loopback) and
+# set:
+#
+#   network_mode: host
+#   cap_add: [NET_RAW, NET_ADMIN]
+#   user: "0:0"
+#   command: ["eth0", "--dictionary", "/usr/share/first-bite/dictionaries/weather-station"]
+#
+# A dictionary of your own is a read-only volume:
+#
+#   volumes:
+#     - ./publishers.yml:/etc/first-bite/publishers.yml:ro
+#     - /path/to/dictionary:/dictionary:ro
+#   command: ["--mock", "--mock-address", "0.0.0.0:12345", "--dictionary", "/dictionary"]
+---
+services:
+  first-bite:
+    build:
+      context: ..
+    image: first-bite:local
+    command:
+      - --mock
+      - --mock-address
+      - 0.0.0.0:12345
+      - --dictionary
+      - /usr/share/first-bite/dictionaries/weather-station
+    ports:
+      - "127.0.0.1:12345:12345/udp"
+      - "127.0.0.1:12000:12000"
+    volumes:
+      - ./publishers.yml:/etc/first-bite/publishers.yml:ro
+    environment:
+      PUBLISHER_CONFIG_PATH: /etc/first-bite/publishers.yml
+      RUST_LOG: info
+    restart: "no"

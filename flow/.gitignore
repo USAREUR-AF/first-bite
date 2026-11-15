@@ -1,0 +1,7 @@
+# Site configuration carries addresses and credentials and stays out of the
+# repository. Only the local-development and example files are tracked.
+config/*.yml
+!config/*.local.yml
+!config/*.example.yml
+config/*.env
+config/*.json5

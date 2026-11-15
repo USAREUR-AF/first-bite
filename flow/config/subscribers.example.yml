@@ -1,0 +1,62 @@
+# One subscriber of each kind that reaches beyond the local machine, with
+# placeholder addresses and credentials. Copy the entries you need into your
+# own subscribers.yml; do not commit real credentials.
+# Keys are described in README.md.
+
+subscribers:
+  # POST each record as JSON to http://203.0.113.10:5001/records.
+  - name: ToRest
+    subscriber_type: "rest"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "WX/Observation"
+    endpoint_url: "203.0.113.10" # or "https://collector.example"
+    endpoint_port: 5001
+    endpoint_path: "/records"
+
+  # Azure Blob Storage at an address of your own (a private cloud, a proxy).
+  - name: AllToBlob
+    subscriber_type: "objectstorage"
+    subtype: "azureobject"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+    cloud_account: "your_storage_account"
+    # The account key, base64 as the storage service issues it. This
+    # placeholder decodes to "your-access-key".
+    cloud_access_key: "eW91ci1hY2Nlc3Mta2V5"
+    cloud_container: "first-bite"
+    cloud_location_type: "Custom" # Public, Custom, Emulator
+    cloud_uri: https://blob.storage.example:10000
+    cloud_api_version: "2017-11-09"
+
+  # S3, or any store that speaks the S3 API.
+  - name: AllToS3
+    subscriber_type: "objectstorage"
+    subtype: "awsobject"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+    aws_access_key_id: "your_access_key_id"
+    aws_secret_access_key: "your_secret_access_key"
+    aws_default_region: "us-east-1"
+    aws_s3_endpoint: "https://s3.amazonaws.com"
+    aws_bucket_name: "your-bucket"
+
+  # Zenoh (needs a build with the cargo feature `zenoh`). Each record is put
+  # on a key rendered from it, as application/json.
+  - name: AllToZenoh
+    subscriber_type: "zenoh"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+    # A standard Zenoh JSON5 configuration file: endpoints, mode, TLS
+    # identity. Leave the key out to use Zenoh's defaults.
+    zenoh_config: "/etc/first-bite/zenoh.json5"
+    # Placeholders: {system} {location} {network} {interface} {message}.
+    # This value is the default.
+    key_template: "telemetry/{system}/{location}/{interface}/{message}"

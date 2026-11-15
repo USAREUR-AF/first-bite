@@ -1,0 +1,152 @@
+# Format, lint and test the workspace. Runs on a fresh clone with GITHUB_TOKEN alone.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Decides whether a pull request changes anything the Rust jobs read. A pull
+  # request whose every file is documentation skips fmt, clippy and test; a job
+  # skipped by its `if:` reports success, so its check name still appears.
+  # Pushes to main, workflow_dispatch, any other path, or a diff that cannot be
+  # computed run everything.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.classify.outputs.code }}
+    steps:
+      # A pull_request checkout is the test merge commit; its first parent is
+      # the base, so depth 2 is enough to diff the pull request's own changes.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - id: classify
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          code=false
+          if [ "$EVENT" != pull_request ]; then
+            code=true
+          elif ! files=$(git diff --name-only HEAD^1 HEAD); then
+            echo "cannot diff against the base: running everything"
+            code=true
+          else
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              case "$f" in
+                *.md|docs/*|diags/*|icon/*|legal/*) is_doc=yes ;;
+                CODEOWNERS|.github/ISSUE_TEMPLATE/*) is_doc=yes ;;
+                *) is_doc=no ;;
+              esac
+              echo "$is_doc  $f"
+              [ "$is_doc" = no ] && code=true
+            done <<< "$files"
+          fi
+          echo "code=$code"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+  # Shell and workflow-file lint. Runs on every change, documentation included.
+  scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: shellcheck
+        run: git ls-files -z '*.sh' | xargs -0 shellcheck
+      - name: yamllint
+        run: pipx run yamllint==1.37.1 .github
+
+  fmt:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
+      - run: cargo fmt --all --check
+
+  # clippy and test share one cache per platform. The test job writes it, on
+  # main only; clippy restores it and so reuses the registry, the proc-macros
+  # and the build-script output (libzmq and aws-lc compiled from C).
+  clippy:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
+      - name: libpcap headers
+        timeout-minutes: 5
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends libpcap-dev
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: ci
+          save-if: 'false'
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  test:
+    name: test (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
+      # macOS ships libpcap in its SDK.
+      - name: libpcap headers
+        if: runner.os == 'Linux'
+        timeout-minutes: 5
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends libpcap-dev
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: ci
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo test --workspace --locked
+
+  # The decoder library is what runs where a process may not capture packets
+  # (iOS, iPadOS, Android, a browser), so it must keep compiling there.
+  decoder-targets:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
+      - run: make decoder-targets

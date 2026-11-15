@@ -1,0 +1,60 @@
+# systemd unit for first-bite. install.sh copies it to
+# /etc/systemd/system/first-bite.service and rewrites the ExecStart path when
+# --prefix is not /usr/local.
+[Unit]
+Description=first-bite: capture frames, decode them against a dictionary, publish records
+Documentation=https://github.com/USAREUR-AF/first-bite
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=firstbite
+Group=firstbite
+EnvironmentFile=/etc/first-bite/first-bite.env
+ExecStart=/usr/local/bin/mind ${FIRST_BITE_INTERFACE} $FIRST_BITE_ARGS
+Restart=on-failure
+RestartSec=5
+
+# Relative paths (--output, a local-file sink) resolve here.
+StateDirectory=first-bite
+WorkingDirectory=/var/lib/first-bite
+
+# mind writes its log lines to stderr and a banner to stdout. Both go to one
+# file, which logrotate rotates and a log shipper can read. The journal holds
+# what systemd reports about the unit: starts, exits and restarts. For the log
+# lines in the journal instead, set both to `journal` in a drop-in.
+StandardOutput=append:/var/log/first-bite/mind.log
+StandardError=append:/var/log/first-bite/mind.log
+
+# Packet capture as a non-root user.
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+
+# Hardening. AF_PACKET is the capture socket, AF_NETLINK is how libpcap reads
+# the interface list; the sinks need AF_INET and AF_INET6.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/log/first-bite
+RestrictAddressFamilies=AF_INET AF_INET6 AF_PACKET AF_NETLINK AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+SystemCallArchitectures=native
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

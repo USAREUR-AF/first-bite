@@ -1,0 +1,49 @@
+{
+    "description": "Engine controller, 100 Hz.",
+    "fields": {
+        "engine_speed": {
+            "start": 0,
+            "stop": 16,
+            "scale": 0.25,
+            "unit": "rpm"
+        },
+        "coolant_temperature": {
+            "start": 16,
+            "stop": 24,
+            "offset": -40,
+            "unit": "degC"
+        },
+        "throttle_position": {
+            "start": 24,
+            "stop": 34,
+            "scale": 0.1,
+            "unit": "%"
+        },
+        "gear": {
+            "start": 34,
+            "stop": 38,
+            "values": {
+                "0": "Neutral",
+                "1": "First",
+                "2": "Second",
+                "3": "Third",
+                "4": "Fourth",
+                "5": "Fifth",
+                "6": "Sixth",
+                "15": "Reverse"
+            }
+        },
+        "check_engine": {
+            "start": 38,
+            "stop": 39,
+            "type": "bool"
+        },
+        "engine_torque": {
+            "start": 40,
+            "stop": 56,
+            "type": "int",
+            "scale": 0.5,
+            "unit": "Nm"
+        }
+    }
+}

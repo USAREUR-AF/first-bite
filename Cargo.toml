@@ -1,0 +1,64 @@
+[workspace]
+resolver = "2"
+members = [
+    "bite",
+    "bite-wasm",
+    "cotify",
+    "datamodels",
+    "flow",
+    "logger",
+    "mind",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/USAREUR-AF/first-bite"
+# The crates are built from this workspace, not published to crates.io.
+publish = false
+
+[workspace.dependencies]
+bite = { path = "bite" }
+cotify = { path = "cotify" }
+datamodels = { path = "datamodels" }
+flow = { path = "flow" }
+logger = { path = "logger" }
+
+async-trait = "0.1"
+aws-sdk-s3 = { version = "1", default-features = false, features = ["rt-tokio", "default-https-client", "behavior-version-latest"] }
+base64 = "0.23"
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+colored = "3"
+ctrlc = { version = "3", features = ["termination"] }
+dotenvy = "0.15"
+env_logger = "0.11"
+etherparse = "0.19"
+hex = "0.4"
+hmac = "0.12"
+libc = "0.2"
+log = "0.4"
+pcap = "2"
+quick-xml = "0.42"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_norway = "0.9"
+sha2 = "0.10"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "io-util", "net"] }
+zenoh = { version = "=1.9.0", default-features = false, features = ["transport_tcp", "transport_tls"] }
+zmq = "0.10"
+
+# Optimised dependencies and line-only debug info keep debug builds fast to
+# link without making the pipeline too slow to exercise.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 16
+strip = true

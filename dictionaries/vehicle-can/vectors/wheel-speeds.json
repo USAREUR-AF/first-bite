@@ -1,0 +1,14 @@
+{
+    "interface": "POWERTRAIN",
+    "frame_id": 2305,
+    "payload_hex": "daaa5b49ab6b0500",
+    "expect": {
+        "message_type": "Wheel Speeds",
+        "fields": {
+            "front_left": "27.78",
+            "front_right": "27.810000000000002",
+            "rear_left": "27.7",
+            "rear_right": "27.75"
+        }
+    }
+}

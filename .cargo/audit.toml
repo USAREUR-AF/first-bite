@@ -1,0 +1,11 @@
+# cargo-audit configuration. Every ignore names the dependency path and what
+# removes it.
+[advisories]
+ignore = [
+    # lz4_flex 0.10 (decompression can read uninitialised memory). Pulled in
+    # only by zenoh-transport 1.9.0, which is in the tree only when the
+    # optional `zenoh` feature is built. zenoh is pinned to =1.9.0 to match the
+    # goat fabric; this ignore goes when that pin moves to a zenoh release that
+    # depends on lz4_flex >= 0.11.6.
+    "RUSTSEC-2026-0041",
+]

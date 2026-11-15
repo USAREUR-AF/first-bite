@@ -1,0 +1,23 @@
+{
+    "icd": {
+        "version": "D"
+    },
+    "mission": "The purpose of this ICD interface is to enable sharing of feelings of missing out.",
+    "protocol": {
+        "network": "ip",
+        "transport": "udp"
+    },
+    "port": 22200,
+    "message_type": {
+        "start": 64,
+        "stop": 80,
+        "values": {
+            "0": "None",
+            "1": "FOMO Report Message"
+        }
+    },
+    "message_length": {
+        "start": 0,
+        "stop": 24
+    }
+}

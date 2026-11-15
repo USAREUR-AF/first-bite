@@ -1,0 +1,282 @@
+# Builds the release for a v* tag and publishes it as a GitHub release.
+#
+# Assets:
+#   first-bite-<version>-x86_64-linux-gnu.tar.gz
+#   first-bite-<version>-aarch64-linux-gnu.tar.gz
+#       the standard Linux build: needs glibc 2.31 (Ubuntu 20.04) or later
+#       and nothing else
+#   first-bite-<version>-x86_64-linux-musl.tar.gz
+#   first-bite-<version>-aarch64-linux-musl.tar.gz
+#       the self-contained Linux build: fully static. Built only for a
+#       vX.Y.0 tag, or by workflow_dispatch with the input `static`
+#   first-bite-<version>-aarch64-apple-darwin.tar.gz
+#   first-bite-<version>-x86_64-apple-darwin.tar.gz
+#   first-bite-<version>-x86_64-pc-windows-msvc.zip     bite.exe only
+#   first-bite-<version>.spdx.json   SPDX 2.3 SBOM of the workspace
+#   SHA256SUMS                       digest of every asset above
+#
+# tools/package-release.sh lays out each archive; docs/deployment.md says which
+# to choose. The build steps are make targets and scripts in tools/, the same
+# ones a developer runs.
+#
+# Every asset carries a build provenance attestation; verify one with
+# `gh attestation verify <file> --repo <owner>/<repo>`.
+#
+# workflow_dispatch builds and packages without publishing.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      static:
+        description: also build the self-contained (static musl) Linux binaries
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Built in an Ubuntu 20.04 container, then run in bare containers of every
+  # Ubuntu release the binaries are published for.
+  linux:
+    name: build ${{ matrix.arch }}-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.arch }}-linux-gnu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make portable
+      - run: make portable-check
+      - name: Package
+        run: tools/package-release.sh "$PLATFORM" "$(make -s portable-dir)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-${{ env.PLATFORM }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  # The self-contained variant changes less often than the standard one: it
+  # is built for the first release of a minor version, and on request.
+  linux-static:
+    name: build ${{ matrix.arch }}-linux-musl
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.static)
+      || (github.ref_type == 'tag' && endsWith(github.ref_name, '.0')) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.arch }}-linux-musl
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make static
+      - run: make static-check
+      - name: Package
+        run: tools/package-release.sh "$PLATFORM" "$(make -s static-dir)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-${{ env.PLATFORM }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  # libpcap and the C++ runtime are part of macOS, so the ordinary release
+  # build needs nothing added. Each binary is run on the runner that built it.
+  macos:
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            runner: macos-15
+          - target: x86_64-apple-darwin
+            runner: macos-15-intel
+    env:
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --target "$TARGET"
+      - run: cargo build --release --locked --target "$TARGET" -p mind -p bite
+      - name: Shared libraries mind needs
+        run: otool -L "target/$TARGET/release/mind"
+      - run: tools/smoke-test.sh "target/$TARGET/release"
+      - name: Package
+        run: tools/package-release.sh "$TARGET" "target/$TARGET/release"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  # The dictionary tool is pure Rust and needs nothing on Windows.
+  windows:
+    name: build x86_64-pc-windows-msvc (bite)
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      TARGET: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --target "$TARGET"
+      - run: cargo build --release --locked --target "$TARGET" -p bite
+      - run: tools/smoke-test.sh --bite-only "target/$TARGET/release"
+      - name: Package
+        run: tools/package-release.sh "$TARGET" "target/$TARGET/release"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-${{ env.TARGET }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  # mind on Windows links the Npcap SDK and needs Npcap installed to start.
+  # Npcap cannot be installed unattended on a runner, so this job shows only
+  # that mind compiles and links; the binary is kept as a workflow artifact
+  # and is not part of the release. A failure here does not fail the release.
+  # --no-default-features leaves out the object storage sinks and the C
+  # cryptography library they bring.
+  windows-mind:
+    name: build x86_64-pc-windows-msvc (mind, not released)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
+    env:
+      TARGET: x86_64-pc-windows-msvc
+      NPCAP_SDK_VERSION: '1.17'
+      NPCAP_SDK_SHA256: ab7e1a6cb8d07427e0071ec11be380bd9d2bb19ae6ab3f5ede0698c301638258
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --target "$TARGET"
+      - name: Npcap SDK
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -o npcap-sdk.zip "https://npcap.com/dist/npcap-sdk-$NPCAP_SDK_VERSION.zip"
+          echo "$NPCAP_SDK_SHA256  npcap-sdk.zip" | sha256sum --check
+          7z x -bso0 -onpcap-sdk npcap-sdk.zip
+          echo "LIBPCAP_LIBDIR=$(cygpath -w "$PWD/npcap-sdk/Lib/x64")" >> "$GITHUB_ENV"
+      - run: cargo build --release --locked --target "$TARGET" -p mind --no-default-features
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unreleased-mind-${{ env.TARGET }}
+          path: target/${{ env.TARGET }}/release/mind.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  sbom:
+    name: SPDX SBOM
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      CARGO_SBOM_VERSION: '0.10.0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal
+      - name: cargo-sbom
+        run: cargo install cargo-sbom --locked --version "=$CARGO_SBOM_VERSION"
+      - name: Generate the SBOM
+        run: |
+          set -euo pipefail
+          version=$(cargo metadata --no-deps --locked --format-version 1 | jq -r '.packages[] | select(.name == "mind") | .version')
+          mkdir -p dist
+          cargo sbom --output-format spdx_json_2_3 > "dist/first-bite-$version.spdx.json"
+          jq -e '.spdxVersion == "SPDX-2.3" and (.packages | length > 0)' "dist/first-bite-$version.spdx.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-sbom
+          path: dist/*.spdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+  # Runs no code from the repository: it only checksums, attests and uploads
+  # what the jobs above built.
+  publish:
+    name: publish the GitHub release
+    needs: [linux, linux-static, macos, windows, sbom]
+    # linux-static is skipped for most tags; a skipped job must not skip this one.
+    if: ${{ !cancelled() && !failure() && github.ref_type == 'tag' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: first-bite-*
+          path: dist
+          merge-multiple: true
+      - name: SHA256SUMS
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          sha256sum -- *.tar.gz *.zip *.spdx.json > SHA256SUMS
+          { echo '```'; cat SHA256SUMS; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # Artifact attestations on a private repository need GitHub Enterprise Cloud.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-checksums: dist/SHA256SUMS
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          flags=(--title "$GITHUB_REF_NAME" --generate-notes --verify-tag)
+          case "$GITHUB_REF_NAME" in *-*) flags+=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" "${flags[@]}" dist/*

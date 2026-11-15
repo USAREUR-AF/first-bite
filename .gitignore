@@ -1,0 +1,65 @@
+# Rust
+/target
+*/target/
+**/debug
+/vendor
+*/vendor
+
+
+# Built by `make wasm` for the page in site/decoder/
+/site/pkg/
+/site/dictionaries.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+**/.venv/*
+.coverage
+htmlcov/*
+
+# Editor/IDE specific
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Miscellaneous
+.DS_Store
+*.log
+*.swp
+*~
+
+# Captures of real traffic never enter the tree; examples/ holds generated ones.
+*.pcapng
+*.pcap
+!examples/*.pcap
+# Local needle list for tools/check-public-tree.sh
+.leak-needles
+
+# logs 
+log_*
+
+# docker tar files
+*.tar
+
+# large library file
+*.a
+*.lib
+# build in runner is not working w/o .dll files checked in.
+# not sure why.
+*.dll
+
+# mocks
+azurite_data
+.claude/worktrees/
+.claude/handoff/
+.claude/coldstart.md
+.claude/coldstart.consumed/
+.iso-mode.env

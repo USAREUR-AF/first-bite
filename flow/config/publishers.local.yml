@@ -1,0 +1,12 @@
+# The built-in publisher: flow uses this file when no publisher configuration
+# is given. One PUB socket; each record goes out on <interface>/<message type>.
+#
+# The socket is unauthenticated and unencrypted. Bound to 127.0.0.1 it is
+# reachable only from this machine, which is where flow's own subscribers
+# connect. Binding another address ("tcp://*:12000", an interface address)
+# exposes every decoded record to that network.
+publishers:
+  - name: "records"
+    publisher_type: PUB
+    address: "tcp://127.0.0.1:12000"
+    topic: "subsystem/message_type" # *, catchall, location, message_type, subsystem/message_type

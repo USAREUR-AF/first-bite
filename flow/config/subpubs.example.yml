@@ -1,0 +1,39 @@
+# A subpub reads records from a publisher socket, transforms each one, and
+# publishes the result on a socket of its own. The transform here turns
+# weather-station Position records into Cursor-on-Target (CoT) events.
+#
+# The mapping under `cot:` applies to whatever records arrive on the
+# subscriber's topics, so it works for any dictionary: name the fields of
+# your own messages.
+subpubs:
+  - name: Position2CoT # used in log lines
+    subscriber:
+      name: "positions"
+      subscriber_type: "transformer"
+      subtype: "cot"
+      zmq_url: "127.0.0.1" # the publisher socket to read
+      zmq_port: 12000
+      topics:
+        - "WX/Position" # <interface>/<message type>; "*" for everything
+      cot:
+        uid: [station_id]                 # field values joined with "_"
+        type:                             # CoT type; either a constant…
+          value: "a-f-G"
+        # …or looked up from a field:
+        # type: { field: affiliation, values: { "Hostile": "a-h-A" }, default: "a-u-A" }
+        position:
+          geodetic: [latitude, longitude, altitude]   # degrees, degrees, metres HAE
+          # or: ecef: [x, y, z]                        # metres, WGS 84 Earth-centred
+        stale_minutes: 60
+    publisher:
+      name: "cot"
+      publisher_type: PUB # PUB, PUSH
+      # Must not be the port the subscriber reads. The socket is
+      # unauthenticated and unencrypted: bound to 127.0.0.1 it is reachable
+      # only from this machine; binding another address exposes every event
+      # to that network.
+      address: "tcp://127.0.0.1:12001"
+      # Required by the publisher format; a subpub publishes on the topic the
+      # record arrived on, followed by "/<topic_suffix>": here WX/Position/CoT.
+      topic: "subsystem/message_type"
+      topic_suffix: "CoT"

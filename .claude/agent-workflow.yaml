@@ -1,0 +1,8 @@
+# agent-workflow: this repo uses per-session worktrees, the session bus and the work tracker.
+# Every key is optional; these are the defaults.
+version: 1
+master_readonly: true
+worktrees_dir: .claude/worktrees
+tracker_dir: docs/project/active-work
+roles_dir: ops/work/roles
+trunk: main

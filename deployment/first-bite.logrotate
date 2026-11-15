@@ -1,0 +1,13 @@
+# /etc/logrotate.d/first-bite
+# copytruncate: systemd holds mind.log open in append mode for the life of the
+# service, so the file is copied and emptied in place, not renamed.
+/var/log/first-bite/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su firstbite firstbite
+}

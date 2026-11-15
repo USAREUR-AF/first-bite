@@ -1,0 +1,59 @@
+# Subscribers for local development, against the emulators in mocks/ and the
+# weather-station example dictionary. Use it with
+#   SUBSCRIBER_CONFIG_PATH=flow/config/subscribers.local.yml
+# Keys are described in README.md.
+
+subscribers:
+  # Azurite, the Azure Storage emulator (mocks/azure). The account name and
+  # key below are the emulator's documented development credentials, the same
+  # for every Azurite installation; they are not a secret.
+  - name: All2BlobEmulator
+    subscriber_type: "objectstorage"
+    subtype: "azureobject"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+    cloud_account: "devstoreaccount1"
+    cloud_access_key: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+    cloud_container: "first-bite"
+    cloud_location_type: "Emulator" # Public, Custom, Emulator
+    cloud_address: "127.0.0.1"
+    cloud_port: 10000
+    cloud_api_version: "2023-01-03"
+
+  # The S3 mock in mocks/s3, which accepts any access key and secret and
+  # starts with the bucket below.
+  - name: All2S3Mock
+    subscriber_type: "objectstorage"
+    subtype: "awsobject"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+    aws_access_key_id: "localaccesskey"
+    aws_secret_access_key: "localsecretkey"
+    aws_default_region: "us-east-1"
+    aws_s3_endpoint: "http://127.0.0.1:9090"
+    aws_bucket_name: "first-bite"
+
+  # Records per topic, written to messagerates.log every ten seconds.
+  - name: MessageRates
+    subscriber_type: "stateful"
+    subtype: "messagerates"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    topics:
+      - "*"
+
+  # Selected topics appended to a local file, one JSON record per line.
+  - name: Write2LocalLog
+    subscriber_type: "local"
+    subtype: "locallog"
+    zmq_url: "127.0.0.1"
+    zmq_port: 12000
+    local_logfile: "first-bite-records.log"
+    topics:
+      - "WX/Heartbeat"
+      - "WX/Observation"
+      - "WX/Position"

@@ -1,0 +1,10 @@
+# Azurite, the Azure Storage emulator, serving the Blob service on
+# 127.0.0.1:10000 with its fixed development account. Blobs are held in
+# memory and are gone when the container stops.
+---
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    command: azurite-blob --blobHost 0.0.0.0 --inMemoryPersistence --loose --skipApiVersionCheck
+    ports:
+      - "127.0.0.1:10000:10000"

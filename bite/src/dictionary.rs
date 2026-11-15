@@ -1,0 +1,780 @@
+//! A dictionary loaded from a directory or from files held in memory, checked,
+//! and indexed for decoding.
+
+use crate::schema::{
+    parse_int, BitOrder, BitRange, ByteOrder, DictionarySpec, DiscriminatorSource, FieldKind,
+    FieldSpec, Icd, InterfaceSpec, MessageSpec, Protocol,
+};
+use std::collections::{BTreeMap, HashMap};
+use std::fmt;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+
+/// The dictionary could not be read at all.
+#[derive(Debug, thiserror::Error)]
+pub enum LoadError {
+    #[error("cannot read {path}: {source}")]
+    Io {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("{path} is not a directory")]
+    NotADirectory { path: PathBuf },
+    #[error(
+        "no interface found under {}: expected sub-directories containing metadata.json",
+        shown(.path)
+    )]
+    Empty { path: PathBuf },
+}
+
+/// A dictionary built from files in memory has no directory to name.
+fn shown(path: &Path) -> std::borrow::Cow<'_, str> {
+    if path.as_os_str().is_empty() {
+        "the files given".into()
+    } else {
+        path.to_string_lossy()
+    }
+}
+
+/// The text of one dictionary file, or why it could not be read.
+type FileText = Result<String, String>;
+
+/// A dictionary's files, read but not yet parsed. Both ways of loading a
+/// dictionary produce this, and [`build`] turns it into a [`Dictionary`].
+#[derive(Default)]
+struct Source {
+    /// `dictionary.json`, when there is one.
+    dictionary: Option<FileText>,
+    /// Interface directory name to its files.
+    interfaces: BTreeMap<String, InterfaceSource>,
+    /// `vectors/*.json`: file name to text.
+    vectors: BTreeMap<String, FileText>,
+    /// Why `vectors/` could not be listed, when it could not.
+    vectors_error: Option<(io::ErrorKind, String)>,
+}
+
+#[derive(Default)]
+struct InterfaceSource {
+    /// `metadata.json`; a directory without one is not an interface.
+    metadata: Option<FileText>,
+    has_messages_dir: bool,
+    /// `messages/*.json`: file name to text.
+    messages: BTreeMap<String, FileText>,
+}
+
+/// One file from a dictionary's `vectors/` directory, kept as text.
+#[derive(Debug, Clone)]
+pub struct VectorFile {
+    /// The file stem.
+    pub name: String,
+    /// The file's text, or why it could not be read.
+    pub text: Result<String, String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Severity {
+    /// Worth a look; the item is still used.
+    Warning,
+    /// The item named is unusable and was left out of the loaded dictionary.
+    Error,
+}
+
+/// Something wrong in a dictionary file, found while loading.
+#[derive(Debug, Clone)]
+pub struct Issue {
+    pub severity: Severity,
+    /// `interface`, `interface/message` or `interface/message/field`.
+    pub location: String,
+    pub message: String,
+}
+
+impl fmt::Display for Issue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let severity = match self.severity {
+            Severity::Warning => "warning",
+            Severity::Error => "error",
+        };
+        write!(f, "{severity}: {}: {}", self.location, self.message)
+    }
+}
+
+/// One field of a message, ready to decode.
+#[derive(Debug, Clone)]
+pub struct Field {
+    pub name: String,
+    pub start: usize,
+    pub stop: usize,
+    pub kind: FieldKind,
+    pub bit_order: BitOrder,
+    pub byte_order: ByteOrder,
+    pub scale: Option<f64>,
+    pub offset: Option<f64>,
+    pub unit: Option<String>,
+    pub description: Option<String>,
+    labels: HashMap<i128, String>,
+}
+
+impl Field {
+    pub fn width(&self) -> usize {
+        self.stop - self.start
+    }
+
+    /// The label the dictionary gives a raw integer value, if any.
+    pub fn label(&self, raw: i128) -> Option<&str> {
+        self.labels.get(&raw).map(String::as_str)
+    }
+
+    pub fn has_labels(&self) -> bool {
+        !self.labels.is_empty()
+    }
+
+    /// Every label the dictionary defines for this field, in no fixed order.
+    pub fn labels(&self) -> impl Iterator<Item = &str> {
+        self.labels.values().map(String::as_str)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub name: String,
+    pub description: Option<String>,
+    /// Ordered by start bit, then name.
+    pub fields: Vec<Field>,
+}
+
+impl Message {
+    pub fn field(&self, name: &str) -> Option<&Field> {
+        self.fields.iter().find(|field| field.name == name)
+    }
+
+    /// Bits needed to hold every field.
+    pub fn bit_length(&self) -> usize {
+        self.fields
+            .iter()
+            .map(|field| field.stop)
+            .max()
+            .unwrap_or(0)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Discriminator {
+    pub source: DiscriminatorSource,
+    pub start: usize,
+    pub stop: usize,
+    pub mask: Option<u64>,
+    /// Identifier to message name, including names with no message file.
+    pub names: HashMap<u64, String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Interface {
+    pub name: String,
+    pub description: Option<String>,
+    pub icd: Option<Icd>,
+    pub protocol: Option<Protocol>,
+    pub port: Option<u16>,
+    pub bit_order: BitOrder,
+    pub byte_order: ByteOrder,
+    pub discriminator: Discriminator,
+    pub message_length: Option<BitRange>,
+    messages: Vec<Message>,
+    by_name: HashMap<String, usize>,
+}
+
+impl Interface {
+    pub fn messages(&self) -> &[Message] {
+        &self.messages
+    }
+
+    pub fn message(&self, name: &str) -> Option<&Message> {
+        self.by_name.get(name).map(|&index| &self.messages[index])
+    }
+}
+
+/// A set of interfaces. Immutable once loaded; share it with `Arc`.
+#[derive(Debug, Clone)]
+pub struct Dictionary {
+    pub spec: DictionarySpec,
+    pub root: PathBuf,
+    interfaces: Vec<Interface>,
+    by_name: HashMap<String, usize>,
+    by_port: HashMap<u16, usize>,
+    issues: Vec<Issue>,
+    vectors: Vec<VectorFile>,
+    vectors_error: Option<(io::ErrorKind, String)>,
+}
+
+impl Dictionary {
+    /// Load every interface under the directory `root`.
+    ///
+    /// Files that cannot be parsed and fields that cannot be decoded are left
+    /// out and reported through [`Dictionary::issues`]; the rest of the
+    /// dictionary stays usable. Use [`Dictionary::has_errors`] to refuse a
+    /// dictionary with any such item.
+    pub fn load(root: impl AsRef<Path>) -> Result<Self, LoadError> {
+        let root = root.as_ref();
+        if !root.is_dir() {
+            return Err(LoadError::NotADirectory {
+                path: root.to_path_buf(),
+            });
+        }
+        build(read_directory(root)?, root.to_path_buf())
+    }
+
+    /// Build a dictionary from files held in memory: pairs of a path relative
+    /// to the dictionary directory, with `/` between components
+    /// (`WX/messages/Heartbeat.json`), and the text of that file.
+    ///
+    /// The result is the dictionary [`Dictionary::load`] gives for a directory
+    /// with the same files, issues included; the paths named in issue text are
+    /// relative, and [`Dictionary::root`] is empty. Paths that are not part of
+    /// the dictionary layout are ignored.
+    ///
+    /// ```
+    /// let dictionary = bite::Dictionary::from_files([
+    ///     (
+    ///         "LINK/metadata.json",
+    ///         r#"{"message_type": {"start": 0, "stop": 8, "values": {"1": "Ping"}}}"#,
+    ///     ),
+    ///     (
+    ///         "LINK/messages/Ping.json",
+    ///         r#"{"fields": {"sequence": {"start": 8, "stop": 24}}}"#,
+    ///     ),
+    /// ])?;
+    /// let decoded = dictionary.interface("LINK").unwrap().decode(&[1, 0, 7])?;
+    /// assert_eq!(decoded.rendered()["sequence"].as_deref(), Some("7"));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn from_files<P, T>(files: impl IntoIterator<Item = (P, T)>) -> Result<Self, LoadError>
+    where
+        P: AsRef<str>,
+        T: Into<String>,
+    {
+        let mut source = Source::default();
+        for (path, text) in files {
+            let parts: Vec<&str> = path
+                .as_ref()
+                .split('/')
+                .filter(|part| !part.is_empty() && *part != ".")
+                .collect();
+            let text: String = text.into();
+            if let ["vectors", file] = parts[..] {
+                if is_json(file) {
+                    source.vectors.insert(file.to_string(), Ok(text.clone()));
+                }
+            }
+            match parts[..] {
+                ["dictionary.json"] => source.dictionary = Some(Ok(text)),
+                [interface, "metadata.json"] => {
+                    source
+                        .interfaces
+                        .entry(interface.to_string())
+                        .or_default()
+                        .metadata = Some(Ok(text));
+                }
+                [interface, "messages", ref rest @ ..] if !rest.is_empty() => {
+                    let entry = source.interfaces.entry(interface.to_string()).or_default();
+                    entry.has_messages_dir = true;
+                    if let [file] = rest {
+                        if is_json(file) {
+                            entry.messages.insert(file.to_string(), Ok(text));
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        build(source, PathBuf::new())
+    }
+
+    pub fn interfaces(&self) -> &[Interface] {
+        &self.interfaces
+    }
+
+    pub fn interface(&self, name: &str) -> Option<&Interface> {
+        self.by_name.get(name).map(|&index| &self.interfaces[index])
+    }
+
+    /// The interface carried on a UDP or TCP port.
+    pub fn interface_for_port(&self, port: u16) -> Option<&Interface> {
+        self.by_port
+            .get(&port)
+            .map(|&index| &self.interfaces[index])
+    }
+
+    /// The interface a packet belongs to, judged by its ports. The source port
+    /// is tried first.
+    pub fn interface_for_ports(&self, source: u16, destination: u16) -> Option<&Interface> {
+        self.interface_for_port(source)
+            .or_else(|| self.interface_for_port(destination))
+    }
+
+    pub fn issues(&self) -> &[Issue] {
+        &self.issues
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.issues
+            .iter()
+            .any(|issue| issue.severity == Severity::Error)
+    }
+
+    /// The files of the dictionary's `vectors/` directory, by file name.
+    /// Empty when the dictionary carries none.
+    pub fn vector_files(&self) -> Result<&[VectorFile], LoadError> {
+        match &self.vectors_error {
+            None => Ok(&self.vectors),
+            Some((kind, message)) => Err(LoadError::Io {
+                path: self.root.join("vectors"),
+                source: io::Error::new(*kind, message.clone()),
+            }),
+        }
+    }
+}
+
+/// Read the files of the dictionary directory `root` into memory.
+fn read_directory(root: &Path) -> Result<Source, LoadError> {
+    let mut source = Source::default();
+    let dictionary = root.join("dictionary.json");
+    if dictionary.is_file() {
+        source.dictionary = Some(read_text(&dictionary));
+    }
+    for dir in sorted_entries(root)? {
+        let metadata = dir.join("metadata.json");
+        if !dir.is_dir() || !metadata.is_file() {
+            continue;
+        }
+        let mut interface = InterfaceSource {
+            metadata: Some(read_text(&metadata)),
+            ..InterfaceSource::default()
+        };
+        let messages_dir = dir.join("messages");
+        if messages_dir.is_dir() {
+            interface.has_messages_dir = true;
+            for path in sorted_entries(&messages_dir)? {
+                let name = file_name(&path);
+                if path.is_file() && is_json(&name) {
+                    interface.messages.insert(name, read_text(&path));
+                }
+            }
+        }
+        source.interfaces.insert(file_name(&dir), interface);
+    }
+    let vectors_dir = root.join("vectors");
+    if vectors_dir.is_dir() {
+        match sorted_entries(&vectors_dir) {
+            Ok(paths) => {
+                for path in paths {
+                    let name = file_name(&path);
+                    if is_json(&name) {
+                        source.vectors.insert(name, read_text(&path));
+                    }
+                }
+            }
+            // Reported by `vector_files`, to whoever asks for the vectors: a
+            // dictionary decodes without them.
+            Err(LoadError::Io { source: error, .. }) => {
+                source.vectors_error = Some((error.kind(), error.to_string()));
+            }
+            Err(other) => return Err(other),
+        }
+    }
+    Ok(source)
+}
+
+/// Check and index a dictionary's files. `root` is where they came from, and
+/// prefixes the file paths named in issues.
+fn build(source: Source, root: PathBuf) -> Result<Dictionary, LoadError> {
+    let mut issues = Vec::new();
+    let spec = match &source.dictionary {
+        None => None,
+        Some(text) => match parse_json::<DictionarySpec>(text, &root.join("dictionary.json")) {
+            Ok(spec) => Some(spec),
+            Err(message) => {
+                issues.push(Issue {
+                    severity: Severity::Error,
+                    location: "dictionary.json".to_string(),
+                    message,
+                });
+                None
+            }
+        },
+    }
+    .unwrap_or_default();
+
+    let mut interfaces = Vec::new();
+    for (name, files) in &source.interfaces {
+        let Some(metadata) = &files.metadata else {
+            continue;
+        };
+        let dir = root.join(name);
+        match parse_json::<InterfaceSpec>(metadata, &dir.join("metadata.json")) {
+            Ok(spec) => interfaces.push(build_interface(
+                name.clone(),
+                spec,
+                files,
+                &dir,
+                &mut issues,
+            )),
+            Err(message) => issues.push(Issue {
+                severity: Severity::Error,
+                location: name.clone(),
+                message,
+            }),
+        }
+    }
+    if interfaces.is_empty() && issues.is_empty() {
+        return Err(LoadError::Empty { path: root });
+    }
+
+    let mut by_name = HashMap::new();
+    let mut by_port = HashMap::new();
+    for (index, interface) in interfaces.iter().enumerate() {
+        by_name.insert(interface.name.clone(), index);
+        if let Some(port) = interface.port {
+            if let Some(&other) = by_port.get(&port) {
+                let other: &Interface = &interfaces[other];
+                issues.push(Issue {
+                    severity: Severity::Error,
+                    location: interface.name.clone(),
+                    message: format!(
+                        "port {port} is already claimed by interface {}; packets on it go to {}",
+                        other.name, other.name
+                    ),
+                });
+            } else {
+                by_port.insert(port, index);
+            }
+        }
+    }
+
+    let vectors = source
+        .vectors
+        .into_iter()
+        .map(|(file, text)| VectorFile {
+            name: stem(&file),
+            text,
+        })
+        .collect();
+
+    Ok(Dictionary {
+        spec,
+        root,
+        interfaces,
+        by_name,
+        by_port,
+        issues,
+        vectors,
+        vectors_error: source.vectors_error,
+    })
+}
+
+fn build_interface(
+    name: String,
+    spec: InterfaceSpec,
+    files: &InterfaceSource,
+    dir: &Path,
+    issues: &mut Vec<Issue>,
+) -> Interface {
+    let mut report = |severity, location: String, message: String| {
+        issues.push(Issue {
+            severity,
+            location,
+            message,
+        })
+    };
+
+    let disc = &spec.message_type;
+    if disc.source == DiscriminatorSource::Payload
+        && (disc.stop <= disc.start || disc.stop - disc.start > 64)
+    {
+        report(
+            Severity::Error,
+            name.clone(),
+            format!(
+                "message_type bits [{}, {}) must span 1 to 64 bits",
+                disc.start, disc.stop
+            ),
+        );
+    }
+    let mask = match disc.mask.as_deref() {
+        None => None,
+        Some(text) => match parse_int(text).and_then(|value| u64::try_from(value).ok()) {
+            Some(value) => Some(value),
+            None => {
+                report(
+                    Severity::Error,
+                    name.clone(),
+                    format!("message_type mask {text:?} is not an unsigned integer"),
+                );
+                None
+            }
+        },
+    };
+    let mut names = HashMap::new();
+    for (key, message_name) in &disc.values {
+        match parse_int(key).and_then(|value| u64::try_from(value).ok()) {
+            Some(code) => {
+                names.insert(code, message_name.clone());
+            }
+            None => report(
+                Severity::Error,
+                name.clone(),
+                format!("message_type value {key:?} is not an unsigned integer"),
+            ),
+        }
+    }
+
+    let mut messages = Vec::new();
+    if files.has_messages_dir {
+        for (file, text) in &files.messages {
+            let message_name = stem(file);
+            let location = format!("{name}/{message_name}");
+            match parse_json::<MessageSpec>(text, &dir.join("messages").join(file)) {
+                Ok(message_spec) => {
+                    if !names.values().any(|known| known == &message_name) {
+                        report(
+                            Severity::Warning,
+                            location.clone(),
+                            "no message_type value maps to this message; it can never be selected"
+                                .to_string(),
+                        );
+                    }
+                    messages.push(build_message(
+                        message_name,
+                        message_spec,
+                        &spec,
+                        &location,
+                        &mut report,
+                    ));
+                }
+                Err(message) => report(Severity::Error, location, message),
+            }
+        }
+    } else {
+        report(
+            Severity::Warning,
+            name.clone(),
+            "no messages directory".to_string(),
+        );
+    }
+
+    let by_name: HashMap<String, usize> = messages
+        .iter()
+        .enumerate()
+        .map(|(index, message)| (message.name.clone(), index))
+        .collect();
+    let mut undefined: Vec<&String> = names
+        .values()
+        .filter(|message_name| !by_name.contains_key(*message_name))
+        .collect();
+    undefined.sort();
+    undefined.dedup();
+    for message_name in undefined {
+        report(
+            Severity::Warning,
+            format!("{name}/{message_name}"),
+            "named by message_type but has no file in messages/; it is identified but not decoded"
+                .to_string(),
+        );
+    }
+
+    Interface {
+        description: spec.mission.clone(),
+        icd: spec.icd.clone(),
+        protocol: spec.protocol.clone(),
+        port: spec.port,
+        bit_order: spec.bit_order,
+        byte_order: spec.byte_order,
+        discriminator: Discriminator {
+            source: disc.source,
+            start: disc.start,
+            stop: disc.stop,
+            mask,
+            names,
+        },
+        message_length: spec.message_length,
+        messages,
+        by_name,
+        name,
+    }
+}
+
+fn build_message(
+    name: String,
+    spec: MessageSpec,
+    interface: &InterfaceSpec,
+    location: &str,
+    report: &mut impl FnMut(Severity, String, String),
+) -> Message {
+    let mut fields: Vec<Field> = Vec::new();
+    for (field_name, field_spec) in spec.fields {
+        let field_location = format!("{location}/{field_name}");
+        match build_field(field_name, field_spec, interface) {
+            Ok((field, warnings)) => {
+                for warning in warnings {
+                    report(Severity::Warning, field_location.clone(), warning);
+                }
+                fields.push(field);
+            }
+            Err(message) => report(Severity::Error, field_location, message),
+        }
+    }
+    fields.sort_by(|a, b| (a.start, &a.name).cmp(&(b.start, &b.name)));
+    for pair in fields.windows(2) {
+        if pair[1].start < pair[0].stop {
+            report(
+                Severity::Warning,
+                format!("{location}/{}", pair[1].name),
+                format!(
+                    "bits [{}, {}) overlap {} [{}, {})",
+                    pair[1].start, pair[1].stop, pair[0].name, pair[0].start, pair[0].stop
+                ),
+            );
+        }
+    }
+    Message {
+        name,
+        description: spec.description,
+        fields,
+    }
+}
+
+fn build_field(
+    name: String,
+    spec: FieldSpec,
+    interface: &InterfaceSpec,
+) -> Result<(Field, Vec<String>), String> {
+    if spec.stop <= spec.start {
+        return Err(format!(
+            "bits [{}, {}) are empty or inverted",
+            spec.start, spec.stop
+        ));
+    }
+    let width = spec.stop - spec.start;
+    let aligned = spec.start.is_multiple_of(8) && spec.stop.is_multiple_of(8);
+    let kind = match (spec.kind, spec.signed) {
+        (Some(kind), _) => kind,
+        (None, Some(true)) => FieldKind::Int,
+        // A byte-aligned field too wide for an integer is carried as bytes.
+        (None, _) if width > 64 && aligned => FieldKind::Bytes,
+        (None, _) => FieldKind::Uint,
+    };
+    match kind {
+        FieldKind::Uint | FieldKind::Int | FieldKind::Bool if width > 64 => {
+            return Err(format!(
+                "{width} bits is wider than the 64 an integer field can hold"
+            ));
+        }
+        FieldKind::Float if width != 32 && width != 64 => {
+            return Err(format!("a float field is 32 or 64 bits, not {width}"));
+        }
+        FieldKind::Bytes | FieldKind::Ascii if !aligned => {
+            return Err(
+                "a bytes or ascii field must start and stop on a byte boundary".to_string(),
+            );
+        }
+        _ => {}
+    }
+    let byte_order = spec.byte_order.unwrap_or(interface.byte_order);
+    if byte_order == ByteOrder::Little
+        && interface.bit_order == BitOrder::Msb0
+        && !aligned
+        && !matches!(kind, FieldKind::Bytes | FieldKind::Ascii)
+    {
+        return Err(
+            "little-endian byte order needs a byte-aligned field; use bit_order lsb0 for \
+             little-endian bit fields"
+                .to_string(),
+        );
+    }
+
+    let mut warnings = Vec::new();
+    let mut labels = HashMap::new();
+    for (key, value) in spec.values.unwrap_or_default() {
+        let label = match value {
+            serde_json::Value::String(text) => text,
+            serde_json::Value::Bool(flag) => flag.to_string(),
+            serde_json::Value::Number(number) => number.to_string(),
+            other => {
+                warnings.push(format!(
+                    "value {key:?} has a label that is not text: {other}"
+                ));
+                continue;
+            }
+        };
+        match parse_int(&key) {
+            Some(raw) => {
+                labels.insert(raw, label);
+            }
+            None => warnings.push(format!("value key {key:?} is not an integer")),
+        }
+    }
+    if !labels.is_empty() && matches!(kind, FieldKind::Float | FieldKind::Bytes | FieldKind::Ascii)
+    {
+        warnings.push("values are ignored on float, bytes and ascii fields".to_string());
+        labels.clear();
+    }
+
+    Ok((
+        Field {
+            name,
+            start: spec.start,
+            stop: spec.stop,
+            kind,
+            bit_order: interface.bit_order,
+            byte_order,
+            scale: spec.scale,
+            offset: spec.offset,
+            unit: spec.unit,
+            description: spec.description,
+            labels,
+        },
+        warnings,
+    ))
+}
+
+fn sorted_entries(dir: &Path) -> Result<Vec<PathBuf>, LoadError> {
+    let io = |source| LoadError::Io {
+        path: dir.to_path_buf(),
+        source,
+    };
+    let mut paths = Vec::new();
+    for entry in fs::read_dir(dir).map_err(io)? {
+        paths.push(entry.map_err(io)?.path());
+    }
+    paths.sort();
+    Ok(paths)
+}
+
+fn file_name(path: &Path) -> String {
+    path.file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_default()
+}
+
+/// Whether a file name has the extension of a dictionary file.
+fn is_json(file: &str) -> bool {
+    Path::new(file).extension().and_then(|e| e.to_str()) == Some("json")
+}
+
+fn stem(file: &str) -> String {
+    Path::new(file)
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().into_owned())
+        .unwrap_or_default()
+}
+
+fn read_text(path: &Path) -> FileText {
+    fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+/// Parse the text of the file at `path`, which is named in the error.
+fn parse_json<T: serde::de::DeserializeOwned>(text: &FileText, path: &Path) -> Result<T, String> {
+    let text = text
+        .as_ref()
+        .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+    serde_json::from_str(text).map_err(|e| format!("{}: {e}", path.display()))
+}

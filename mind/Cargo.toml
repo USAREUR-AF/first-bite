@@ -1,0 +1,35 @@
+[package]
+name = "mind"
+version = "1.0.1"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "first-bite process control: capture packets, decode them, publish the records"
+
+[features]
+default = ["azure", "aws"]
+# Sinks compiled into the binary; see flow/README.md.
+azure = ["flow/azure"]
+aws = ["flow/aws"]
+zenoh = ["flow/zenoh"]
+
+[dependencies]
+base64.workspace = true
+bite.workspace = true
+chrono.workspace = true
+clap.workspace = true
+ctrlc.workspace = true
+datamodels.workspace = true
+dotenvy.workspace = true
+etherparse.workspace = true
+flow.workspace = true
+log.workspace = true
+logger.workspace = true
+pcap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+hex.workspace = true
+libc.workspace = true

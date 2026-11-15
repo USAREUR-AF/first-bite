@@ -1,0 +1,90 @@
+name: User story
+description: A new capability or behaviour change, described from the point of view of whoever benefits.
+title: "feat(<scope>): <what changes, in plain language>"
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If you cannot write the "so that" clause, the work may not be worth doing yet -
+        file it as a Discussion instead.
+
+        Use this form for new capability. Something broken is a **Bug report**;
+        maintenance, infrastructure, docs or process work is a **Chore**.
+
+        Security-impacting? Use
+        [private vulnerability reporting](https://github.com/USAREUR-AF/first-bite/security/advisories/new),
+        not this form.
+
+  - type: input
+    id: as-a
+    attributes:
+      label: As a...
+      description: Who benefits? A role, not a person.
+      placeholder: integrator adding a new message set
+    validations:
+      required: true
+
+  - type: input
+    id: i-want
+    attributes:
+      label: I want...
+      description: The capability, stated as an outcome rather than an implementation.
+      placeholder: to validate a dictionary before deploying it
+    validations:
+      required: true
+
+  - type: input
+    id: so-that
+    attributes:
+      label: So that...
+      description: Why it matters. If this is hard to write, reconsider the work.
+      placeholder: a malformed field definition is caught before it drops live packets
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: >-
+        What a reader needs in order to act - current behaviour, prior decisions,
+        links to design docs, and anything already tried.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        Testable conditions in Given / When / Then form. Each must be something a
+        second person could verify without asking you. "Works correctly" is not a
+        criterion; "exits 1 and names the field when its bit width is zero" is.
+      value: |
+        - [ ] **Given** ..., **when** ..., **then** ...
+        - [ ] **Given** ..., **when** ..., **then** ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this story deliberately does not cover.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and risks
+      description: Blocking issues, hardware or access needed, and anything that would change the size of the work.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and did not find this
+          required: true
+        - label: This issue contains no CUI, no PII and no export-controlled data
+          required: true

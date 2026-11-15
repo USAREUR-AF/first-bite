@@ -1,0 +1,11 @@
+# S3Mock, an S3-compatible server, on 127.0.0.1:9090 with the bucket
+# `first-bite` created at start. It accepts any access key and secret. Objects
+# are gone when the container stops.
+---
+services:
+  s3:
+    image: adobe/s3mock:5.2.3
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: first-bite
+    ports:
+      - "127.0.0.1:9090:9090"

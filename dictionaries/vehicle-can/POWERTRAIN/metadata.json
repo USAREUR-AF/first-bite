@@ -1,0 +1,16 @@
+{
+    "description": "Powertrain bus, 500 kbit/s, 11-bit identifiers.",
+    "protocol": {
+        "network": "can",
+        "transport": "raw"
+    },
+    "bit_order": "lsb0",
+    "message_type": {
+        "source": "frame_id",
+        "mask": "0x7FF",
+        "values": {
+            "0x100": "Engine Status",
+            "0x101": "Wheel Speeds"
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "interface": "POWERTRAIN",
+    "frame_id": 256,
+    "payload_hex": "c83282b54d6aff00",
+    "expect": {
+        "message_type": "Engine Status",
+        "fields": {
+            "engine_speed": "3250",
+            "coolant_temperature": "90",
+            "throttle_position": "43.7",
+            "gear": "Third",
+            "check_engine": "true",
+            "engine_torque": "-75"
+        }
+    }
+}

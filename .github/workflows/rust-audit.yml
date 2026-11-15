@@ -1,0 +1,35 @@
+# RustSec advisory scan of Cargo.lock. The weekly run catches advisories
+# published against dependencies that have not changed.
+name: rust-audit
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.lock'
+      - '**/Cargo.toml'
+      - '.github/workflows/rust-audit.yml'
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  audit:
+    name: cargo-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@4a76afe23f9e08d2d9550fb56e556444e8611d21 # v2.90.4
+        with:
+          tool: cargo-audit
+      # Fails on vulnerabilities; unmaintained-crate warnings are reported only.
+      - run: cargo audit

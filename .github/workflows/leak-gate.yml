@@ -1,0 +1,47 @@
+# Refuses material that does not belong in this repository: credential shapes,
+# capture files, and names on the maintainers' needle list (a deployment's
+# hosts, places and accounts; the message and field names of restricted message
+# sets). The list is the repository secret LEAK_NEEDLES; a hit prints the file,
+# the line and an id of the needle, never the needle.
+#
+# pull_request_target runs with the secret, also for pull requests from forks.
+# Only the base branch's copy of tools/check-public-tree.sh is executed; the
+# pull request is checked out beside it and read as data, never run.
+name: leak-gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: leak-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  leak-gate:
+    name: leak-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the gate as merged
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: gate
+          persist-credentials: false
+      - name: Check out the tree to scan, as data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: scanned
+          persist-credentials: false
+      - name: Scan
+        working-directory: scanned
+        env:
+          LEAK_NEEDLES: ${{ secrets.LEAK_NEEDLES }}
+        run: bash ../gate/tools/check-public-tree.sh

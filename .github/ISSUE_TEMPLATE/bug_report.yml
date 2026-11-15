@@ -1,0 +1,81 @@
+name: Bug report
+description: Something is broken or behaves contrary to documented intent.
+title: "fix(<scope>): <the symptom, not the guessed cause>"
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security issue? Use
+        [private vulnerability reporting](https://github.com/USAREUR-AF/first-bite/security/advisories/new)
+        instead - do not file it here.
+
+        Do not attach captures, message dictionaries or decoded records from a
+        controlled system. Reproduce with synthetic data.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence. What is broken, and for whom?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Minimal commands that reproduce it, with exact versions.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: And where that expectation is documented, if it is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Logs or error output. Redact secrets, names, and any CUI.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        How we will know it is fixed - including the regression test that stops it
+        coming back. A fix with no test that would have caught it is not done.
+      value: |
+        - [ ] **Given** the reproduction above, **when** it is re-run, **then** ...
+        - [ ] **Given** the fix, **when** CI runs, **then** a regression test covers this case
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "version or commit: ... | OS and architecture: ... | capture source: interface, mock"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and did not find this
+          required: true
+        - label: This issue contains no CUI, no PII and no export-controlled data
+          required: true

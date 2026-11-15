@@ -1,0 +1,25 @@
+[package]
+name = "bite"
+version = "0.2.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "decode fixed-layout binary messages against a declarative dictionary"
+
+[features]
+default = ["cli"]
+# The `bite` command. The library builds without it, with
+# `--no-default-features`, for targets that have no command line.
+cli = ["dep:clap"]
+
+[[bin]]
+name = "bite"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[dependencies]
+clap = { workspace = true, optional = true }
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

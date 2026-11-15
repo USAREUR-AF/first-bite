@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decode a message in the browser · first-bite</title>
+<meta name="description" content="The first-bite decoder running in this page as WebAssembly: pick a dictionary and a payload and see which bits make which field.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="decoder.css">
+<script type="module" src="decoder.js"></script>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <h1>Every field is a range of bits</h1>
+    <p>This page runs the <code>bite</code> decoder itself, compiled to WebAssembly. Pick a dictionary and a payload: the decoder names the message and reads each field from the bits shown. <strong>Nothing leaves the page</strong>: there is no server behind it.</p>
+  </header>
+
+  <p id="startup" class="notice" role="status">Loading the decoder…</p>
+
+  <section id="app" hidden>
+    <form class="controls" id="controls" aria-label="What to decode" autocomplete="off">
+      <fieldset>
+        <legend>Dictionary</legend>
+        <div class="choices" id="dictionary-choices"></div>
+        <p class="hint" id="dictionary-description"></p>
+        <p class="hint mono" id="dictionary-summary"></p>
+        <ul class="issues mono" id="dictionary-issues" hidden></ul>
+      </fieldset>
+
+      <fieldset id="vector-set">
+        <legend>Example payload</legend>
+        <div class="choices" id="vector-choices"></div>
+      </fieldset>
+
+      <div class="inputs">
+        <label class="field" id="interface-field">
+          <span>Interface</span>
+          <select id="interface"></select>
+        </label>
+        <label class="field" id="frame-field">
+          <span>Frame identifier</span>
+          <input id="frame-id" class="mono" inputmode="text" spellcheck="false" placeholder="0x100">
+        </label>
+        <label class="field grow">
+          <span>Payload, as hex</span>
+          <textarea id="payload" class="mono" rows="2" spellcheck="false" autocapitalize="off" placeholder="01 00 0c 4b 58 37 …"></textarea>
+        </label>
+      </div>
+    </form>
+
+    <section class="result" aria-labelledby="result-title">
+      <div class="result-head">
+        <h2 id="result-title">&nbsp;</h2>
+        <p id="result-sub" class="hint">&nbsp;</p>
+      </div>
+      <p id="error" class="notice crit mono" role="alert" hidden></p>
+
+      <div id="view">
+        <p id="inspector" class="inspector" aria-live="polite"></p>
+        <div id="bits" class="bits" role="img" aria-label="The payload bit by bit"></div>
+        <p id="bits-note" class="hint"></p>
+
+        <div class="table-wrap">
+          <table id="fields">
+            <caption class="visually-hidden">Decoded fields</caption>
+            <thead>
+              <tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col" class="unit">Unit</th><th scope="col">Bits</th><th scope="col" class="wide-only">Type</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="no-fields" class="hint" hidden></p>
+      </div>
+    </section>
+
+    <section class="own" aria-labelledby="own-title">
+      <h2 id="own-title">Try your own dictionary</h2>
+      <p>A dictionary is a folder of JSON files. Choose the folder, or drop it here, and it is checked and used by the decoder in this page. <strong>The files are read by your browser and go nowhere else.</strong></p>
+      <div id="drop" class="drop">
+        <p class="drop-text">Drop a dictionary folder or its files here</p>
+        <div class="drop-actions">
+          <label class="button">Choose a folder<input id="pick-folder" type="file" webkitdirectory multiple class="visually-hidden"></label>
+          <label class="button">Choose files<input id="pick-files" type="file" multiple accept=".json,application/json" class="visually-hidden"></label>
+        </div>
+      </div>
+      <p id="own-status" class="notice" role="status" hidden></p>
+    </section>
+  </section>
+</main>
+</body>
+</html>

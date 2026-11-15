@@ -1,0 +1,8 @@
+# Publisher configuration for docker/compose.yml: one PUB socket on every
+# interface of the container, so that the port published by compose works.
+---
+publishers:
+  - name: "records"
+    publisher_type: PUB
+    address: "tcp://*:12000"
+    topic: "subsystem/message_type"

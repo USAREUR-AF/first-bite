@@ -1,0 +1,14 @@
+# Filebeat 8 configuration: ship the first-bite log to Elasticsearch.
+# install.sh replaces the example output URL with the one it is given.
+---
+filebeat.inputs:
+  - type: filestream
+    id: first-bite
+    paths:
+      - /var/log/first-bite/*.log
+
+output.elasticsearch:
+  hosts: ["https://elasticsearch.example.org:9200"]
+  # Authenticate with an API key kept in the Filebeat keystore:
+  #   filebeat keystore add ES_API_KEY
+  # api_key: "${ES_API_KEY}"

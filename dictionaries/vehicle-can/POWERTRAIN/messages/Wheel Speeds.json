@@ -1,0 +1,29 @@
+{
+    "description": "Brake controller, 50 Hz. Four 13-bit speeds packed end to end.",
+    "fields": {
+        "front_left": {
+            "start": 0,
+            "stop": 13,
+            "scale": 0.01,
+            "unit": "m/s"
+        },
+        "front_right": {
+            "start": 13,
+            "stop": 26,
+            "scale": 0.01,
+            "unit": "m/s"
+        },
+        "rear_left": {
+            "start": 26,
+            "stop": 39,
+            "scale": 0.01,
+            "unit": "m/s"
+        },
+        "rear_right": {
+            "start": 39,
+            "stop": 52,
+            "scale": 0.01,
+            "unit": "m/s"
+        }
+    }
+}

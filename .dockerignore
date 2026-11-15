@@ -1,0 +1,11 @@
+# Kept out of the build context: nothing here is needed to build the image,
+# and private/ must never reach an image layer.
+private/
+target/
+vendor/
+.git
+.github
+.claude
+**/__pycache__
+**/*.log
+**/azurite_data
