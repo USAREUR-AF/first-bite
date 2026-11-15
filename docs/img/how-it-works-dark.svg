@@ -1,27 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 500" width="760" height="500" role="img" aria-labelledby="how-it-works-title how-it-works-desc" aria-label="A tap copies the link; first-bite decodes the copy and publishes it">
-<title id="how-it-works-title">A tap copies the link; first-bite decodes the copy and publishes it</title>
-<desc id="how-it-works-desc">Two native systems exchange binary messages on a link. A tap on the link sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 500" width="760" height="500" role="img" aria-labelledby="how-it-works-title how-it-works-desc" aria-label="The link is copied; first-bite decodes the copy and publishes it">
+<title id="how-it-works-title">The link is copied; first-bite decodes the copy and publishes it</title>
+<desc id="how-it-works-desc">Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.</desc>
 <style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#e6e9ee}.q{fill:#a3abb8}.a{fill:#8fb0ff}.g{fill:#6cc487}.w{fill:#e3b04f}.i{fill:#b3a6f5}.mu{fill:#9aa2ad}.on{fill:#0f1317}.bg{fill:#0f1317;stroke:#2c333d;stroke-width:1}.bx{fill:#0f1317;stroke:#7a8594;stroke-width:1.25}.bxp{fill:#171b21;stroke:#2c333d;stroke-width:1.25}.bxa{fill:#172544;stroke:#8fb0ff;stroke-width:1.25}.bxg{fill:#172b1e;stroke:#6cc487;stroke-width:1.25}.bxw{fill:#31281a;stroke:#e3b04f;stroke-width:1.25}.bxm{fill:#23262b;stroke:#9aa2ad;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#0f1317;stroke:#7a8594;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7a8594;stroke-width:1.25;fill:none}.lnk{stroke:#e6e9ee;stroke-width:3;fill:none}.lna{stroke:#8fb0ff;stroke-width:2;fill:none}.lnd{stroke:#7a8594;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#2c333d;stroke-width:1;fill:none}.fa{fill:#8fb0ff}.fl{fill:#7a8594}.fk{fill:#e6e9ee}.fg{fill:#6cc487}.fp{fill:#171b21}.fr{fill:#2c333d}.f0{fill:#172544}.f1{fill:#31281a}.f2{fill:#221d3d}.f3{fill:#172b1e}.s0{stroke:#8fb0ff}.s1{stroke:#e3b04f}.s2{stroke:#b3a6f5}.s3{stroke:#6cc487}.c0{fill:#8fb0ff}.c1{fill:#e3b04f}.c2{fill:#b3a6f5}.c3{fill:#6cc487}.pp{fill:#0f1317}path,line{stroke-linejoin:round}</style>
 <rect class="bg" x="0.5" y="0.5" width="759" height="499" rx="12"/>
-<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">A tap copies the link; first-bite decodes the copy and publishes it</text>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">The link is copied; first-bite decodes the copy and publishes it</text>
 <rect x="40" y="64" width="150" height="60" rx="8" class="bx"/>
 <text x="115" y="89.5" font-size="15" font-weight="700" text-anchor="middle" class="t">System A</text>
 <text x="115" y="107.9" font-size="13" text-anchor="middle" class="q">native system</text>
 <rect x="570" y="64" width="150" height="60" rx="8" class="bx"/>
 <text x="645" y="89.5" font-size="15" font-weight="700" text-anchor="middle" class="t">System B</text>
 <text x="645" y="107.9" font-size="13" text-anchor="middle" class="q">native system</text>
-<path d="M190 94L236 94" class="lnk" data-lint="nohead"/>
-<path d="M296 94L570 94" class="lnk" data-lint="nohead"/>
-<rect x="309" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="341" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="373" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="471" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="503" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="535" y="89" width="18" height="10" rx="2" class="fk"/>
-<rect x="236" y="78" width="60" height="32" rx="6" class="bx"/>
-<text x="266" y="97.9" font-size="13" font-weight="700" text-anchor="middle" class="t">tap</text>
-<text x="431" y="82" font-size="13" text-anchor="middle" class="q">binary messages</text>
-<text x="431" y="118" font-size="13" font-weight="700" text-anchor="middle" class="g">not delayed, blocked or altered</text>
+<path d="M190 94L204 94" class="lnk" data-lint="nohead"/>
+<path d="M328 94L570 94" class="lnk" data-lint="nohead"/>
+<rect x="343" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="375" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="407" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="475" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="507" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="539" y="89" width="18" height="10" rx="2" class="fk"/>
+<rect x="204" y="78" width="124" height="32" rx="6" class="bx"/>
+<text x="266" y="97.9" font-size="13" font-weight="700" text-anchor="middle" class="t">tap or mirror port</text>
+<text x="450" y="82" font-size="13" text-anchor="middle" class="q">binary messages</text>
+<text x="450" y="118" font-size="13" font-weight="700" text-anchor="middle" class="g">not delayed, blocked or altered</text>
 <rect x="40" y="180" width="680" height="162" rx="12" class="bxa"/>
 <path d="M266 110L266 187" class="lna"/><path d="M266 196L261 186L271 186z" class="fa"/>
 <text x="280" y="148" font-size="13" font-weight="700" class="a">copy of every frame</text>

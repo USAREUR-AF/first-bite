@@ -1,7 +1,13 @@
 # One subscriber of each kind that reaches beyond the local machine, with
-# placeholder addresses and credentials. Copy the entries you need into your
-# own subscribers.yml; do not commit real credentials.
-# Keys are described in README.md.
+# placeholder addresses. Copy the entries you need into your own
+# subscribers.yml. Keys are described in README.md.
+#
+# No credential is written in this file. A credential key holds a reference,
+# ${NAME}, and the value is read from the environment variable NAME when the
+# file is loaded; set the variable in /etc/first-bite/first-bite.env (mode
+# 0640, root:firstbite). A reference is the whole value. Instead of a
+# reference, the key's `_file` variant names a file that holds the value, for
+# example one that systemd provides with LoadCredential=.
 
 subscribers:
   # POST each record as JSON to http://203.0.113.10:5001/records.
@@ -24,9 +30,9 @@ subscribers:
     topics:
       - "*"
     cloud_account: "your_storage_account"
-    # The account key, base64 as the storage service issues it. This
-    # placeholder decodes to "your-access-key".
-    cloud_access_key: "eW91ci1hY2Nlc3Mta2V5"
+    # The account key, base64 as the storage service issues it.
+    cloud_access_key: "${FIRST_BITE_BLOB_ACCESS_KEY}"
+    # or: cloud_access_key_file: "blob-access-key"
     cloud_container: "first-bite"
     cloud_location_type: "Custom" # Public, Custom, Emulator
     cloud_uri: https://blob.storage.example:10000
@@ -40,8 +46,9 @@ subscribers:
     zmq_port: 12000
     topics:
       - "*"
-    aws_access_key_id: "your_access_key_id"
-    aws_secret_access_key: "your_secret_access_key"
+    aws_access_key_id: "${FIRST_BITE_S3_ACCESS_KEY_ID}"
+    aws_secret_access_key: "${FIRST_BITE_S3_SECRET_ACCESS_KEY}"
+    # or: aws_access_key_id_file / aws_secret_access_key_file
     aws_default_region: "us-east-1"
     aws_s3_endpoint: "https://s3.amazonaws.com"
     aws_bucket_name: "your-bucket"

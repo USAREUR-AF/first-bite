@@ -6,7 +6,8 @@
 subscribers:
   # Azurite, the Azure Storage emulator (mocks/azure). The account name and
   # key below are the emulator's documented development credentials, the same
-  # for every Azurite installation; they are not a secret.
+  # for every Azurite installation; they are not a secret. A real key is
+  # never written here: see subscribers.example.yml for the reference form.
   - name: All2BlobEmulator
     subscriber_type: "objectstorage"
     subtype: "azureobject"

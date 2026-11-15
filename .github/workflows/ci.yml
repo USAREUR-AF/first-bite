@@ -69,9 +69,19 @@ jobs:
         with:
           persist-credentials: false
       - name: shellcheck
-        run: git ls-files -z '*.sh' | xargs -0 shellcheck
+        run: git ls-files -z '*.sh' 'tools/git-hooks/*' | xargs -0 shellcheck
       - name: yamllint
         run: pipx run yamllint==1.37.1 .github
+      # The leak check must catch what it claims to: it is run against one
+      # planted example of every class before its verdict is relied on.
+      - name: leak check self-test
+        run: tools/check-public-tree.test.sh
+      # Every action is pinned to a commit and every container image to a
+      # digest; the checker is first run against fixtures that are not.
+      - name: pin check
+        run: |
+          python3 tools/check-pins.py --self-test
+          python3 tools/check-pins.py
 
   fmt:
     needs: changes

@@ -22,6 +22,7 @@ pub mod bits;
 pub mod decode;
 pub mod dictionary;
 pub mod jsonschema;
+pub mod limits;
 pub mod schema;
 pub mod vectors;
 

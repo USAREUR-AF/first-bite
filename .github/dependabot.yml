@@ -18,6 +18,32 @@ updates:
       prefix: "chore(deps)"
     open-pull-requests-limit: 5
 
+  # The base images in the Dockerfile and the images of the mocks are pinned
+  # by digest (tools/check-pins.py); these entries move the pins.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker-compose
+    directories:
+      - "/mocks/azure"
+      - "/mocks/elastic"
+      - "/mocks/s3"
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      mocks:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

@@ -42,7 +42,7 @@ way, and `mind` is not built for them.
 | `linux-gnu`, the standard build | the machine runs Ubuntu 20.04 or later, or any distribution with glibc 2.31 or later. This is the default. | with every release |
 | `linux-musl`, the self-contained build | the machine has no glibc or an older one: Alpine, a busybox or `scratch` container image, an embedded or cut-down root filesystem | with the first release of each minor version (`vX.Y.0`), and when the release workflow is run by hand with the input `static` |
 
-Both carry libpcap 1.10.5, ZeroMQ and the C++ runtime inside `mind`, so
+Both carry libpcap 1.10.7, ZeroMQ and the C++ runtime inside `mind`, so
 neither needs a package installed. The standard build uses the machine's glibc
 and so gets its fixes from the distribution. The self-contained build is linked
 statically against musl: it has no program interpreter and loads no shared
@@ -116,6 +116,7 @@ way that system starts services; the options and settings are the ones in the
 | `/usr/local/bin/mind`, `/usr/local/bin/bite` | binaries | every install |
 | `/etc/first-bite/first-bite.env` | settings: interface, dictionary path, configuration paths, record metadata, log level | first install only |
 | `/etc/first-bite/config/*.yml` | publisher, subscriber and subpub configuration | first install only |
+| `/etc/first-bite/credentials/` | optional credential files for the unit's `LoadCredential=` lines; `0700 root:root` | you |
 | `/etc/first-bite/dictionary/` | the dictionary | every install given `--dictionary` |
 | `/etc/systemd/system/first-bite.service` | the unit | every install |
 | `/etc/logrotate.d/first-bite` | daily rotation, seven kept | every install |
@@ -127,9 +128,53 @@ Records and logs are both in `/var/log/first-bite/mind.log`. The journal
 service: starts, stops, exit codes and restarts.
 
 The service runs as the system user `firstbite` with the capabilities
-`CAP_NET_RAW` and `CAP_NET_ADMIN` and no others. Files under `/etc/first-bite`
-are readable by root and that user only, because a subscriber configuration can
-hold storage credentials.
+`CAP_NET_RAW` and `CAP_NET_ADMIN` and no others. `/etc/first-bite` and
+`/etc/first-bite/config` are `0750 root:firstbite`, and the environment file
+and every configuration file are `0640 root:firstbite`; `install.sh` sets
+this on every run, also for files it keeps. Records written under
+`/var/lib/first-bite` are created `0640` in a directory other users cannot
+list.
+
+### Credentials
+
+A subscriber that stores records in Azure Blob Storage or S3 needs a
+credential. The configuration file does not hold it; it holds a reference:
+
+```yaml
+# /etc/first-bite/config/subscribers.yml
+    cloud_access_key: "${FIRST_BITE_BLOB_ACCESS_KEY}"
+```
+
+```bash
+# /etc/first-bite/first-bite.env
+FIRST_BITE_BLOB_ACCESS_KEY=<the key>
+```
+
+`mind` replaces the reference with the variable's value when it loads the
+file. A reference to a variable that is not set stops the service at startup
+with an error naming the subscriber, the key and the variable. The value is
+not written to the log or to an error message at any log level.
+
+The other way is a file per credential, which keeps values out of the
+environment file as well. Put each value in a file under
+`/etc/first-bite/credentials/` (`0700 root:root`; make the files `0600`),
+uncomment the matching `LoadCredential=` line in the unit, and name the
+credential in the subscriber:
+
+```yaml
+    cloud_access_key_file: "blob-access-key"
+```
+
+systemd hands the service a private copy; the service user cannot read the
+original.
+
+A credential written in the configuration file as a plain value still works.
+The service logs one warning for each at startup, naming the subscriber and
+the key. To move an existing deployment: put the value in
+`first-bite.env` under a name of your choice, replace the value in
+`subscribers.yml` with `"${THAT_NAME}"`, and restart.
+[flow/config/README.md](../flow/config/README.md#credentials-and-references)
+has the rules in full.
 
 Settings are `KEY=value` lines in `/etc/first-bite/first-bite.env`; the file
 documents each one. After editing it or a file in `/etc/first-bite/config`:

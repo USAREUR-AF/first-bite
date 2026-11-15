@@ -29,6 +29,21 @@ pub enum Problem {
     },
     #[error("the publisher binds port {0}, which is the port the subscriber reads; the output would feed the input")]
     Loopback(String),
+    #[error("`{key}` refers to the environment variable {variable}, which is not set")]
+    UnsetVariable { key: &'static str, variable: String },
+    #[error(
+        "`{key}` contains `${{` but is not one whole reference; a reference is the whole value, \
+         written ${{NAME}}"
+    )]
+    MalformedReference { key: &'static str },
+    #[error("`{key}` and `{key}_file` are both set; give one")]
+    ValueAndFile { key: &'static str },
+    #[error("`{key}_file`: cannot read {}: {reason}", path.display())]
+    CredentialFile {
+        key: &'static str,
+        path: PathBuf,
+        reason: String,
+    },
 }
 
 fn display_subtype(subtype: &Option<String>) -> String {

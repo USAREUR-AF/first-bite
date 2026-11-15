@@ -1,14 +1,18 @@
 //! A dictionary loaded from a directory or from files held in memory, checked,
 //! and indexed for decoding.
 
+use crate::limits::{
+    quoted, MAX_FIELDS_PER_MESSAGE, MAX_FILES, MAX_FILE_BYTES, MAX_PAYLOAD_BITS, MAX_PAYLOAD_BYTES,
+    MAX_VALUES,
+};
 use crate::schema::{
     parse_int, BitOrder, BitRange, ByteOrder, DictionarySpec, DiscriminatorSource, FieldKind,
     FieldSpec, Icd, InterfaceSpec, MessageSpec, Protocol,
 };
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 /// The dictionary could not be read at all.
@@ -26,6 +30,11 @@ pub enum LoadError {
         shown(.path)
     )]
     Empty { path: PathBuf },
+    #[error(
+        "{} holds more than {limit} files; a dictionary may hold at most that many",
+        shown(.path)
+    )]
+    TooManyFiles { path: PathBuf, limit: usize },
 }
 
 /// A dictionary built from files in memory has no directory to name.
@@ -52,6 +61,21 @@ struct Source {
     vectors: BTreeMap<String, FileText>,
     /// Why `vectors/` could not be listed, when it could not.
     vectors_error: Option<(io::ErrorKind, String)>,
+}
+
+impl Source {
+    /// Files held: `dictionary.json`, metadata, messages and vectors.
+    fn file_count(&self) -> usize {
+        usize::from(self.dictionary.is_some())
+            + self.vectors.len()
+            + self
+                .interfaces
+                .values()
+                .map(|interface| {
+                    usize::from(interface.metadata.is_some()) + interface.messages.len()
+                })
+                .sum::<usize>()
+    }
 }
 
 #[derive(Default)]
@@ -260,30 +284,43 @@ impl Dictionary {
                 .filter(|part| !part.is_empty() && *part != ".")
                 .collect();
             let text: String = text.into();
+            let text = if text.len() > MAX_FILE_BYTES {
+                Err(too_large(text.len() as u64))
+            } else {
+                Ok(text)
+            };
             if let ["vectors", file] = parts[..] {
                 if is_json(file) {
-                    source.vectors.insert(file.to_string(), Ok(text.clone()));
+                    source.vectors.insert(file.to_string(), text.clone());
                 }
             }
             match parts[..] {
-                ["dictionary.json"] => source.dictionary = Some(Ok(text)),
+                ["dictionary.json"] => source.dictionary = Some(text),
                 [interface, "metadata.json"] => {
                     source
                         .interfaces
                         .entry(interface.to_string())
                         .or_default()
-                        .metadata = Some(Ok(text));
+                        .metadata = Some(text);
                 }
                 [interface, "messages", ref rest @ ..] if !rest.is_empty() => {
                     let entry = source.interfaces.entry(interface.to_string()).or_default();
                     entry.has_messages_dir = true;
                     if let [file] = rest {
                         if is_json(file) {
-                            entry.messages.insert(file.to_string(), Ok(text));
+                            entry.messages.insert(file.to_string(), text);
                         }
                     }
                 }
                 _ => {}
+            }
+            // Checked as files are kept, so an endless iterator stops here
+            // and not when memory runs out.
+            if source.file_count() > MAX_FILES {
+                return Err(LoadError::TooManyFiles {
+                    path: PathBuf::new(),
+                    limit: MAX_FILES,
+                });
             }
         }
         build(source, PathBuf::new())
@@ -337,8 +374,23 @@ impl Dictionary {
 /// Read the files of the dictionary directory `root` into memory.
 fn read_directory(root: &Path) -> Result<Source, LoadError> {
     let mut source = Source::default();
+    let too_many = || LoadError::TooManyFiles {
+        path: root.to_path_buf(),
+        limit: MAX_FILES,
+    };
+    // Files read so far; checked before each read.
+    let mut files = 0usize;
+    let mut count = || {
+        files += 1;
+        if files > MAX_FILES {
+            Err(too_many())
+        } else {
+            Ok(())
+        }
+    };
     let dictionary = root.join("dictionary.json");
     if dictionary.is_file() {
+        count()?;
         source.dictionary = Some(read_text(&dictionary));
     }
     for dir in sorted_entries(root)? {
@@ -346,6 +398,7 @@ fn read_directory(root: &Path) -> Result<Source, LoadError> {
         if !dir.is_dir() || !metadata.is_file() {
             continue;
         }
+        count()?;
         let mut interface = InterfaceSource {
             metadata: Some(read_text(&metadata)),
             ..InterfaceSource::default()
@@ -356,6 +409,7 @@ fn read_directory(root: &Path) -> Result<Source, LoadError> {
             for path in sorted_entries(&messages_dir)? {
                 let name = file_name(&path);
                 if path.is_file() && is_json(&name) {
+                    count()?;
                     interface.messages.insert(name, read_text(&path));
                 }
             }
@@ -368,7 +422,8 @@ fn read_directory(root: &Path) -> Result<Source, LoadError> {
             Ok(paths) => {
                 for path in paths {
                     let name = file_name(&path);
-                    if is_json(&name) {
+                    if path.is_file() && is_json(&name) {
+                        count()?;
                         source.vectors.insert(name, read_text(&path));
                     }
                 }
@@ -487,17 +542,27 @@ fn build_interface(
     };
 
     let disc = &spec.message_type;
-    if disc.source == DiscriminatorSource::Payload
-        && (disc.stop <= disc.start || disc.stop - disc.start > 64)
-    {
-        report(
-            Severity::Error,
-            name.clone(),
-            format!(
-                "message_type bits [{}, {}) must span 1 to 64 bits",
-                disc.start, disc.stop
-            ),
-        );
+    if disc.source == DiscriminatorSource::Payload {
+        if disc.stop <= disc.start || disc.stop - disc.start > 64 {
+            report(
+                Severity::Error,
+                name.clone(),
+                format!(
+                    "message_type bits [{}, {}) must span 1 to 64 bits",
+                    disc.start, disc.stop
+                ),
+            );
+        } else if disc.stop > MAX_PAYLOAD_BITS {
+            report(
+                Severity::Error,
+                name.clone(),
+                format!(
+                    "message_type bits [{}, {}) reach past the {MAX_PAYLOAD_BYTES} bytes of a \
+                     payload that are considered",
+                    disc.start, disc.stop
+                ),
+            );
+        }
     }
     let mask = match disc.mask.as_deref() {
         None => None,
@@ -514,7 +579,21 @@ fn build_interface(
         },
     };
     let mut names = HashMap::new();
-    for (key, message_name) in &disc.values {
+    let values = if disc.values.len() > MAX_VALUES {
+        report(
+            Severity::Error,
+            name.clone(),
+            format!(
+                "message_type has {} values; at most {MAX_VALUES} are read, so none is and the \
+                 interface identifies no message",
+                disc.values.len()
+            ),
+        );
+        None
+    } else {
+        Some(&disc.values)
+    };
+    for (key, message_name) in values.into_iter().flatten() {
         match parse_int(key).and_then(|value| u64::try_from(value).ok()) {
             Some(code) => {
                 names.insert(code, message_name.clone());
@@ -522,19 +601,31 @@ fn build_interface(
             None => report(
                 Severity::Error,
                 name.clone(),
-                format!("message_type value {key:?} is not an unsigned integer"),
+                format!(
+                    "message_type value {:?} is not an unsigned integer",
+                    quoted(key)
+                ),
             ),
         }
     }
 
     let mut messages = Vec::new();
     if files.has_messages_dir {
+        let selectable: HashSet<&str> = names.values().map(String::as_str).collect();
         for (file, text) in &files.messages {
             let message_name = stem(file);
             let location = format!("{name}/{message_name}");
             match parse_json::<MessageSpec>(text, &dir.join("messages").join(file)) {
+                Ok(message_spec) if message_spec.fields.len() > MAX_FIELDS_PER_MESSAGE => report(
+                    Severity::Error,
+                    location,
+                    format!(
+                        "{} fields; a message may have at most {MAX_FIELDS_PER_MESSAGE}",
+                        message_spec.fields.len()
+                    ),
+                ),
                 Ok(message_spec) => {
-                    if !names.values().any(|known| known == &message_name) {
+                    if !selectable.contains(message_name.as_str()) {
                         report(
                             Severity::Warning,
                             location.clone(),
@@ -653,6 +744,13 @@ fn build_field(
             spec.start, spec.stop
         ));
     }
+    if spec.stop > MAX_PAYLOAD_BITS {
+        return Err(format!(
+            "bits [{}, {}) reach past the {MAX_PAYLOAD_BYTES} bytes of a payload that are \
+             considered",
+            spec.start, spec.stop
+        ));
+    }
     let width = spec.stop - spec.start;
     let aligned = spec.start.is_multiple_of(8) && spec.stop.is_multiple_of(8);
     let kind = match (spec.kind, spec.signed) {
@@ -693,14 +791,23 @@ fn build_field(
 
     let mut warnings = Vec::new();
     let mut labels = HashMap::new();
-    for (key, value) in spec.values.unwrap_or_default() {
+    let values = spec.values.unwrap_or_default();
+    if values.len() > MAX_VALUES {
+        return Err(format!(
+            "{} values; a field may have at most {MAX_VALUES}",
+            values.len()
+        ));
+    }
+    for (key, value) in values {
         let label = match value {
             serde_json::Value::String(text) => text,
             serde_json::Value::Bool(flag) => flag.to_string(),
             serde_json::Value::Number(number) => number.to_string(),
             other => {
                 warnings.push(format!(
-                    "value {key:?} has a label that is not text: {other}"
+                    "value {:?} has a label that is not text: {}",
+                    quoted(&key),
+                    quoted(&other.to_string())
                 ));
                 continue;
             }
@@ -709,7 +816,7 @@ fn build_field(
             Some(raw) => {
                 labels.insert(raw, label);
             }
-            None => warnings.push(format!("value key {key:?} is not an integer")),
+            None => warnings.push(format!("value key {:?} is not an integer", quoted(&key))),
         }
     }
     if !labels.is_empty() && matches!(kind, FieldKind::Float | FieldKind::Bytes | FieldKind::Ascii)
@@ -743,6 +850,14 @@ fn sorted_entries(dir: &Path) -> Result<Vec<PathBuf>, LoadError> {
     };
     let mut paths = Vec::new();
     for entry in fs::read_dir(dir).map_err(io)? {
+        // A dictionary holds at most MAX_FILES files, so no directory of one
+        // is listed past that many entries.
+        if paths.len() >= MAX_FILES {
+            return Err(LoadError::TooManyFiles {
+                path: dir.to_path_buf(),
+                limit: MAX_FILES,
+            });
+        }
         paths.push(entry.map_err(io)?.path());
     }
     paths.sort();
@@ -767,8 +882,28 @@ fn stem(file: &str) -> String {
         .unwrap_or_default()
 }
 
+/// Why a file of `bytes` bytes is not read.
+fn too_large(bytes: u64) -> String {
+    format!("the file is {bytes} bytes; the largest dictionary file read is {MAX_FILE_BYTES}")
+}
+
+/// The text of the file at `path`, when it is no larger than
+/// [`MAX_FILE_BYTES`]. The read itself stops at the limit, so a file that
+/// grows, or one whose size the filesystem does not report, cannot exceed it.
 fn read_text(path: &Path) -> FileText {
-    fs::read_to_string(path).map_err(|e| e.to_string())
+    let file = fs::File::open(path).map_err(|e| e.to_string())?;
+    let size = file.metadata().map_err(|e| e.to_string())?.len();
+    if size > MAX_FILE_BYTES as u64 {
+        return Err(too_large(size));
+    }
+    let mut text = String::new();
+    file.take(MAX_FILE_BYTES as u64 + 1)
+        .read_to_string(&mut text)
+        .map_err(|e| e.to_string())?;
+    if text.len() > MAX_FILE_BYTES {
+        return Err(too_large(text.len() as u64));
+    }
+    Ok(text)
 }
 
 /// Parse the text of the file at `path`, which is named in the error.

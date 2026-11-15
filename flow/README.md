@@ -50,11 +50,12 @@ module in `src/sink/` and an arm there.
 | `sink::azure_blob` | Azure Blob Storage, over its REST API | `azure` |
 | `sink::aws_s3` | S3 and S3-compatible stores | `aws` |
 | `sink::zenoh` | Zenoh put | `zenoh` |
+| `goat::sink` | Zenoh put on a goat data fabric, with goat's identity, key and announcement conventions; optional and off by default ([docs/goat/joining.md](../docs/goat/joining.md)) | `goat` |
 | `sink::rest` | HTTP POST | always built |
 | `sink::local_log` | local file, one record per line | always built |
 | `sink::message_rates` | per-topic counts | always built |
 
-`flow` enables no feature by default. `mind` forwards the three features and
+`flow` enables no feature by default. `mind` forwards the four features and
 enables `azure` and `aws` by default.
 
 ## Standalone subscribers

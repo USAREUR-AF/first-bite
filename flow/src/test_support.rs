@@ -83,6 +83,20 @@ pub(crate) struct HttpStub {
 
 impl HttpStub {
     pub(crate) fn answering(statuses: &[u16]) -> Self {
+        Self::serving(statuses, None, Vec::new())
+    }
+
+    /// As [`HttpStub::answering`], with a `Location` header on every answer.
+    pub(crate) fn redirecting(statuses: &[u16], location: &str) -> Self {
+        Self::serving(statuses, Some(location.to_string()), Vec::new())
+    }
+
+    /// One answer with `status` and `body`.
+    pub(crate) fn answering_with_body(status: u16, body: Vec<u8>) -> Self {
+        Self::serving(&[status], None, body)
+    }
+
+    fn serving(statuses: &[u16], location: Option<String>, body: Vec<u8>) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let requests = Arc::new(Mutex::new(Vec::new()));
@@ -93,7 +107,7 @@ impl HttpStub {
                 let Ok((stream, _)) = listener.accept() else {
                     return;
                 };
-                serve(stream, status, &seen);
+                serve(stream, status, location.as_deref(), &body, &seen);
             }
         });
         HttpStub { port, requests }
@@ -111,7 +125,13 @@ impl HttpStub {
 /// Read one request, record it, answer it with `status` and close the
 /// connection. The request is recorded before the answer goes out, so a
 /// client that has its answer can already see its request in the list.
-fn serve(stream: TcpStream, status: u16, seen: &Mutex<Vec<Request>>) -> Option<()> {
+fn serve(
+    stream: TcpStream,
+    status: u16,
+    location: Option<&str>,
+    answer: &[u8],
+    seen: &Mutex<Vec<Request>>,
+) -> Option<()> {
     stream
         .set_read_timeout(Some(Duration::from_secs(10)))
         .ok()?;
@@ -174,15 +194,21 @@ fn serve(stream: TcpStream, status: u16, seen: &Mutex<Vec<Request>>) -> Option<(
     // The storage SDKs read these headers from every answer; other clients
     // ignore them.
     let reason = if status < 400 { "OK" } else { "Error" };
+    let location = location.map_or_else(String::new, |to| format!("Location: {to}\r\n"));
     let response = format!(
         "HTTP/1.1 {status} {reason}\r\n\
+         {location}\
          ETag: \"0x1\"\r\n\
          Last-Modified: Wed, 04 Mar 2026 12:00:00 GMT\r\n\
          Date: Wed, 04 Mar 2026 12:00:00 GMT\r\n\
          x-ms-request-id: 00000000-0000-0000-0000-000000000001\r\n\
          x-ms-request-server-encrypted: true\r\n\
-         Content-Length: 0\r\n\
-         Connection: close\r\n\r\n"
+         Content-Length: {}\r\n\
+         Connection: close\r\n\r\n",
+        answer.len()
     );
-    reader.get_mut().write_all(response.as_bytes()).ok()
+    reader.get_mut().write_all(response.as_bytes()).ok()?;
+    // A client that has read all it wants may close before the end.
+    let _ = reader.get_mut().write_all(answer);
+    Some(())
 }

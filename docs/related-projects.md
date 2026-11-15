@@ -10,6 +10,11 @@ formats. octo-pod carries a feed across a site boundary unchanged, under an
 identity, a release gate and an audit record. This page says where they
 overlap, what each publishes, and what to configure when they run together.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/three-projects-dark.svg">
+  <img src="img/three-projects.svg" width="100%" alt="A sensor that speaks its own binary format on the left and a Zenoh data fabric on the right, with three projects between them. Open Billie is an endpoint the sensor sends to: it decodes one sensor's tracks and publishes them as Cursor-on-Target, ASTERIX CAT062 or SAPIENT. octo-pod is a boundary appliance the sensor sends to: it carries the bytes unchanged under a certificate, a release gate and an audit record. first-bite listens on a tap beside the link, without the sensor knowing, decodes every message and publishes every field as the source defined it.">
+</picture>
+
 Statements about the other two name the file in their repository that they
 come from: Open Billie as of platform version 0.3.0, octo-pod as of 0.6.0.
 

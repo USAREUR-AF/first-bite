@@ -1,68 +1,35 @@
 # Publishing to a goat data fabric
 
-A goat network carries data on [Zenoh](https://zenoh.io). first-bite joins it
-as a shim: a service that keeps a non-Zenoh protocol on one side (the binary
-messages it captures) and publishes on the fabric on the other. This page says
-where its records go on the fabric and what a goatnet operator configures.
+goat support is optional and off by default. first-bite is a general tool: the
+default build, the capture path, the decoder and the record format do not
+depend on goat. A `mind` built with the cargo feature `goat` can also join a
+goat network ("goatnet") and publish decoded records on its Zenoh fabric the
+way goat expects.
 
-The conventions referred to are in goatcore's
-[`docs/design/zenoh-data-fabric.md`](https://github.com/USAREUR-AF/goatcore/blob/main/docs/design/zenoh-data-fabric.md).
-
-## What is published where
-
-| Data | Key expression | goat prefix class | Status |
-|---|---|---|---|
-| one decoded record per packet, as JSON | `telemetry/<system>/<location>/<interface>/<message>` | `telemetry/`: wire-faithful surfaces for non-canonical formats; situational QoS | built |
-| Cursor-on-Target events, when the transform is on | `telemetry/cot/<location>/<uid>` | same | designed, not built: the transform publishes on ZeroMQ only, and the key template has no placeholder for the event's `uid` |
-
-`<system>`, `<location>` come from `DATA_SOURCE_SYSTEM_TYPE` and
-`DATA_SOURCE_GEO_LOCATION`; `<interface>` and `<message>` from the dictionary.
-Each part is lower-cased and every character outside `a-z 0-9 _ -` becomes `_`,
-so a value cannot add a level or a wildcard to the key. The template is the
-`key_template` of the subscriber; the default is the first row above.
-
-Records are the fabric's `telemetry/` class, not `data/`: they are faithful to
-the source message set, not to a canonical goat schema. Mapping a message set
-onto a canonical `data/` schema is a separate subscriber on the fabric.
-
-## Configuration
-
-Build with the `zenoh` feature (`cargo build --release -p mind --features
-zenoh`); the Zenoh crate is pinned to the version goat pins, `=1.9.0`. Then add
-a subscriber:
-
-```yaml
-subscribers:
-  - name: fabric
-    subscriber_type: "zenoh"
-    zmq_url: "127.0.0.1"
-    zmq_port: 12000
-    topics: ["*"]
-    zenoh_config: /etc/first-bite/zenoh.json5
-    # key_template: "telemetry/{system}/{location}/{interface}/{message}"
-```
-
-`zenoh_config` is a standard Zenoh configuration file. Everything about joining
-the goatnet lives there and nowhere else: the router endpoints, client mode,
-and the TLS identity. A goat router admits a publisher by the certificate it
-presents, so the file names the leaf certificate and key the goatnet's offline
-CA issued for this peer, and the router's access-control list must grant that
-certificate's subject `put` on the key prefix above.
-
-## Declaring the schema
-
-goat asks every publisher of a data-carrying topic to declare what it
-publishes. `bite schema <dictionary>` prints a JSON Schema (draft 2020-12) per
-message, with bounded integers, labels as enumerations, and units and bit
-ranges as `x-unit` and `x-bits`. That schema describes the typed form of a
-record's `message`; the published form renders every value as a string.
-
-| Piece | Status |
+| Page | For |
 |---|---|
-| Zenoh sink with templated, sanitised keys | built |
-| JSON Schema per message from a dictionary | built |
-| publishing the typed form so the schema validates the record as sent | designed, not built |
-| publishing the schemas at `attest/schema/<topic-pattern>` and the announcement at `services/shims/<format>/<instance>/announce` | designed, not built |
+| [goat/joining.md](goat/joining.md) | an operator with a goatnet and an onboarding archive: build, configure, check, start, confirm, troubleshoot |
+| [goat/contract.md](goat/contract.md) | what goat requires of a publisher, the goat file that states each requirement, and what the public goat repositories leave undefined |
+
+## What exists
+
+| Piece | Where | Status |
+|---|---|---|
+| Generic Zenoh sink with templated, sanitised keys (any fabric) | `subscriber_type: zenoh`, feature `zenoh` | built |
+| JSON Schema per message from a dictionary | `bite schema`, `bite::jsonschema` | built |
+| goat configuration file and `mind goat init` from an onboarding archive | `flow/src/goat/config.rs`, `bundle.rs` | built |
+| Offline checks of configuration, key, certificate name, dates and root | `mind goat check`, `flow/src/goat/cert.rs` | built |
+| Zenoh client configuration generated for a goat router (client mode, mutual TLS, session identifier pinned to the slot UUID) | `mind goat config`, `flow/src/goat/session.rs` | built |
+| Records on `<prefix>/telemetry/<format>/<site>/<interface>/<message>` | `subscriber_type: goat`, `flow/src/goat/sink.rs` | built |
+| Schema declaration per record key at `attest/schema/<record key>` | same | built |
+| Service announcement and 30 s heartbeat under `<prefix>/services/shims/…` and `<prefix>/health/shims/…` | same | built |
+| Delivery probe for the router's silent denial | `mind goat probe`, and the sink at startup | built |
+| Reading the fabric back | `mind goat watch` | built |
+| The whole path against a stock `eclipse/zenoh:1.9.0` router configured as goat configures one | `tools/goat-selftest.sh` | measured |
+| A run against a real goatnet | | not built |
+| Per-sample time-quality attachment and Zenoh source info | | not built |
+| Publishing under the never-persisted `volatile/` class | | not built |
+| Mapping a message set onto goat's canonical `data/` schemas | a separate consumer on the fabric | not built |
 
 ## Beside Open Billie and octo-pod
 
@@ -81,4 +48,4 @@ A deployment that cannot hold a Zenoh session in `mind` can use goat's
 `rest-pub-bridge` sidecar, which accepts `PUT /<key expression>` and republishes
 with the bridge's mutual-TLS identity. first-bite's REST sink posts every record
 to one configured path, so through the bridge all records land on one key; the
-native sink is the one that gives a key per interface and message.
+`goat` sink is the one that gives a key per interface and message.

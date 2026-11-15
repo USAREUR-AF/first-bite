@@ -10,7 +10,9 @@
 name: leak-gate
 
 on:
-  pull_request_target:
+  # The trigger is what gives a fork's pull request the needle list. Nothing
+  # from the pull request is executed: see the two checkouts below.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]

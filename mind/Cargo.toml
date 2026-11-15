@@ -12,6 +12,8 @@ default = ["azure", "aws"]
 azure = ["flow/azure"]
 aws = ["flow/aws"]
 zenoh = ["flow/zenoh"]
+# Joining a goat data fabric; implies zenoh. See docs/goat/joining.md.
+goat = ["zenoh", "flow/goat"]
 
 [dependencies]
 base64.workspace = true

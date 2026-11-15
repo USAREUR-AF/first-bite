@@ -1,0 +1,12 @@
+# gitleaks configuration: the default rules, minus the two values in this
+# tree that are published development credentials and open nothing.
+#
+#   gitleaks dir . --redact
+title = "first-bite"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "The storage emulator's documented development account key, the same for every Azurite installation."
+regexes = ['''Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==''']

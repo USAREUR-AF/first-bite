@@ -1,0 +1,51 @@
+# Joining a goat data fabric. Optional: read only by a `mind` built with the
+# cargo feature `goat`, and only when a subscriber of type `goat` is configured
+# or a `mind goat` command runs. Named by GOAT_CONFIG_PATH.
+#
+# `mind goat init --bundle <dir>` writes this file from a goatnet's onboarding
+# archive; `mind goat check` checks it. docs/goat/joining.md is the procedure.
+goatnet:
+  # A label for messages; no key or certificate depends on it.
+  name: zagros
+  # Router endpoint(s), from the goatnet's administrator. Always tls/.
+  endpoints: ["tls/zenoh.goat.example:7447"]
+  # Check the router's certificate against the endpoint's host name. Set to
+  # false only when the router is reached by a name its certificate lacks.
+  verify_name_on_connect: true
+
+identity:
+  # References to the three files of the onboarding archive. A relative path
+  # is taken from the directory of this file. The key must be readable by its
+  # owner only (chmod 600).
+  certificate: e7a9c75b532e3d434bb09fefd3ce1ec7-cert.pem
+  private_key: e7a9c75b532e3d434bb09fefd3ce1ec7-key.pem
+  ca_certificate: ca-root.pem
+  # Exactly one of `slot` and `org`.
+  # On a slot-pool goatnet: the slot UUID. It is the certificate's common
+  # name and the first chunk of every key. Keep the quotes.
+  slot: "e7a9c75b532e3d434bb09fefd3ce1ec7"
+  # On a per-org goatnet: the org prefix; the certificate's common name is the
+  # prefix followed by cn_suffix.
+  # org: example-vendor
+  # cn_suffix: "-trial-peer"
+  # The slot's human name. Shown by `mind goat check`; never part of a key.
+  alias: alpha-operator
+  # This host's name on the goatnet's mesh. Checked against goat's peer-name
+  # form; never transmitted.
+  # mesh_peer_name: peer-maintainer-zagros-2026-06-10-tap1
+  # Use the slot UUID as the Zenoh session identifier, as goat's own
+  # publishers do. Two processes with one certificate cannot both do this.
+  pin_session_id: true
+
+publish:
+  # The message set: the <format> chunk of telemetry/<format>/<site>/...
+  format: weather-station
+  # Where the data source is: the <site> chunk.
+  site: hilltop-7
+  # This process among others publishing the same format.
+  instance: tap-1
+  # Appends /v<N> to record and schema keys.
+  # version: 1
+  health_interval_seconds: 30
+  # At startup, put one health sample and confirm the router delivers it.
+  self_check: true

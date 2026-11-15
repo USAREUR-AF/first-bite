@@ -1,6 +1,6 @@
 //! POST each record as JSON to an HTTP endpoint.
 
-use super::{required, Sink, SinkError};
+use super::{quoted, read_body, required, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::error::Problem;
 use async_trait::async_trait;
@@ -15,7 +15,10 @@ const FIRST_RETRY_WAIT: Duration = Duration::from_secs(2);
 
 pub struct RestSink {
     client: reqwest::Client,
-    url: String,
+    url: reqwest::Url,
+    /// The endpoint as log lines name it: no user, password, query or
+    /// fragment, any of which can hold a credential.
+    shown: String,
     first_retry_wait: Duration,
 }
 
@@ -31,16 +34,30 @@ impl RestSink {
         } else {
             "http://"
         };
+        // Records go to the endpoint that was configured and nowhere else:
+        // a redirect is an error, not an instruction to post them again.
         let client = reqwest::Client::builder()
             .timeout(REQUEST_TIMEOUT)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| Problem::InvalidValue {
                 key: "endpoint_url",
                 reason: format!("cannot build the HTTP client: {e}"),
             })?;
+        // The parser's error does not quote the text, which may hold a
+        // password.
+        let url = reqwest::Url::parse(&format!("{scheme}{host}:{port}{path}")).map_err(|e| {
+            Problem::InvalidValue {
+                key: "endpoint_url",
+                reason: format!(
+                    "endpoint_url, endpoint_port and endpoint_path do not make a URL: {e}"
+                ),
+            }
+        })?;
         Ok(RestSink {
             client,
-            url: format!("{scheme}{host}:{port}{path}"),
+            shown: shown(&url),
+            url,
             first_retry_wait: FIRST_RETRY_WAIT,
         })
     }
@@ -48,7 +65,7 @@ impl RestSink {
     async fn post(&self, body: &str) -> Result<(), SinkError> {
         let response = self
             .client
-            .post(&self.url)
+            .post(self.url.clone())
             .header("Content-Type", "application/json")
             .body(body.to_string())
             .send()
@@ -57,9 +74,19 @@ impl RestSink {
         if status.is_success() {
             return Ok(());
         }
-        let body = response.text().await.unwrap_or_default();
+        let body = quoted(&read_body(response).await);
         Err(SinkError::HttpStatus { status, body })
     }
+}
+
+/// `url` without user, password, query and fragment.
+fn shown(url: &reqwest::Url) -> String {
+    let mut shown = url.clone();
+    let _ = shown.set_username("");
+    let _ = shown.set_password(None);
+    shown.set_query(None);
+    shown.set_fragment(None);
+    shown.to_string()
 }
 
 /// Whether sending again could succeed: the request never got an answer, or
@@ -83,14 +110,14 @@ impl Sink for RestSink {
         loop {
             match self.post(&body).await {
                 Ok(()) => {
-                    debug!("posted a record to {}", self.url);
+                    debug!("posted a record to {}", self.shown);
                     return Ok(());
                 }
                 Err(e) if retries < MAX_RETRIES && worth_retrying(&e) => {
                     retries += 1;
                     warn!(
                         "{}: {e}; retry {retries} of {MAX_RETRIES} in {wait:?}",
-                        self.url
+                        self.shown
                     );
                     tokio::time::sleep(wait).await;
                     wait *= 2;
@@ -117,12 +144,13 @@ mod tests {
 
     #[test]
     fn url_is_built_from_host_port_and_path() {
-        assert_eq!(sink(5001).url, "http://127.0.0.1:5001/records");
+        assert_eq!(sink(5001).url.as_str(), "http://127.0.0.1:5001/records");
         let https = RestSink::from_config(&subscriber(
             "    subscriber_type: rest\n    endpoint_url: \"https://collector.example\"\n    endpoint_port: 443\n",
         ))
         .unwrap();
-        assert_eq!(https.url, "https://collector.example:443");
+        // The URL type writes the root path and leaves out a default port.
+        assert_eq!(https.url.as_str(), "https://collector.example/");
     }
 
     #[tokio::test]
@@ -164,6 +192,70 @@ mod tests {
         let error = sink(stub.port()).send("t", "{}").await.unwrap_err();
         assert!(matches!(error, SinkError::HttpStatus { .. }), "{error}");
         assert_eq!(stub.requests().len(), 4);
+    }
+
+    #[test]
+    fn credentials_in_the_url_stay_out_of_log_lines_and_errors() {
+        let sink = RestSink::from_config(&subscriber(
+            "    subscriber_type: rest\n    endpoint_url: \"https://ingest:hunter2@collector.example.org\"\n    endpoint_port: 8443\n    endpoint_path: \"/records?token=hunter3#hunter4\"\n",
+        ))
+        .unwrap();
+        assert_eq!(sink.shown, "https://collector.example.org:8443/records");
+        assert_eq!(
+            sink.url.as_str(),
+            "https://ingest:hunter2@collector.example.org:8443/records?token=hunter3#hunter4"
+        );
+
+        let refused = RestSink::from_config(&subscriber(
+            "    subscriber_type: rest\n    endpoint_url: \"https://ingest:hunter2@collector.example.org\"\n    endpoint_port: notaport\n",
+        ));
+        let reason = match refused {
+            Ok(_) => panic!("built a sink for a URL that does not parse"),
+            Err(problem) => problem.to_string(),
+        };
+        assert!(reason.starts_with("`endpoint_url`: "), "{reason}");
+        assert!(!reason.contains("hunter2"), "{reason}");
+    }
+
+    #[tokio::test]
+    async fn a_failed_connection_is_reported_without_the_url() {
+        let port = crate::test_support::free_port();
+        let mut sink = RestSink::from_config(&subscriber(&format!(
+            "    subscriber_type: rest\n    endpoint_url: \"http://ingest:hunter2@127.0.0.1\"\n    endpoint_port: {port}\n    endpoint_path: \"/records?token=hunter3\"\n"
+        )))
+        .unwrap();
+        sink.first_retry_wait = Duration::from_millis(1);
+        let error = sink.send("t", "{}").await.unwrap_err().to_string();
+        assert!(error.starts_with("HTTP request failed: "), "{error}");
+        assert!(!error.contains("hunter"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn a_redirect_is_an_error_and_is_not_followed() {
+        let elsewhere = HttpStub::answering(&[200]);
+        let stub = HttpStub::redirecting(
+            &[307],
+            &format!("http://127.0.0.1:{}/elsewhere", elsewhere.port()),
+        );
+        let error = sink(stub.port()).send("t", "{}").await.unwrap_err();
+        assert!(
+            matches!(error, SinkError::HttpStatus { status, .. } if status.as_u16() == 307),
+            "{error}"
+        );
+        assert_eq!(stub.requests().len(), 1);
+        assert!(
+            elsewhere.requests().is_empty(),
+            "the record was posted to the redirect target"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_long_error_answer_is_read_and_quoted_in_part() {
+        let stub = HttpStub::answering_with_body(422, vec![b'x'; 3 * 1024 * 1024]);
+        let error = sink(stub.port()).send("t", "{}").await.unwrap_err();
+        let text = error.to_string();
+        assert!(text.len() < 1024, "{} characters", text.len());
+        assert!(text.ends_with("(1048576 bytes read)"), "{text}");
     }
 
     #[tokio::test]

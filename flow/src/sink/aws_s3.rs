@@ -2,9 +2,10 @@
 //! that speaks the S3 API.
 
 use super::object_path::{time_then_topic, topic_then_time};
-use super::{required, Sink, SinkError};
+use super::{required, required_secret, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::error::Problem;
+use crate::secret::scrub;
 use async_trait::async_trait;
 use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
 use aws_sdk_s3::error::{DisplayErrorContext, ProvideErrorMetadata, SdkError};
@@ -21,12 +22,15 @@ pub struct S3Sink {
     client: Client,
     bucket: String,
     region: String,
+    /// The access key id and the secret, kept to take them out of error text.
+    credentials: [String; 2],
 }
 
 impl S3Sink {
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
-        let access_key_id = required(&config.aws_access_key_id, "aws_access_key_id")?;
-        let secret_access_key = required(&config.aws_secret_access_key, "aws_secret_access_key")?;
+        let access_key_id = required_secret(&config.aws_access_key_id, "aws_access_key_id")?;
+        let secret_access_key =
+            required_secret(&config.aws_secret_access_key, "aws_secret_access_key")?;
         let region = required(&config.aws_default_region, "aws_default_region")?;
         let endpoint = required(&config.aws_s3_endpoint, "aws_s3_endpoint")?;
         let bucket = required(&config.aws_bucket_name, "aws_bucket_name")?;
@@ -47,17 +51,24 @@ impl S3Sink {
             client: Client::from_conf(sdk_config),
             bucket: bucket.to_string(),
             region: region.to_string(),
+            credentials: [
+                access_key_id.trim().to_string(),
+                secret_access_key.trim().to_string(),
+            ],
         })
     }
-}
 
-/// The SDK's error with its whole cause chain; its own `Display` says only
-/// which stage failed.
-fn s3_error<E>(error: SdkError<E>) -> SinkError
-where
-    E: std::error::Error + 'static,
-{
-    SinkError::S3(DisplayErrorContext(&error).to_string())
+    /// The SDK's error with its whole cause chain; its own `Display` says
+    /// only which stage failed. A store's answer can quote the access key id
+    /// it was sent, so both credentials are taken out of the text.
+    fn error<E>(&self, error: SdkError<E>) -> SinkError
+    where
+        E: std::error::Error + 'static,
+    {
+        let text = DisplayErrorContext(&error).to_string();
+        let [id, secret] = &self.credentials;
+        SinkError::S3(scrub(&text, &[id, secret]))
+    }
 }
 
 #[async_trait]
@@ -70,7 +81,7 @@ impl Sink for S3Sink {
                 return Ok(());
             }
             Err(SdkError::ServiceError(e)) if e.err().code() == Some("NotFound") => {}
-            Err(e) => return Err(s3_error(e)),
+            Err(e) => return Err(self.error(e)),
         }
         let mut create = self.client.create_bucket().bucket(&self.bucket);
         if self.region != REGION_WITHOUT_CONSTRAINT {
@@ -80,7 +91,7 @@ impl Sink for S3Sink {
                     .build(),
             );
         }
-        create.send().await.map_err(s3_error)?;
+        create.send().await.map_err(|e| self.error(e))?;
         info!("created bucket {}", self.bucket);
         Ok(())
     }
@@ -98,7 +109,7 @@ impl Sink for S3Sink {
                 .body(ByteStream::from(record.as_bytes().to_vec()))
                 .send()
                 .await
-                .map_err(s3_error)?;
+                .map_err(|e| self.error(e))?;
             debug!("stored {key} in bucket {}", self.bucket);
         }
         Ok(())
@@ -160,6 +171,23 @@ mod tests {
                 .header("authorization")
                 .is_some_and(|value| value.contains("Credential=exampleaccesskey/")));
         }
+    }
+
+    #[tokio::test]
+    async fn an_answer_that_quotes_the_access_key_id_is_reported_without_it() {
+        let answer =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>InvalidAccessKeyId</Code>\
+                      <Message>The access key id exampleaccesskey does not exist</Message>\
+                      <AWSAccessKeyId>exampleaccesskey</AWSAccessKeyId></Error>";
+        let stub = HttpStub::answering_with_body(403, answer.as_bytes().to_vec());
+        let error = sink(stub.port(), "us-east-1")
+            .send("WX/Heartbeat", "{}")
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("InvalidAccessKeyId"), "{error}");
+        assert!(!error.contains("exampleaccesskey"), "{error}");
+        assert!(!error.contains("examplesecretkey"), "{error}");
     }
 
     #[tokio::test]

@@ -13,8 +13,8 @@
   <div class="lockup"><img src="../../icon/first-bite-dark.svg" alt=""><div><b>first-bite</b><span>the first bite of every byte,<br>before it reaches its addressee</span></div></div>
   <p class="kicker">Technical brief</p>
   <h1>Binary messages off the wire, decoded and published, without touching the link</h1>
-  <p class="lede">first-bite listens on a network tap, decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to anyone who subscribes. The systems exchanging the messages are not delayed, blocked or altered.</p>
-  <figure><img src="../img/how-it-works.svg" alt="A tap copies the link; first-bite decodes the copy and publishes it."></figure>
+  <p class="lede">first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to anyone who subscribes. It never transmits on the link it listens to.</p>
+  <figure><img src="../img/how-it-works.svg" alt="The link is copied by a tap or a mirror port; first-bite decodes the copy and publishes it."></figure>
   <div class="numbers">
     <div><b>340,000 / s</b><span>packets through the whole pipeline on one core</span></div>
     <div><b>0.3%</b><span>of one core for a link carrying 1,000 messages per second</span></div>
@@ -43,7 +43,7 @@
       <h2>What a tap and one decoder change</h2>
       <ul>
         <li><strong>The native systems are not touched.</strong> No new peer, no configuration change, no added load. The copy is taken from the link.</li>
-        <li><strong>The layout is written once, as data.</strong> A dictionary of JSON files holds every bit range and label, with test vectors that prove it.</li>
+        <li><strong>The interface document becomes maintainable data.</strong> A dictionary of JSON files holds every bit range and label, versioned and tested, so developers read and maintain it like code (page 5).</li>
         <li><strong>Consumers read JSON from a socket</strong>, or from storage, an HTTP endpoint or a data fabric. Adding the tenth consumer costs the native systems what adding the first did: nothing.</li>
       </ul>
       <p>first-bite was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it.</p>
@@ -55,18 +55,18 @@
 <!-- 3 -->
 <section class="page">
   <p class="kicker">2. How it works</p>
-  <h1>Tap, decode, publish: it listens, and the link cannot tell</h1>
-  <p class="lede">first-bite is one process that reads frames from a capture interface, decodes them and publishes records on a different interface. Nothing it does can reach the link it listens to.</p>
+  <h1>Copy, decode, publish: it listens and never transmits</h1>
+  <p class="lede">first-bite reads a copy of the traffic, decodes it and publishes records on a different interface. What the copy costs the link depends on where it is taken.</p>
   <div class="cols c3">
-    <div class="card tint"><h2>It only reads</h2><p>The capture interface is opened for reading. first-bite never sends on it, and the interface carries no address and answers no protocol.</p></div>
-    <div class="card tint"><h2>There is no way back</h2><p>On a passive tap there is no path from the monitor ports to the link. Nothing downstream of the tap can delay, block or alter a frame.</p></div>
-    <div class="card tint"><h2>It can stop</h2><p>If first-bite stalls, crashes or is switched off, the link carries on exactly as before. The native systems cannot tell it was there.</p></div>
+    <div class="card tint"><h2>Always: it only reads</h2><p>The capture interface is opened for reading and first-bite never sends on it. If it stalls, crashes or is switched off, the native systems carry on as before.</p></div>
+    <div class="card tint"><h2>On a passive tap: no way back</h2><p>There is no path from the monitor ports to the link, so nothing downstream of the tap can delay, block or alter a frame, and nothing is lost at the tap.</p></div>
+    <div class="card tint"><h2>On a mirror port: the switch copies</h2><p>Forwarding is not affected, but the switch drops mirrored frames first when busy. A remote mirror also loads the network that carries its tunnel.</p></div>
   </div>
-  <figure class="gap"><img src="../img/tap-placement.svg" alt="Breakout tap, aggregating tap and mirror port compared."><figcaption><b>Three ways to take the copy.</b> A breakout tap gives each direction its own monitor port; first-bite captures on both interfaces at once and merges the frames in arrival order.</figcaption></figure>
+  <figure class="gap"><img src="../img/tap-placement.svg" alt="Breakout tap, aggregating tap, mirror port and remote mirror compared."><figcaption><b>Four ways to take the copy.</b> A breakout tap gives each direction its own monitor port. GRE and ERSPAN tunnels are unwrapped when seen; a VXLAN mirror needs its port named.</figcaption></figure>
   <div class="cols c3">
-    <div class="step"><i>1</i><p><strong>Capture.</strong> libpcap on one or more interfaces, promiscuous, with an optional kernel filter such as <code>udp port 40100</code>. A capture file or a UDP socket can stand in for the interface.</p></div>
-    <div class="step"><i>2</i><p><strong>Decode.</strong> Find the interface by port and the message by its type field, then extract every field the dictionary names. A packet on a port no interface claims is still published, undecoded.</p></div>
-    <div class="step"><i>3</i><p><strong>Publish.</strong> One JSON record per packet on a ZeroMQ PUB socket, under the topic <code>interface/message</code>. The record also carries the timestamp, addresses, ports and the raw bytes.</p></div>
+    <div class="step"><i>1</i><p><strong>Capture.</strong> libpcap on one or more interfaces, with an optional kernel filter. A tunnelled mirror is unwrapped first.</p></div>
+    <div class="step"><i>2</i><p><strong>Decode.</strong> Find the interface by port and the message by its type field, then extract every field the dictionary names.</p></div>
+    <div class="step"><i>3</i><p><strong>Publish.</strong> One JSON record per packet on a ZeroMQ PUB socket, under the topic <code>interface/message</code>.</p></div>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
@@ -116,37 +116,10 @@
 <!-- 5 -->
 <section class="page">
   <p class="kicker">4. The dictionary</p>
-  <h1>The message set is data, with its own tests</h1>
-  <p class="lede">Nothing about a message set is compiled in. A dictionary is a directory of JSON files, loaded once at start, and it carries the test vectors that prove it.</p>
-  <div class="cols c2">
-    <div>
-      <h2>A directory of JSON files</h2>
-<pre><code>weather-station/
-  dictionary.json          name, version
-  WX/
-    metadata.json          port, message type
-    messages/
-      Heartbeat.json
-      Observation.json
-      Position.json
-  vectors/
-    observation.json       payload, expected values</code></pre>
-    </div>
-    <div>
-      <h2>A test vector</h2>
-<pre><code>{
-  "interface": "WX",
-  "payload_hex": "01000c4b5837000001518060",
-  "expect": {
-    "message_type": "Heartbeat",
-    "fields": {"station_id": "KX7",
-               "uptime": "86400",
-               "mode": "Calibrating"}
-  }
-}</code></pre>
-    </div>
-  </div>
-  <h2>A message file: each field is a bit range, a type and its labels</h2>
+  <h1>An interface document becomes data that developers can maintain</h1>
+  <p class="lede">An interface control document is hundreds of pages of tables that live in a PDF and in a few people's heads. A dictionary is the same interface as versioned, reviewable, testable data, and every tool runs from that one source.</p>
+  <figure><img src="../img/icd-to-dictionary.svg" alt="An interface document is transcribed into a dictionary, from which the decoder, bite check, a JSON Schema and the browser bit view all run."></figure>
+  <h2>One JSON file per message: each field is a bit range, a type and its labels</h2>
 <pre><code>{
   "description": "Sent every ten seconds while the station is powered.",
   "fields": {
@@ -157,28 +130,30 @@
 }</code></pre>
   <div class="cols c2 gap">
     <div>
-      <h2>What a field can be</h2>
-      <p><code>uint</code> and <code>int</code> of 1 to 64 bits at any alignment, <code>float</code>, <code>bool</code>, <code>bytes</code> and <code>ascii</code>, with a scale and offset, big or little byte order, and <code>msb0</code> or <code>lsb0</code> bit numbering. A value can carry labels, and a message is identified by a payload field or by a frame identifier.</p>
-      <h2>Where the vectors come from</h2>
-      <p>Vectors are computed independently of the decoder, by hand or with a few lines of Python, never by pasting the decoder's output. <code>bite check</code> runs every vector each time, and the installer runs the same check and installs nothing if it fails.</p>
-      <h2>A dictionary you may not publish</h2>
-      <p>Point <code>BITE_DICT_PATH</code> at any directory. The public decoder tests a private dictionary without its contents entering the repository.</p>
+      <h2>What a developer gets</h2>
+      <ul>
+        <li><strong>Read and reviewed like code.</strong> A revision of the document is a diff of a few files in version control.</li>
+        <li><strong>Proved by test vectors.</strong> Each is a payload and what it must decode to, computed independently of the decoder.</li>
+        <li><strong>A schema for consumers.</strong> <code>bite schema</code> generates a JSON Schema per message, with bounds, labels and units.</li>
+      </ul>
+      <h2>Status</h2>
+      <p><span class="st b">Built:</span> the format, <code>bite check</code>, test vectors, JSON Schema export, the bit view in a browser. <span class="st d">In progress:</span> a documented method for going from a document to a dictionary, with tooling for the error-prone steps and a worked example.</p>
     </div>
     <div>
       <h2>What <code>bite check</code> catches</h2>
       <table>
         <tr><td class="st n">error</td><td>a file that is not valid JSON or lacks a required key</td></tr>
         <tr><td class="st n">error</td><td>an empty or inverted bit range; an integer wider than 64 bits; a float that is not 32 or 64 bits</td></tr>
-        <tr><td class="st n">error</td><td>a text or little-endian field that is not byte-aligned</td></tr>
-        <tr><td class="st n">error</td><td>two interfaces claiming one port</td></tr>
+        <tr><td class="st n">error</td><td>a text or little-endian field that is not byte-aligned; two interfaces claiming one port</td></tr>
         <tr><td class="st n">failure</td><td>a vector that does not decode to what it expects</td></tr>
         <tr><td class="st d">warning</td><td>overlapping fields; a message no type value names; a type value with no message file</td></tr>
       </table>
+<pre><code>$ bite check dictionaries/weather-station --strict
+1 interfaces, 3 messages, 0 errors, 0 warnings,
+5/5 vectors passed</code></pre>
       <p>Each finding names the file and the field.</p>
     </div>
   </div>
-<pre><code>$ bite check dictionaries/weather-station --strict
-1 interfaces, 3 messages, 0 errors, 0 warnings, 5/5 vectors passed</code></pre>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
 
@@ -248,7 +223,7 @@
 <section class="page">
   <p class="kicker">7. Deployment</p>
   <h1>One archive beside the link, and nothing to install first</h1>
-  <p class="lede">A deployment is a tap, a small host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary carries libpcap and ZeroMQ inside it, so the target needs no package installed.</p>
+  <p class="lede">A deployment is a tap or a mirror session, a small host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary carries libpcap and ZeroMQ inside it, so the target needs no package installed.</p>
   <figure><img src="../img/platforms.svg" alt="Where first-bite runs: the standard and self-contained Linux builds, other platforms, the container, the decoder library and the offline build."></figure>
   <div class="cols c2">
     <div>
@@ -293,7 +268,7 @@ $ sudo deployment/install.sh \
   <div class="cols c2">
     <div class="card">
       <h2>It listens only</h2>
-      <p>The capture path opens interfaces for reading and has no code that sends on them. On a passive tap the monitor ports have no path back to the link, whatever the software does.</p>
+      <p>The capture path opens interfaces for reading and has no code that sends on them. On a passive tap the monitor ports have no path back to the link, whatever the software does; a mirror port relies on the switch.</p>
       <p>Check: <code>mind/src/source.rs</code>; <code>docs/tap.md</code>.</p>
     </div>
     <div class="card">
@@ -343,8 +318,8 @@ $ gh attestation verify first-bite-&lt;version&gt;-&lt;platform&gt;.tar.gz --rep
       <tr><td>Standard and self-contained Linux builds on x86-64; installer; container image</td><td class="st b">built, measured</td></tr>
       <tr><td>Decoder as a WebAssembly module for browsers</td><td class="st b">built</td></tr>
       <tr><td>Sinks: S3, Azure Blob, HTTP, file, Zenoh; Cursor-on-Target</td><td class="st b">built</td></tr>
-      <tr><td>VLAN-tagged frames (802.1Q, QinQ)</td><td class="st b">built</td></tr>
-      <tr><td>systemd unit (verified; not yet run under systemd)</td><td class="st b">built</td></tr>
+      <tr><td>VLAN tags skipped; GRE, ERSPAN and VXLAN mirrors unwrapped (not yet run against a switch)</td><td class="st b">built</td></tr>
+      <tr><td>systemd unit (not yet run under systemd)</td><td class="st b">built</td></tr>
     </table>
     <table>
       <tr><th>Not yet</th><th>Status</th></tr>
@@ -372,7 +347,7 @@ cargo run -p mind -- \
         <h2>To put it on a link</h2>
         <ol>
           <li>Write the dictionary for your interface, with vectors.</li>
-          <li>Fit a tap; prepare two capture interfaces.</li>
+          <li>Fit a tap or set up a mirror session.</li>
           <li>Install the archive; watch the loss counters.</li>
           <li>Point a sink at where the data is needed.</li>
         </ol>

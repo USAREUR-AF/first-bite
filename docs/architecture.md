@@ -13,7 +13,7 @@ or a file.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/how-it-works-dark.svg">
-  <img src="img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary and publishes one JSON record per message. Nothing is sent back to the link.">
+  <img src="img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
 </picture>
 
 ## Crates
@@ -81,6 +81,7 @@ a cargo feature of `flow`, forwarded by `mind`.
 | HTTP POST | `rest` | always | built |
 | local file | `local` | always | built |
 | Zenoh | `zenoh` | `zenoh` | built |
+| Zenoh on a goat data fabric (optional, off by default; [goat/joining.md](goat/joining.md)) | `goat` | `goat` | built |
 
 A subpub is a subscriber, a transform and a publisher: it reads records, turns
 each into something else, and publishes the result on another ZeroMQ socket.

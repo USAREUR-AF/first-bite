@@ -14,12 +14,21 @@ Type=simple
 User=firstbite
 Group=firstbite
 EnvironmentFile=/etc/first-bite/first-bite.env
+# A credential can come from a file instead of the environment file: systemd
+# copies each file named here to a directory only this service can read, and a
+# subscriber reads it with a `_file` key (`cloud_access_key_file:
+# "blob-access-key"`; a relative path is looked up in that directory).
+#LoadCredential=blob-access-key:/etc/first-bite/credentials/blob-access-key
+#LoadCredential=s3-access-key-id:/etc/first-bite/credentials/s3-access-key-id
+#LoadCredential=s3-secret-access-key:/etc/first-bite/credentials/s3-secret-access-key
 ExecStart=/usr/local/bin/mind ${FIRST_BITE_INTERFACE} $FIRST_BITE_ARGS
 Restart=on-failure
 RestartSec=5
 
-# Relative paths (--output, a local-file sink) resolve here.
+# Relative paths (--output, a local-file sink) resolve here. The files are
+# records, so other users cannot list the directory.
 StateDirectory=first-bite
+StateDirectoryMode=0750
 WorkingDirectory=/var/lib/first-bite
 
 # mind writes its log lines to stderr and a banner to stdout. Both go to one
@@ -53,6 +62,7 @@ ProtectKernelLogs=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
 ProtectProc=invisible
+RemoveIPC=yes
 SystemCallArchitectures=native
 UMask=0027
 

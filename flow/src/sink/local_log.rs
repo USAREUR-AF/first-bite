@@ -1,10 +1,10 @@
 //! Append each record to a local file, one JSON document per line.
 
-use super::{required, Sink, SinkError};
+use super::{record_file_options, required, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::error::Problem;
 use async_trait::async_trait;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard, PoisonError};
@@ -27,10 +27,7 @@ impl LocalLogSink {
     }
 
     fn open(&self) -> std::io::Result<File> {
-        OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&self.path)
+        record_file_options().append(true).open(&self.path)
     }
 }
 
@@ -90,6 +87,22 @@ mod tests {
             std::fs::read_to_string(&path).unwrap(),
             "{\"n\":1}\n{\"n\":2}\n"
         );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn the_file_is_created_without_access_for_others() {
+        use std::os::unix::fs::PermissionsExt;
+        let path = temp_path("local-log-mode.log");
+        let sink = LocalLogSink::from_config(&subscriber(&format!(
+            "    subscriber_type: local\n    local_logfile: \"{}\"\n",
+            path.display()
+        )))
+        .unwrap();
+        sink.prepare().await.unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o007, 0, "mode {mode:o}");
         let _ = std::fs::remove_file(&path);
     }
 

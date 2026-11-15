@@ -197,8 +197,8 @@ class Fig:
 # 1. how-it-works
 # ---------------------------------------------------------------------------
 def how_it_works():
-    f = Fig("how-it-works", "A tap copies the link; first-bite decodes the copy and publishes it",
-            "Two native systems exchange binary messages on a link. A tap on the link sends a copy of every "
+    f = Fig("how-it-works", "The link is copied; first-bite decodes the copy and publishes it",
+            "Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every "
             "frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and "
             "publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a "
             "Zenoh data fabric, a Cursor-on-Target transform and any other subscriber read the records. "
@@ -206,13 +206,13 @@ def how_it_works():
     # native link
     f.box(40, 64, 150, 60, [("System A", 15, True, "t"), ("native system", 13, False, "q")])
     f.box(570, 64, 150, 60, [("System B", 15, True, "t"), ("native system", 13, False, "q")])
-    f.line([(190, 94), (236, 94)], "lnk")
-    f.line([(296, 94), (570, 94)], "lnk")
-    for x in (318, 350, 382, 480, 512, 544):
+    f.line([(190, 94), (204, 94)], "lnk")
+    f.line([(328, 94), (570, 94)], "lnk")
+    for x in (352, 384, 416, 484, 516, 548):
         f.rect(x - 9, 89, 18, 10, "fk", 2)
-    f.box(236, 78, 60, 32, [("tap", 13, True, "t")], rx=6)
-    f.text(431, 82, "binary messages", 13, False, "q", "middle")
-    f.text(431, 118, "not delayed, blocked or altered", 13, True, "g", "middle")
+    f.box(204, 78, 124, 32, [("tap or mirror port", 13, True, "t")], rx=6, pad=4)
+    f.text(450, 82, "binary messages", 13, False, "q", "middle")
+    f.text(450, 118, "not delayed, blocked or altered", 13, True, "g", "middle")
     # first-bite
     f.rect(40, 180, 680, 162, "bxa", 12)
     # the copy
@@ -247,53 +247,59 @@ def how_it_works():
 # ---------------------------------------------------------------------------
 def tap_placement():
     f = Fig("tap-placement", "Where the copy is taken decides what can be lost",
-            "Three ways to give first-bite a copy of a link. A breakout tap has one monitor port per direction, "
-            "so first-bite uses two capture interfaces and loses nothing at the tap. An aggregating tap merges "
-            "both directions into one port and loses nothing at the tap. A switch mirror port carries both "
-            "directions on one port, and the switch drops mirrored frames first when it is busy.", 414)
-    cols = [
-        ("Breakout tap", "tap", 2, [
-            [("Link: ", True, "q"), ("no effect", False, "t")],
-            [("Loss: ", True, "q"), ("none at the tap", False, "t")],
-            [("Ports: ", True, "q"), ("one per direction", False, "t")],
-            [("Use: ", True, "q"), ("if every frame matters", False, "t")]]),
-        ("Aggregating tap", "tap", 1, [
-            [("Link: ", True, "q"), ("no effect", False, "t")],
-            [("Loss: ", True, "q"), ("none at the tap", False, "t")],
-            [("Ports: ", True, "q"), ("one for both directions", False, "t")],
-            [("Use: ", True, "q"), ("if every frame matters", False, "t")]]),
-        ("Mirror port (SPAN)", "switch", 1, [
-            [("Link: ", True, "q"), ("no effect on forwarding", False, "t")],
-            [("Loss: ", True, "q"), ("when the switch is busy", False, "w")],
-            [("Ports: ", True, "q"), ("one for both directions", False, "t")],
-            [("Use: ", True, "q"), ("if no tap can be fitted", False, "t")]]),
+            "Four ways to give first-bite a copy of a link. A breakout tap has one monitor port per direction, "
+            "so first-bite uses two capture interfaces; the link is not affected and nothing is lost at the "
+            "tap; built and measured. An aggregating tap merges both directions into one port, with the same "
+            "effect and loss; built and measured. A switch mirror port (SPAN) does not affect forwarding, "
+            "carries both directions on one port, and the switch drops mirrored frames first when it is busy; "
+            "built. A remote mirror sends each frame in a GRE, ERSPAN or VXLAN tunnel across a routed network "
+            "to first-bite on any host the session can route to, which unwraps it; it behaves as a mirror "
+            "port, adds the tunnel's traffic to that network and can also lose what the path drops; built, "
+            "not yet run against a switch.", 438)
+    b, q, t, w, g = (lambda s: (s, True, "q")), None, (lambda s: (s, False, "t")), (lambda s: (s, False, "w")), (lambda s: (s, True, "g"))
+    panels = [
+        ("Breakout tap", "tap", "two", ["A to B", "B to A"], "2 capture interfaces", [
+            [b("Link: "), t("no effect")], [b("Loss: "), t("none at the tap")],
+            [b("Ports: "), t("one per direction")], [b("Use: "), t("every frame matters")],
+            [b("Status: "), g("built, measured")]]),
+        ("Aggregating tap", "tap", "one", ["A to B,", "B to A"], "1 capture interface", [
+            [b("Link: "), t("no effect")], [b("Loss: "), t("none at the tap")],
+            [b("Ports: "), t("one for both ways")], [b("Use: "), t("every frame matters")],
+            [b("Status: "), g("built, measured")]]),
+        ("Mirror port (SPAN, RSPAN)", "switch", "one", ["A to B,", "B to A"], "1 capture interface", [
+            [b("Link: "), t("forwards as before")], [b("Loss: "), w("at a busy switch")],
+            [b("Ports: "), t("one for both ways")], [b("Use: "), t("no tap can be fitted")],
+            [b("Status: "), g("built")]]),
+        ("Remote mirror (ERSPAN, GRE, VXLAN)", "switch", "one", ["in a tunnel,", "routed"], "unwraps the tunnel", [
+            [b("Link: "), t("as a mirror port,")], [w("plus tunnel traffic")],
+            [b("Loss: "), w("as a mirror port,")], [w("plus what the path drops")],
+            [b("Runs: "), t("any routable host")],
+            [b("Status: "), g("built;")], [w("not yet run on a switch")]]),
     ]
-    for k, (head, dev, ports, facts) in enumerate(cols):
-        x0 = 24 + k * 246
-        f.rect(x0, 60, 220, 336, "bxp", 10)
-        f.text(x0 + 16, 86, head, 15, True, "t")
-        # link A - device - B
-        f.box(x0 + 16, 104, 44, 34, [("A", 14, True, "t")], rx=6)
-        f.box(x0 + 160, 104, 44, 34, [("B", 14, True, "t")], rx=6)
-        dw = 60
-        f.line([(x0 + 60, 121), (x0 + 110 - dw / 2, 121)], "lnk")
-        f.line([(x0 + 110 + dw / 2, 121), (x0 + 160, 121)], "lnk")
-        f.box(x0 + 110 - dw / 2, 104, dw, 34, [(dev, 13, True, "t")], rx=6, pad=6)
-        # monitor ports down to first-bite
-        if ports == 2:
-            f.line([(x0 + 96, 138), (x0 + 96, 196)], "lna", head="fa")
-            f.line([(x0 + 124, 138), (x0 + 124, 196)], "lna", head="fa")
-            f.text(x0 + 86, 170, "A to B", 13, False, "q", "end")
-            f.text(x0 + 134, 170, "B to A", 13, False, "q")
-            sub = "2 capture interfaces"
+    for k, (head, dev, ports, labels, sub, facts) in enumerate(panels):
+        x0, y0 = 24 + (k % 2) * 363, 60 + (k // 2) * 186
+        f.rect(x0, y0, 349, 174, "bxp", 10)
+        f.text(x0 + 14, y0 + 26, head, 15, True, "t", maxw=321)
+        sx, cy = x0 + 14, y0 + 56
+        f.box(sx, cy - 15, 36, 30, [("A", 13, True, "t")], rx=6, pad=4)
+        f.box(sx + 112, cy - 15, 36, 30, [("B", 13, True, "t")], rx=6, pad=4)
+        f.line([(sx + 36, cy), (sx + 46, cy)], "lnk")
+        f.line([(sx + 102, cy), (sx + 112, cy)], "lnk")
+        f.box(sx + 46, cy - 15, 56, 30, [(dev, 13, True, "t")], rx=6, pad=4)
+        top = y0 + 116
+        if ports == "two":
+            f.line([(sx + 64, cy + 15), (sx + 64, top)], "lna", head="fa")
+            f.line([(sx + 84, cy + 15), (sx + 84, top)], "lna", head="fa")
+            f.text(sx + 56, cy + 42, labels[0], 13, False, "q", "end")
+            f.text(sx + 92, cy + 42, labels[1], 13, False, "q")
         else:
-            f.line([(x0 + 110, 138), (x0 + 110, 196)], "lna", head="fa")
-            f.text(x0 + 120, 170, "A to B, B to A", 13, False, "q")
-            sub = "1 capture interface"
-        f.box(x0 + 30, 196, 160, 52, [("first-bite", 14, True, "a"), (sub, 13, False, "q")], "bxa")
-        f.line([(x0 + 16, 268), (x0 + 204, 268)], "lnr")
-        for j, parts in enumerate(facts):
-            f.rich(x0 + 14, 294 + j * 26, parts, 13, maxw=194)
+            f.line([(sx + 60, cy + 15), (sx + 60, top)], "lna", head="fa")
+            f.text(sx + 70, cy + 34, labels[0], 13, False, "q")
+            f.text(sx + 70, cy + 50, labels[1], 13, False, "q")
+        f.box(sx, top - 2, 148, 48, [("first-bite", 13, True, "a"), (sub, 13, False, "q")], "bxa", pad=6)
+        f.line([(x0 + 170, y0 + 42), (x0 + 170, y0 + 162)], "lnr")
+        for n_, parts in enumerate(facts):
+            f.rich(x0 + 180, y0 + 54 + n_ * 18, parts, 13, maxw=161)
     return f
 
 
@@ -704,12 +710,12 @@ def record_flow():
 # ---------------------------------------------------------------------------
 def loss_counters():
     f = Fig("loss-counters", "Three counters say where a frame was lost",
-            "A frame passes from the tap to the network card, the kernel capture buffer, the queue inside mind "
+            "A frame passes from the tap or mirror port to the network card, the kernel capture buffer, the queue inside mind "
             "and the pipeline. mind counts losses at three of them. By interface: the card or driver discarded "
             "frames; raise the receive ring. Dropped by kernel: the capture buffer was full; raise --buffer-mb "
             "or add a filter. In queue: the pipeline was behind because a sink is blocking; check the "
             "subscriber log lines.", 290)
-    stages = [("Tap", "monitor port"), ("Network card", "receive ring"), ("Kernel buffer", "32 MiB by default"),
+    stages = [("Tap or mirror", "the copy"), ("Network card", "receive ring"), ("Kernel buffer", "32 MiB by default"),
               ("Queue in mind", "65,536 frames"), ("Pipeline", "decode, publish")]
     for k, (head, sub) in enumerate(stages):
         x = 20 + k * 148
@@ -731,8 +737,79 @@ def loss_counters():
     return f
 
 
+# ---------------------------------------------------------------------------
+# 11. three-projects
+# ---------------------------------------------------------------------------
+def three_projects():
+    f = Fig("three-projects", "Three ways from a sensor's own format to a Zenoh data fabric",
+            "A sensor that speaks its own binary format on the left and a Zenoh data fabric on the right, with "
+            "three projects between them. Open Billie is an endpoint the sensor sends to: it decodes one "
+            "sensor's tracks and publishes them as Cursor-on-Target, ASTERIX CAT062 or SAPIENT. octo-pod is "
+            "a boundary appliance the sensor sends to: it carries the bytes unchanged under a certificate, a "
+            "release gate and an audit record. first-bite listens on a tap beside the link, without the "
+            "sensor knowing, decodes every message and publishes every field as the source defined it.", 372)
+    f.box(24, 64, 100, 284, [("Sensor", 15, True, "t"), ("its own", 13, False, "q"), ("binary format", 13, False, "q")], pad=6)
+    f.box(636, 64, 100, 284, [("Zenoh", 15, True, "t"), ("data fabric", 13, False, "q")], pad=6)
+    lanes = [
+        (64, "bx", "t", "Open Billie", "an endpoint: turns one sensor's tracks into",
+         "Cursor-on-Target, ASTERIX CAT062 or SAPIENT", "sends", "tracks"),
+        (164, "bx", "t", "octo-pod", "a boundary appliance: carries bytes unchanged,",
+         "under a certificate, a release gate, an audit record", "sends", "bytes"),
+        (264, "bxa", "a", "first-bite", "a passive listener: decodes every message,",
+         "every field named as the source defined it", None, "records"),
+    ]
+    for y, cls, hcls, head, l1, l2, inlabel, outlabel in lanes:
+        cy = y + 42
+        f.box(220, y, 350, 84, [(head, 15, True, hcls), (l1, 13, False, "t"), (l2, 13, False, "q")])
+        if inlabel:
+            f.line([(124, cy), (220, cy)], "ln", head="fl")
+            f.text(170, cy - 10, inlabel, 13, False, "q", "middle")
+        else:
+            f.line([(124, cy), (150, cy)], "lna", nohead=True)
+            f.box(150, cy - 16, 44, 32, [("tap", 13, True, "t")], rx=6, pad=4)
+            f.line([(194, cy), (220, cy)], "lna", head="fa")
+            f.text(172, cy - 26, "copy", 13, False, "q", "middle")
+        f.line([(570, cy), (636, cy)], "lna" if cls == "bxa" else "ln", head="fa" if cls == "bxa" else "fl")
+        f.text(602, cy - 10, outlabel, 13, False, "q", "middle")
+    return f
+
+
+# ---------------------------------------------------------------------------
+# 12. icd-to-dictionary
+# ---------------------------------------------------------------------------
+def icd_to_dictionary():
+    f = Fig("icd-to-dictionary", "An interface document becomes data that every tool runs from",
+            "An interface control document, hundreds of pages of tables in a PDF, is transcribed into a "
+            "dictionary: one JSON file per message giving bit ranges, types, scale, units and labels, kept "
+            "under version control and reviewed like code. Four things run from that one source: the decoder, "
+            "bite check with the test vectors, a generated JSON Schema, and the bit view in a browser. All "
+            "four and the dictionary format are built. A documented method and tooling for the transcription step are in progress.", 286)
+    f.box(24, 86, 160, 120, [("Interface document", 14, True, "t"), ("hundreds of pages", 13, False, "q"),
+                             ("of tables, in a PDF", 13, False, "q")], pad=6)
+    f.rect(254, 60, 208, 172, "bxa", 8)
+    f.text(270, 86, "Dictionary", 15, True, "a")
+    for k, ln in enumerate(("one JSON file per message", "bit ranges and types", "scale, units and labels",
+                            "test vectors", "versioned, reviewed, diffed")):
+        f.text(270, 112 + k * 20, ln, 13, False, "t" if k < 4 else "q", maxw=176)
+    f.line([(184, 146), (254, 146)], "lnd", head="fl")
+    f.text(219, 136, "transcribe", 13, False, "q", "middle")
+    outs = [("Decoder", "mind and bite decode"), ("bite check", "validates, runs the vectors"),
+            ("JSON Schema", "generated per message"), ("Bit view in a browser", "the same decoder")]
+    f.line([(462, 146), (490, 146)], "lna", nohead=True)
+    f.line([(490, 76), (490, 220)], "lna", nohead=True)
+    for k, (head, sub) in enumerate(outs):
+        y = 54 + k * 48
+        f.line([(490, y + 22), (516, y + 22)], "lna", head="fa")
+        f.rect(516, y, 220, 44, "bx", 8)
+        f.text(528, y + 19, head, 13, True, "t")
+        f.text(528, y + 36, sub, 13, False, "q", maxw=200)
+    f.rich(24, 268, [("Built: ", True, "g"), ("the format and all that runs from it.  ", False, "t"),
+                     ("In progress: ", True, "w"), ("a documented method and tooling to transcribe.", False, "t")], 13)
+    return f
+
+
 FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
-           record_flow, loss_counters]
+           record_flow, loss_counters, three_projects, icd_to_dictionary]
 
 
 def main():

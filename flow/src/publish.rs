@@ -108,6 +108,14 @@ impl Publisher {
             .bind(&config.address)
             .map_err(Error::zmq(describe("bind")))?;
         info!("publisher {} bound to {}", config.name, config.address);
+        if !binds_this_machine_only(&config.address) {
+            warn!(
+                "publisher {}: {} is reachable from other machines; the socket has no \
+                 authentication and no encryption, so any host that can connect reads every \
+                 record",
+                config.name, config.address
+            );
+        }
 
         Ok(Publisher {
             name: config.name.clone(),
@@ -165,6 +173,21 @@ impl Publisher {
         };
         Ok(self.socket.send(&message, 0)?)
     }
+}
+
+/// Whether a socket bound to `address` can be reached only from this
+/// machine: a TCP address on the loopback network or `localhost`, or a
+/// transport that never leaves the host.
+fn binds_this_machine_only(address: &str) -> bool {
+    let Some(rest) = address.strip_prefix("tcp://") else {
+        return address.starts_with("ipc://") || address.starts_with("inproc://");
+    };
+    let host = rest.rsplit_once(':').map_or(rest, |(host, _)| host);
+    let host = host.trim_start_matches('[').trim_end_matches(']');
+    host == "localhost"
+        || host
+            .parse::<std::net::IpAddr>()
+            .is_ok_and(|ip| ip.is_loopback())
 }
 
 /// Every configured publisher. The owner publishes records through it; the
@@ -280,6 +303,31 @@ mod tests {
         wrong_type.publisher_type = "ROUTER".into();
         let error = Publishers::bind(&[wrong_type]).err().unwrap();
         assert!(error.to_string().contains("`publisher_type`"), "{error}");
+    }
+
+    #[test]
+    fn only_loopback_and_local_transports_stay_on_this_machine() {
+        for local in [
+            "tcp://127.0.0.1:12000",
+            "tcp://127.8.9.10:12000",
+            "tcp://localhost:12000",
+            "tcp://[::1]:12000",
+            "ipc:///run/first-bite/records",
+            "inproc://records",
+        ] {
+            assert!(binds_this_machine_only(local), "{local}");
+        }
+        for exposed in [
+            "tcp://*:12000",
+            "tcp://0.0.0.0:12000",
+            "tcp://[::]:12000",
+            "tcp://192.0.2.7:12000",
+            "tcp://eth0:12000",
+            "tcp://records.example:12000",
+            "pgm://192.0.2.7;239.192.1.1:5555",
+        ] {
+            assert!(!binds_this_machine_only(exposed), "{exposed}");
+        }
     }
 
     #[test]

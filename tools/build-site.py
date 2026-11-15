@@ -7,7 +7,8 @@ What it does:
   * copies site/ (the landing page, the stylesheet, and the interactive
     decoder when it is present), leaving out names that start with "_";
   * copies the illustrations from docs/img and the brief from docs/brief;
-  * turns every docs/**/*.md except plan.md and decisions.md into a page with
+  * turns every docs/**/*.md except plan.md, decisions.md and the notes in
+    docs/img and docs/brief into a page with
     site/_page.html, a sub-directory becoming a group in the navigation, and
     takes the header and footer from site/index.html so there is one copy.
 
@@ -34,22 +35,24 @@ REPO = "https://github.com/USAREUR-AF/first-bite"
 # document needs no change here: it gets its title as its label, and a
 # sub-directory becomes a group in the navigation.
 UNPUBLISHED = {"plan.md", "decisions.md"}
+# docs/img and docs/brief hold the figures and the brief, with notes for people working on them.
+UNPUBLISHED_FOLDERS = {"img", "brief"}
 # Optional: order of the top-level pages, shorter navigation labels, the line
 # on the landing-page card and group names. Pages not named here follow in
 # alphabetical order.
 ORDER = ["architecture", "dictionary-format", "performance", "tap", "deployment", "goat-integration", "related-projects"]
-LABEL = {"tap": "Running on a tap", "goat-integration": "Zenoh data fabric", "related-projects": "Related projects",
-         "img/README": "Illustrations", "README": "Overview"}
+LABEL = {"tap": "Tap or mirror port", "goat-integration": "Zenoh data fabric", "related-projects": "Related projects",
+         "README": "Overview"}
 ABOUT = {
     "architecture": "The crates, the path from frame to record, sinks and transforms.",
     "dictionary-format": "Every key of a dictionary and everything bite check reports.",
     "performance": "The measured figures and the command behind each.",
-    "tap": "Tap or mirror port, capture interfaces, loss counters.",
+    "tap": "Taps, mirror ports and tunnelled mirrors; capture interfaces; loss counters.",
     "deployment": "Which archive for which machine, the service, the container, offline builds.",
     "goat-integration": "Where records go on a goat data fabric.",
     "related-projects": "first-bite beside Open Billie and octo-pod.",
 }
-GROUP = {"img": "Illustrations", "goat": "goat network", "security": "Security"}
+GROUP = {"goat": "goat network", "security": "Security"}
 
 
 def fail(message):
@@ -69,6 +72,8 @@ def discover():
     """Page keys ("tap", "goat/contract") in navigation order."""
     keys = []
     for folder, _, names in os.walk(DOCS):
+        if os.path.relpath(folder, DOCS).split(os.sep)[0] in UNPUBLISHED_FOLDERS:
+            continue
         for name in names:
             if name.endswith(".md") and name not in UNPUBLISHED:
                 keys.append(os.path.relpath(os.path.join(folder, name), DOCS)[:-3].replace(os.sep, "/"))

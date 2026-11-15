@@ -26,7 +26,38 @@ Every CI check is a command you can run locally before you push.
 | a dictionary under `dictionaries/` | `cargo run -p bite -- check dictionaries/<name> --strict` |
 | `Cargo.toml` or `Cargo.lock` | `make deny` and `make audit` |
 | `.github/workflows/` | `actionlint` and `yamllint .github` (both run by `make lint`) |
-| anything | `tools/check-public-tree.sh` — no deployment name, address, credential or controlled message definition enters the tree |
+| a workflow, a `Dockerfile`, a compose file, an image in the `Makefile` | `python3 tools/check-pins.py` — every action is pinned to a commit SHA and every image to a digest |
+| a shell script | `shellcheck` (run by `make lint`) |
+| anything | `make guards` — `tools/check-public-tree.sh` over the files that are published: no deployment name, address, credential or controlled message definition enters the tree |
+
+### The leak check and its hook
+
+`tools/check-public-tree.sh` refuses, by shape: private keys, cloud access key
+ids and tokens; capture files outside `examples/`; SSH public keys and age
+recipients; MAC addresses; private (`10/8`, `172.16/12`, `192.168/16`,
+`169.254/16`) and CGNAT (`100.64/10`) IPv4 addresses; e-mail addresses outside
+`example.org` and `users.noreply.github.com`; and an AI assistant's session
+link or attribution trailer outside `AGENTS.md`, `CLAUDE.md` and `.claude/`.
+In CI it also refuses the names on the maintainers' list. It prints the file,
+the line and the class, never the text it matched.
+
+Install it as a pre-commit hook, once per clone:
+
+```bash
+make hooks        # git config core.hooksPath tools/git-hooks
+```
+
+The hook runs the check on the files staged for the commit. Write addresses
+from the documentation ranges (`192.0.2.0/24`, `198.51.100.0/24`,
+`203.0.113.0/24`) and mail at `example.org`. A line that has to hold one of
+these shapes and identifies nothing real (a MAC address in a parser test)
+ends with `opsec-allow: <reason>`; the reviewer reads the reason.
+`tools/check-public-tree.test.sh` plants one example of every class and
+checks that each is caught; CI runs it before relying on the check.
+
+A configuration file in the tree holds no credential value: a credential key
+is written as a reference, `${NAME}`
+([flow/config/README.md](flow/config/README.md#credentials-and-references)).
 
 Building needs a Rust toolchain (`rust-toolchain.toml` pins the channel), a C and C++ compiler, CMake, and the libpcap headers (`libpcap-dev` on Debian and Ubuntu; part of the SDK on macOS).
 
