@@ -44,9 +44,9 @@ fn run(_: Vec<OsString>) -> ExitCode {
 
 /// Give the goat sink the messages of the loaded dictionary, so it can
 /// declare their schemas. Does nothing in a build without the feature.
-pub fn register(dictionary: Option<&bite::Dictionary>) {
+pub fn register(dictionary: Option<&bite::Dictionary>, version: datamodels::RecordVersion) {
     #[cfg(feature = "goat")]
-    flow::goat::register(schema::declarations(dictionary));
+    flow::goat::register(schema::declarations(dictionary, version));
     #[cfg(not(feature = "goat"))]
-    let _ = dictionary;
+    let _ = (dictionary, version);
 }

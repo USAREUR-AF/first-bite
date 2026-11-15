@@ -54,7 +54,8 @@ subscribers:
     aws_bucket_name: "your-bucket"
 
   # Zenoh (needs a build with the cargo feature `zenoh`). Each record is put
-  # on a key rendered from it, as application/json.
+  # on a key rendered from it, as application/json; with `encoding: cbor`,
+  # as application/cbor.
   - name: AllToZenoh
     subscriber_type: "zenoh"
     zmq_url: "127.0.0.1"

@@ -1,11 +1,13 @@
 //! Turn a captured frame into the record that is published.
 
-use crate::decap::{gre_inner, vxlan_inner};
+use crate::decap::{gre_inner, vxlan_inner, Tunnel};
 use crate::source::{Frame, LinkType};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use bite::Dictionary;
-use datamodels::packets::{get_packet_metadata, PacketInfoWithParsedMessage, PacketMetadata};
+use datamodels::packets::{
+    get_packet_metadata, PacketInfoWithParsedMessage, PacketMetadata, Port, RecordVersion,
+};
 use etherparse::{IpNumber, NetSlice, SlicedPacket, TransportSlice};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -29,6 +31,17 @@ struct Located<'a> {
     source_port: u16,
     destination_port: u16,
     payload: &'a [u8],
+    /// The outermost tunnel that was unwrapped to reach the packet.
+    tunnel: Option<Tunnel>,
+}
+
+/// The name a record gives a tunnel.
+fn tunnel_name(tunnel: Tunnel) -> &'static str {
+    match tunnel {
+        Tunnel::GreEthernet | Tunnel::GreIp => "gre",
+        Tunnel::ErspanI | Tunnel::ErspanII | Tunnel::ErspanIII => "erspan",
+        Tunnel::Vxlan => "vxlan",
+    }
 }
 
 /// Why a frame produced no record.
@@ -40,25 +53,45 @@ pub enum Skip {
     Malformed(String),
 }
 
+/// The deployment's metadata, with this program's version as the
+/// application version.
+fn metadata(version: RecordVersion) -> PacketMetadata {
+    PacketMetadata {
+        application_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+        ..get_packet_metadata(version)
+    }
+}
+
 /// Decodes frames against one dictionary and stamps records with the
 /// deployment's metadata.
 pub struct Pipeline {
     dictionary: Option<Arc<Dictionary>>,
     metadata: PacketMetadata,
+    version: RecordVersion,
     decapsulation: Decapsulation,
     unwrapped: AtomicU64,
 }
 
 impl Pipeline {
     /// `dictionary` of `None` publishes every packet undecoded. The metadata is
-    /// read from the environment once, here.
+    /// read from the environment once, here. Records are version 2.
     pub fn new(dictionary: Option<Arc<Dictionary>>) -> Self {
+        let version = RecordVersion::default();
         Pipeline {
             dictionary,
-            metadata: get_packet_metadata(),
+            metadata: metadata(version),
+            version,
             decapsulation: Decapsulation::default(),
             unwrapped: AtomicU64::new(0),
         }
+    }
+
+    /// Choose the record version. Version 1 renders every field value and
+    /// both ports as text and leaves out the capture context.
+    pub fn with_record_version(mut self, version: RecordVersion) -> Self {
+        self.version = version;
+        self.metadata = metadata(version);
+        self
     }
 
     /// Choose which tunnels are unwrapped. The default unwraps GRE and ERSPAN
@@ -78,6 +111,7 @@ impl Pipeline {
     /// payload are those of the mirrored packet, not of the tunnel.
     fn locate<'a>(&self, link: LinkType, data: &'a [u8]) -> Result<Located<'a>, Skip> {
         let (mut link, mut data) = (link, data);
+        let mut tunnel = None;
         for depth in 0..=MAX_TUNNEL_DEPTH {
             let sliced = match link {
                 LinkType::Ethernet => SlicedPacket::from_ethernet(data),
@@ -116,6 +150,7 @@ impl Pipeline {
                                 source_port: udp.source_port(),
                                 destination_port: udp.destination_port(),
                                 payload: udp.payload(),
+                                tunnel,
                             })
                         }
                     }
@@ -127,6 +162,7 @@ impl Pipeline {
                         source_port: tcp.source_port(),
                         destination_port: tcp.destination_port(),
                         payload: tcp.payload(),
+                        tunnel,
                     })
                 }
                 _ if ip_payload.ip_number == IpNumber::GRE
@@ -142,6 +178,7 @@ impl Pipeline {
             }
             if depth == 0 {
                 self.unwrapped.fetch_add(1, Ordering::Relaxed);
+                tunnel = Some(inner.0);
             }
             (link, data) = (inner.1, inner.2);
         }
@@ -162,6 +199,7 @@ impl Pipeline {
             source_port,
             destination_port,
             payload,
+            tunnel,
         } = self.locate(frame.link, frame.data)?;
 
         let interface = self
@@ -169,19 +207,31 @@ impl Pipeline {
             .as_deref()
             .and_then(|dictionary| dictionary.interface_for_ports(source_port, destination_port));
         let decoded = interface.and_then(|interface| interface.decode(payload).ok());
+        let typed = self.version == RecordVersion::Typed;
+        let message = decoded.as_ref().and_then(|decoded| {
+            if typed {
+                serde_json::to_value(decoded).ok()
+            } else {
+                serde_json::to_value(decoded.rendered()).ok()
+            }
+        });
+        // The dictionary is named on the records it decoded.
+        let spec = self
+            .dictionary
+            .as_deref()
+            .filter(|_| typed && decoded.is_some())
+            .map(|dictionary| &dictionary.spec);
 
         Ok(PacketInfoWithParsedMessage {
             timestamp: frame.timestamp,
-            src_port: source_port.to_string(),
-            dst_port: destination_port.to_string(),
+            src_port: Port::new(source_port, self.version),
+            dst_port: Port::new(destination_port, self.version),
             src_ip: source_ip,
             dst_ip: destination_ip,
             data_encoded_inner: STANDARD.encode(payload),
             subsystem: interface.map(|interface| interface.name.clone()),
             message_type: decoded.as_ref().map(|decoded| decoded.message_type()),
-            message: decoded
-                .as_ref()
-                .and_then(|decoded| serde_json::to_value(decoded.rendered()).ok()),
+            message,
             data_encoded_full: STANDARD.encode(frame.data),
             data_source_geo_location: self.metadata.data_source_geo_location.clone(),
             data_source_network_name: self.metadata.data_source_network_name.clone(),
@@ -191,6 +241,12 @@ impl Pipeline {
             data_packet_accm: self.metadata.data_packet_accm.clone(),
             data_model_version: self.metadata.data_model_version.clone(),
             application_version: self.metadata.application_version.clone(),
+            capture_interface: frame.interface.filter(|_| typed).map(ToString::to_string),
+            tunnel: tunnel
+                .filter(|_| typed)
+                .map(|tunnel| tunnel_name(tunnel).to_string()),
+            dictionary: spec.and_then(|spec| spec.name.clone()),
+            dictionary_version: spec.and_then(|spec| spec.version.clone()),
         })
     }
 }

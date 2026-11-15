@@ -45,6 +45,52 @@ The pipeline is one thread. The cost per packet is fixed by the work listed in
 the table, not by the size of the dictionary: finding the interface is one hash
 lookup on the port, finding the message is one more on the message type.
 
+## Record size and encoding
+
+A record leaves as version 2 JSON by default; version 1 JSON and CBOR are
+settings ([record.md](record.md)). Measured on the vectors of two example
+dictionaries, each wrapped in a UDP frame and passed through the pipeline:
+
+```bash
+cargo run --release -p mind --example encodings -- dictionaries/weather-station
+```
+
+| Mean bytes per record | Version 1 JSON | Version 2 JSON | Version 2 CBOR |
+|---|---|---|---|
+| weather-station, 5 vectors: whole record | 724 | 776 | **639** |
+| weather-station: `message` alone | 137 | 131 | 104 |
+| glasshouse, 10 vectors: whole record | 859 | 892 | **733** |
+| glasshouse: `message` alone | 261 | 238 | 192 |
+
+Typed values make `message` 5% to 9% smaller than text values. The whole
+version 2 record is 4% to 7% larger than version 1, because it names the
+dictionary and its own version (`dictionary`, `dictionary_version`,
+`data_model_version`: about 60 bytes). CBOR is 18% smaller than version 2
+JSON. In every form most of a record is its field names and the two base64
+buffers: of the 648 bytes of a CBOR heartbeat, 121 are the decoded message.
+
+| Time per record, one core, median of five runs | weather-station | glasshouse |
+|---|---|---|
+| Version 1 record to JSON text | 0.50 µs | 0.62 µs |
+| Version 2 record to JSON text | 0.53 µs | 0.68 µs |
+| JSON text to CBOR, done once more per record when a publisher or sink has `encoding: cbor` | 1.40 µs | 1.77 µs |
+| CBOR back to JSON text, done by a subscriber that reads a CBOR publisher | 1.37 µs | 1.64 µs |
+
+The whole pipeline on the 2,000,000-packet load file, with the publisher set
+as shown, median of seven runs each, the runs of the three forms interleaved
+(2026-11-15, the machine also running other work at a load average of 10):
+
+| Record published on ZeroMQ | Packets per second | Per packet |
+|---|---|---|
+| Version 2 JSON (the default) | **449,000** (430,000 to 459,000) | 2.2 µs |
+| Version 1 JSON (`FIRST_BITE_RECORD_VERSION=1`) | 406,000 (376,000 to 413,000) | 2.5 µs |
+| Version 2 CBOR (`encoding: cbor` on the publisher) | 270,000 (259,000 to 276,000) | 3.7 µs |
+| Version 2 JSON, also writing one log line per record | 164,000 | 6.1 µs |
+
+Memory on the version 2 JSON run: 10.6 MB resident. The default `mind` binary
+is 15.95 MB and has 277 crates in its dependency tree, the same crates as
+before CBOR was added: the codec is part of `flow`.
+
 ## What changed from the first implementation
 
 The first decoder in this project looked every field up through a string-keyed

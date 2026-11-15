@@ -22,6 +22,9 @@ pub struct Frame<'a> {
     pub timestamp: SystemTime,
     pub link: LinkType,
     pub data: &'a [u8],
+    /// The network interface the frame was captured on; `None` for a frame
+    /// read from a file or from the mock socket.
+    pub interface: Option<&'a str>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -178,6 +181,7 @@ impl FrameSource for LiveCapture {
                 timestamp: timestamp(packet.header),
                 link: self.link,
                 data: packet.data,
+                interface: Some(&self.device),
             })),
             Err(pcap::Error::TimeoutExpired) => {
                 #[cfg(unix)]
@@ -253,6 +257,8 @@ struct QueuedFrame {
     timestamp: SystemTime,
     link: LinkType,
     data: Vec<u8>,
+    /// Index into the devices the capture was opened on.
+    device: usize,
 }
 
 #[derive(Default)]
@@ -284,7 +290,7 @@ impl MultiCapture {
         let (sender, receiver) = sync_channel(QUEUE_FRAMES);
         let budget = Arc::new(ByteBudget::new(QUEUE_BYTES));
         let mut stats = Vec::new();
-        for device in devices {
+        for (index, device) in devices.iter().enumerate() {
             let capture = LiveCapture::open(device, options)?;
             let shared = Arc::new(SharedStats::default());
             stats.push(Arc::clone(&shared));
@@ -292,7 +298,7 @@ impl MultiCapture {
             let budget = Arc::clone(&budget);
             thread::Builder::new()
                 .name(format!("capture-{device}"))
-                .spawn(move || capture_thread(capture, sender, shared, budget))?;
+                .spawn(move || capture_thread(capture, index, sender, shared, budget))?;
         }
         Ok(MultiCapture {
             receiver,
@@ -306,6 +312,7 @@ impl MultiCapture {
 
 fn capture_thread(
     mut capture: LiveCapture,
+    device: usize,
     sender: SyncSender<Result<QueuedFrame, SourceError>>,
     shared: Arc<SharedStats>,
     budget: Arc<ByteBudget>,
@@ -322,6 +329,7 @@ fn capture_thread(
                 timestamp: frame.timestamp,
                 link: frame.link,
                 data: frame.data.to_vec(),
+                device,
             }),
             Ok(None) => None,
             Err(e) => {
@@ -369,6 +377,7 @@ impl FrameSource for MultiCapture {
                     timestamp: frame.timestamp,
                     link: frame.link,
                     data: &frame.data,
+                    interface: self.devices.get(frame.device).map(String::as_str),
                 }))
             }
             Ok(Err(e)) => Err(e),
@@ -430,6 +439,7 @@ impl FrameSource for FileCapture {
                 timestamp: timestamp(packet.header),
                 link: self.link,
                 data: packet.data,
+                interface: None,
             })),
             Err(pcap::Error::NoMorePackets) => {
                 self.finished = true;
@@ -475,6 +485,7 @@ impl FrameSource for UdpFrames {
                 timestamp: SystemTime::now(),
                 link: LinkType::Ethernet,
                 data: &self.buffer[..length],
+                interface: None,
             })),
             Err(e)
                 if matches!(

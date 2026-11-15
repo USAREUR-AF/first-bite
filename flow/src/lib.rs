@@ -7,11 +7,15 @@
 //! * [`SubPubs`] reads them, transforms each record and publishes the result
 //!   on a second socket.
 //!
+//! A record is JSON text inside the process; each publisher and sink writes
+//! it as JSON or CBOR, as its `encoding` key says (see [`encoding`]).
+//!
 //! All three are values the caller owns. Each is built from its YAML file
 //! (see [`config`]) and checked in full before anything runs, so a
 //! configuration mistake stops startup with an error that names the entry.
 
 pub mod config;
+pub mod encoding;
 pub mod error;
 mod feed;
 #[cfg(feature = "goat")]
@@ -25,6 +29,7 @@ pub mod subscribe;
 mod test_support;
 
 pub use crate::config::{PublisherConfig, SubPubConfig, SubscriberConfig};
+pub use crate::encoding::{Encoding, EncodingError};
 pub use crate::error::{ConfigError, Error, Problem};
 pub use crate::publish::{PublishError, Publisher, Publishers};
 pub use crate::secret::Secret;

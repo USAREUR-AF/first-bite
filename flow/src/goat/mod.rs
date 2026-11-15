@@ -163,6 +163,9 @@ pub enum GoatError {
 /// dictionary and the schema of each record.
 #[derive(Debug, Clone, Default)]
 pub struct Declarations {
+    /// The version of the application that publishes: what `mind --version`
+    /// prints. Reported in the announcement and the heartbeat.
+    pub application_version: Option<String>,
     /// The dictionary's name and version, where it states them.
     pub dictionary: Option<String>,
     pub messages: Vec<MessageDeclaration>,
@@ -183,6 +186,16 @@ static DECLARATIONS: OnceLock<Declarations> = OnceLock::new();
 /// subscribers are built; a second call is ignored.
 pub fn register(declarations: Declarations) {
     let _ = DECLARATIONS.set(declarations);
+}
+
+impl Declarations {
+    /// The version to report: the application's, or this crate's when no
+    /// application registered one.
+    pub fn version(&self) -> &str {
+        self.application_version
+            .as_deref()
+            .unwrap_or(env!("CARGO_PKG_VERSION"))
+    }
 }
 
 pub(crate) fn registered() -> Declarations {

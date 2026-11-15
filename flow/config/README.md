@@ -89,7 +89,20 @@ publishers:
 | `message_type` | the record's `message_type`, or `unknown_message_type` |
 | `subsystem/message_type` | `<subsystem>/<message_type>`, e.g. `WX/Observation`; `subsystem` is the dictionary interface the packet matched |
 
-A message on the socket is `<topic>|<record JSON>`.
+A message on the socket is `<topic>|<record>`. The record is JSON text, or
+one CBOR item when the publisher has `encoding: cbor`
+([docs/record.md](../../docs/record.md#encodings)):
+
+```yaml
+publishers:
+  - name: records
+    publisher_type: PUB
+    address: "tcp://127.0.0.1:12000"
+    topic: "subsystem/message_type"
+    encoding: cbor           # json (default) or cbor
+```
+
+A subscriber reads a publisher of either encoding without being told which.
 
 The sockets are unauthenticated and unencrypted. Bound to `127.0.0.1`, as in
 the built-in publisher, a socket is reachable only from the same machine,
@@ -110,6 +123,7 @@ Keys every subscriber has:
 |---|---|
 | `name` | Used in log lines and errors. |
 | `subscriber_type`, `subtype` | Which sink; see the table below. |
+| `encoding` | How the sink writes each record: `json` (default) or `cbor`. See [Encoding](#encoding). |
 | `zmq_url`, `zmq_port` | Host and port of the publisher socket to read. |
 | `topics` | Topics to keep. A topic must match exactly. `*` or `all` keeps everything. |
 
@@ -153,7 +167,7 @@ cargo build --release -p mind --no-default-features --features zenoh
 | `cloud_api_version` | storage service version sent as `x-ms-version`; default `2023-11-03`. Must be `2015-02-21` or later. |
 
 Requests are authorised with the account's Shared Key. Blobs are stored as
-block blobs with content type `application/json`.
+block blobs with the content type of the sink's encoding.
 
 ### `objectstorage` / `awsobject`
 
@@ -171,9 +185,11 @@ Both object-storage sinks store each record twice, so that listings by time
 and by topic are both prefix scans:
 
 ```
-all-time-topic/<Y>/<m>/<d>/<H>/<M>/<S>/<topic>/<sha256 of the record>.json
-all-topic-time/<topic>/<Y>/<m>/<d>/<H>/<M>/<S>/<sha256 of the record>.json
+all-time-topic/<Y>/<m>/<d>/<H>/<M>/<S>/<topic>/<sha256 of the stored bytes>.json
+all-topic-time/<topic>/<Y>/<m>/<d>/<H>/<M>/<S>/<sha256 of the stored bytes>.json
 ```
+
+With `encoding: cbor` the names end in `.cbor`.
 
 The topic is used as it arrived, with these changes so that it cannot name
 an object outside its prefix: empty segments are dropped, a segment `.`
@@ -231,8 +247,25 @@ becomes `_`; a value the record does not have is written `unknown`. So
 `telemetry/weather_station/hilltop-7/wx/observation`. The fixed text of a
 template may not contain `*`, `$`, `#` or `?`.
 
-The payload is the record JSON with encoding `application/json`. Each
+The payload is the record as JSON with Zenoh encoding `application/json`, or
+with `encoding: cbor` as CBOR with Zenoh encoding `application/cbor`. Each
 subscriber opens one session.
+
+## Encoding
+
+`encoding` on a subscriber says how its sink writes each record;
+[docs/record.md](../../docs/record.md#encodings) describes the two encodings.
+
+| Sink | `json` (default) | `cbor` |
+|---|---|---|
+| `objectstorage` | object `….json`, content type `application/json` | object `….cbor`, content type `application/cbor` |
+| `rest` | body JSON, `Content-Type: application/json` | body CBOR, `Content-Type: application/cbor` |
+| `local` | one record per line | a CBOR sequence (RFC 8742): one item after another |
+| `zenoh` | Zenoh encoding `application/json` | Zenoh encoding `application/cbor` |
+| `goat` | JSON | refused at startup: the schema declared for each record is a JSON Schema |
+| `stateful` | counts only | refused at startup: no record is stored |
+
+Any other value is refused at startup with the two choices.
 
 ## Subpubs
 

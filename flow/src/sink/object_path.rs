@@ -1,8 +1,9 @@
 //! Object names for the object-storage sinks.
 //!
 //! Each record is stored twice, so that a listing by time and a listing by
-//! topic are both prefix scans. The name ends in the SHA-256 of the record,
-//! which makes a repeated upload of the same record overwrite itself.
+//! topic are both prefix scans. The name ends in the SHA-256 of the stored
+//! bytes, which makes a repeated upload of the same record overwrite itself,
+//! and in the extension of the encoding: `json` or `cbor`.
 
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
@@ -44,23 +45,23 @@ pub fn topic_path(topic: &str) -> String {
     path
 }
 
-/// `all-time-topic/<Y>/<m>/<d>/<H>/<M>/<S>/<topic>/<sha256>.json`
-pub fn time_then_topic(topic: &str, record: &str, now: DateTime<Utc>) -> String {
+/// `all-time-topic/<Y>/<m>/<d>/<H>/<M>/<S>/<topic>/<sha256>.<extension>`
+pub fn time_then_topic(topic: &str, record: &[u8], extension: &str, now: DateTime<Utc>) -> String {
     let topic = topic_path(topic);
     format!(
-        "all-time-topic/{}/{topic}/{}.json",
+        "all-time-topic/{}/{topic}/{}.{extension}",
         now.format("%Y/%m/%d/%H/%M/%S"),
-        sha256_hex(record.as_bytes())
+        sha256_hex(record)
     )
 }
 
-/// `all-topic-time/<topic>/<Y>/<m>/<d>/<H>/<M>/<S>/<sha256>.json`
-pub fn topic_then_time(topic: &str, record: &str, now: DateTime<Utc>) -> String {
+/// `all-topic-time/<topic>/<Y>/<m>/<d>/<H>/<M>/<S>/<sha256>.<extension>`
+pub fn topic_then_time(topic: &str, record: &[u8], extension: &str, now: DateTime<Utc>) -> String {
     let topic = topic_path(topic);
     format!(
-        "all-topic-time/{topic}/{}/{}.json",
+        "all-topic-time/{topic}/{}/{}.{extension}",
         now.format("%Y/%m/%d/%H/%M/%S"),
-        sha256_hex(record.as_bytes())
+        sha256_hex(record)
     )
 }
 
@@ -89,12 +90,12 @@ mod tests {
 
         let now = Utc.with_ymd_and_hms(2026, 3, 4, 5, 6, 7).unwrap();
         for name in [
-            time_then_topic("../../../etc", "{}", now),
-            topic_then_time("../../../etc", "{}", now),
+            time_then_topic("../../../etc", b"{}", "json", now),
+            topic_then_time("../../../etc", b"{}", "json", now),
         ] {
             assert!(name.split('/').all(|segment| segment != ".."), "{name}");
         }
-        assert!(topic_then_time("..", "{}", now).starts_with("all-topic-time/__/2026/"));
+        assert!(topic_then_time("..", b"{}", "json", now).starts_with("all-topic-time/__/2026/"));
     }
 
     #[test]
@@ -110,12 +111,18 @@ mod tests {
     fn names_are_ordered_by_time_or_by_topic() {
         let now = Utc.with_ymd_and_hms(2026, 3, 4, 5, 6, 7).unwrap();
         assert_eq!(
-            time_then_topic("WX/Observation", "{}", now),
+            time_then_topic("WX/Observation", b"{}", "json", now),
             format!("all-time-topic/2026/03/04/05/06/07/WX/Observation/{EMPTY_OBJECT_SHA256}.json")
         );
         assert_eq!(
-            topic_then_time("WX/Observation", "{}", now),
+            topic_then_time("WX/Observation", b"{}", "json", now),
             format!("all-topic-time/WX/Observation/2026/03/04/05/06/07/{EMPTY_OBJECT_SHA256}.json")
+        );
+        // The extension names the encoding of the stored bytes: 0xa0 is the
+        // empty CBOR map.
+        assert_eq!(
+            time_then_topic("WX/Observation", &[0xa0], "cbor", now),
+            "all-time-topic/2026/03/04/05/06/07/WX/Observation/c19a797fa1fd590cd2e5b42d1cf5f246e29b91684e2f87404b81dc345c7a56a0.cbor"
         );
     }
 }

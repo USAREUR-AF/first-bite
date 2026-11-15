@@ -55,6 +55,18 @@ pub(crate) fn receive(subscriber: &zmq::Socket, mut publish: impl FnMut()) -> St
     panic!("no message arrived within ten seconds");
 }
 
+/// [`receive`] for a message that is not text.
+pub(crate) fn receive_bytes(subscriber: &zmq::Socket, mut publish: impl FnMut()) -> Vec<u8> {
+    subscriber.set_rcvtimeo(100).unwrap();
+    for _ in 0..100 {
+        publish();
+        if let Ok(message) = subscriber.recv_bytes(0) {
+            return message;
+        }
+    }
+    panic!("no message arrived within ten seconds");
+}
+
 /// One request the stub received.
 #[derive(Debug, Clone)]
 pub(crate) struct Request {

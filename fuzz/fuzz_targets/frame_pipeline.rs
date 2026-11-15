@@ -60,6 +60,7 @@ fuzz_target!(|data: &[u8]| {
         timestamp: UNIX_EPOCH,
         link,
         data: frame,
+        interface: None,
     };
     if let Ok(record) = pipeline.process(&frame) {
         let _ = serde_json::to_string(&record);

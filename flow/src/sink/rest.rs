@@ -2,6 +2,7 @@
 
 use super::{quoted, read_body, required, Sink, SinkError};
 use crate::config::SubscriberConfig;
+use crate::encoding::{json_to_cbor, Encoding};
 use crate::error::Problem;
 use async_trait::async_trait;
 use log::{debug, warn};
@@ -19,6 +20,7 @@ pub struct RestSink {
     /// The endpoint as log lines name it: no user, password, query or
     /// fragment, any of which can hold a credential.
     shown: String,
+    encoding: Encoding,
     first_retry_wait: Duration,
 }
 
@@ -58,16 +60,17 @@ impl RestSink {
             client,
             shown: shown(&url),
             url,
+            encoding: Encoding::from_config(config.encoding.as_deref())?,
             first_retry_wait: FIRST_RETRY_WAIT,
         })
     }
 
-    async fn post(&self, body: &str) -> Result<(), SinkError> {
+    async fn post(&self, body: &[u8]) -> Result<(), SinkError> {
         let response = self
             .client
             .post(self.url.clone())
-            .header("Content-Type", "application/json")
-            .body(body.to_string())
+            .header("Content-Type", self.encoding.media_type())
+            .body(body.to_vec())
             .send()
             .await?;
         let status = response.status();
@@ -104,7 +107,12 @@ impl Sink for RestSink {
     async fn send(&self, _topic: &str, record: &str) -> Result<(), SinkError> {
         // Parsing refuses a record that is not JSON before anything is sent,
         // and the endpoint receives it in compact form.
-        let body = serde_json::from_str::<serde_json::Value>(record)?.to_string();
+        let body = match self.encoding {
+            Encoding::Json => serde_json::from_str::<serde_json::Value>(record)?
+                .to_string()
+                .into_bytes(),
+            Encoding::Cbor => json_to_cbor(record)?,
+        };
         let mut wait = self.first_retry_wait;
         let mut retries = 0;
         loop {
@@ -166,6 +174,36 @@ mod tests {
         assert_eq!(requests[0].path, "/records");
         assert_eq!(requests[0].header("content-type"), Some("application/json"));
         assert_eq!(requests[0].body, br#"{"station_id":"KX7"}"#);
+    }
+
+    #[tokio::test]
+    async fn a_cbor_sink_posts_the_record_as_application_cbor() {
+        let stub = HttpStub::answering(&[200]);
+        let mut sink = RestSink::from_config(&subscriber(&format!(
+            "    subscriber_type: rest\n    endpoint_url: \"127.0.0.1\"\n    endpoint_port: {}\n    endpoint_path: /records\n    encoding: cbor\n",
+            stub.port()
+        )))
+        .unwrap();
+        sink.first_retry_wait = Duration::from_millis(5);
+        sink.send("WX/Heartbeat", r#"{"station_id":"KX7","uptime":86400}"#)
+            .await
+            .unwrap();
+        let requests = stub.requests();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].header("content-type"), Some("application/cbor"));
+        // {"uptime": 86400, "station_id": "KX7"}: shorter key first.
+        assert_eq!(
+            requests[0].body,
+            [
+                &[0xa2, 0x66][..],
+                b"uptime",
+                &[0x1a, 0x00, 0x01, 0x51, 0x80, 0x6a],
+                b"station_id",
+                &[0x63],
+                b"KX7",
+            ]
+            .concat()
+        );
     }
 
     #[tokio::test]

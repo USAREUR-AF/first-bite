@@ -62,10 +62,13 @@ decoder without its contents entering this tree.
 4. **Publish.** `flow` sends the record on each configured ZeroMQ PUB socket
    under a topic derived from the record, by default `interface/message`.
 
-Field values in `message` are strings: the dictionary's label where the raw
-value has one, the value in decimal otherwise, `null` for a field beyond the end
-of a short payload. `bite` also produces the typed form (integers as numbers)
-and a JSON Schema for it: `bite schema <dir>`.
+Field values in `message` keep their type: integers and scaled values are
+numbers, booleans are booleans, the dictionary's label stands where the raw
+value has one, and a field beyond the end of a short payload is `null`.
+`bite schema <dir>` prints a JSON Schema for it. [record.md](record.md) is the
+record's contract: every field, the earlier all-text version 1
+(`FIRST_BITE_RECORD_VERSION=1`), and the two encodings, JSON and CBOR, a
+publisher or sink can write.
 
 ## Sinks and transforms
 

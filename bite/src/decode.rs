@@ -221,7 +221,7 @@ impl Field {
                 } else {
                     f64::from_bits(raw)
                 };
-                (Some(Value::Float(self.scaled(value))), None)
+                (Some(Value::Float(self.scaled_float(value))), None)
             }
             FieldKind::Bool => {
                 let label = self.label(raw as i128);
@@ -245,9 +245,5 @@ impl Field {
         } else {
             raw
         }
-    }
-
-    fn scaled(&self, value: f64) -> f64 {
-        value * self.scale.unwrap_or(1.0) + self.offset.unwrap_or(0.0)
     }
 }
