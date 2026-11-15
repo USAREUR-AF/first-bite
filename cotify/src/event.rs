@@ -1,8 +1,8 @@
 //! Build the Cursor-on-Target event for one decoded message.
 
-use crate::mapping::{EventType, Mapping, Position};
+use crate::mapping::{EventType, Form, Mapping, Position, UNKNOWN_ERROR};
 use chrono::{DateTime, Duration, Utc};
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Writer;
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -84,6 +84,7 @@ impl Mapping {
             ),
         };
         let cot_xml_string = event_xml(
+            self.form,
             &uid,
             &event_type,
             &time,
@@ -164,9 +165,15 @@ pub fn ecef_to_geodetic(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
     (latitude.to_degrees(), longitude.to_degrees(), altitude)
 }
 
-/// The event element, with one argument per attribute that varies.
+fn xml_error(error: impl ToString) -> CotError {
+    CotError::Xml(error.to_string())
+}
+
+/// The event as XML in the given form, with one argument per attribute that
+/// varies.
 #[allow(clippy::too_many_arguments)]
 pub fn event_xml(
+    form: Form,
     uid: &str,
     event_type: &str,
     time: &str,
@@ -176,6 +183,11 @@ pub fn event_xml(
     longitude: f64,
     altitude: f64,
 ) -> Result<String, CotError> {
+    let (latitude, longitude, altitude) = (
+        latitude.to_string(),
+        longitude.to_string(),
+        altitude.to_string(),
+    );
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     let mut event = BytesStart::new("event");
     event.push_attribute(("version", "2.0"));
@@ -185,15 +197,33 @@ pub fn event_xml(
     event.push_attribute(("start", start));
     event.push_attribute(("stale", stale));
     event.push_attribute(("how", "m-g"));
-    event.push_attribute(("point", "h-e"));
-    event.push_attribute(("lat", latitude.to_string().as_str()));
-    event.push_attribute(("lon", longitude.to_string().as_str()));
-    event.push_attribute(("hae", altitude.to_string().as_str()));
-    event.push_attribute(("detail", "a-f-G-U-C"));
-    writer
-        .write_event(Event::Start(event))
-        .map_err(|e| CotError::Xml(e.to_string()))?;
-    String::from_utf8(writer.into_inner().into_inner()).map_err(|e| CotError::Xml(e.to_string()))
+    match form {
+        Form::Event => {
+            let mut point = BytesStart::new("point");
+            point.push_attribute(("lat", latitude.as_str()));
+            point.push_attribute(("lon", longitude.as_str()));
+            point.push_attribute(("hae", altitude.as_str()));
+            point.push_attribute(("ce", UNKNOWN_ERROR));
+            point.push_attribute(("le", UNKNOWN_ERROR));
+            writer.write_event(Event::Start(event)).map_err(xml_error)?;
+            writer.write_event(Event::Empty(point)).map_err(xml_error)?;
+            writer
+                .write_event(Event::Empty(BytesStart::new("detail")))
+                .map_err(xml_error)?;
+            writer
+                .write_event(Event::End(BytesEnd::new("event")))
+                .map_err(xml_error)?;
+        }
+        Form::Flat => {
+            event.push_attribute(("point", "h-e"));
+            event.push_attribute(("lat", latitude.as_str()));
+            event.push_attribute(("lon", longitude.as_str()));
+            event.push_attribute(("hae", altitude.as_str()));
+            event.push_attribute(("detail", "a-f-G-U-C"));
+            writer.write_event(Event::Start(event)).map_err(xml_error)?;
+        }
+    }
+    String::from_utf8(writer.into_inner().into_inner()).map_err(xml_error)
 }
 
 /// The value of `field` as text: a label or number as the decoder wrote it.
@@ -380,15 +410,60 @@ mod tests {
     }
 
     #[test]
-    fn event_element_is_written_attribute_by_attribute() {
+    fn event_form_is_a_complete_event_with_a_point() {
         let xml = event_xml(
-            "uid", "type", "now", "start", "stale", 48.8584, 2.2945, 300.0,
+            Form::Event,
+            "uid",
+            "type",
+            "now",
+            "start",
+            "stale",
+            48.8584,
+            2.2945,
+            300.0,
+        )
+        .unwrap();
+        assert_eq!(
+            xml,
+            r#"<event version="2.0" uid="uid" type="type" time="now" start="start" stale="stale" how="m-g"><point lat="48.8584" lon="2.2945" hae="300" ce="9999999" le="9999999"/><detail/></event>"#
+        );
+    }
+
+    #[test]
+    fn flat_form_is_one_start_tag_with_the_position_as_attributes() {
+        let xml = event_xml(
+            Form::Flat,
+            "uid",
+            "type",
+            "now",
+            "start",
+            "stale",
+            48.8584,
+            2.2945,
+            300.0,
         )
         .unwrap();
         assert_eq!(
             xml,
             r#"<event version="2.0" uid="uid" type="type" time="now" start="start" stale="stale" how="m-g" point="h-e" lat="48.8584" lon="2.2945" hae="300" detail="a-f-G-U-C">"#
         );
+    }
+
+    #[test]
+    fn an_attribute_value_is_escaped() {
+        let xml = event_xml(
+            Form::Event,
+            r#"a"<b>&c"#,
+            "type",
+            "now",
+            "start",
+            "stale",
+            0.0,
+            0.0,
+            0.0,
+        )
+        .unwrap();
+        assert!(xml.contains(r#" uid="a&quot;&lt;b&gt;&amp;c" "#), "{xml}");
     }
 
     #[test]
@@ -404,14 +479,17 @@ mod tests {
         let xml = &event.cot_xml_string;
         assert!(
             xml.starts_with(
-                r#"<event version="2.0" uid="1_1" type="a-f-A" time="2026-03-04T12:00:00+00:00" start="2026-03-04T12:00:00+00:00" stale="2026-03-04T13:00:00+00:00" how="m-g" point="h-e" lat=""#
+                r#"<event version="2.0" uid="1_1" type="a-f-A" time="2026-03-04T12:00:00+00:00" start="2026-03-04T12:00:00+00:00" stale="2026-03-04T13:00:00+00:00" how="m-g"><point lat=""#
             ),
             "{xml}"
         );
         assert!((attribute(xml, "lat") - 48.858_399_998_376_306).abs() < 1e-9);
         assert!((attribute(xml, "lon") - 2.294_499_995_781_851).abs() < 1e-9);
         assert!((attribute(xml, "hae") - 300.000_057_493_336_5).abs() < 1e-4);
-        assert!(xml.ends_with(r#"" detail="a-f-G-U-C">"#), "{xml}");
+        assert!(
+            xml.ends_with(r#"" ce="9999999" le="9999999"/><detail/></event>"#),
+            "{xml}"
+        );
     }
 
     #[test]
@@ -444,11 +522,14 @@ mod tests {
         let xml = event["cot_xml_string"].as_str().unwrap();
         assert!(
             xml.starts_with(
-                r#"<event version="2.0" uid="12_3" type="a-n-A" time="2026-03-04T12:00:00+00:00" start="2026-03-04T12:00:00+00:00" stale="2026-03-04T13:00:00+00:00" how="m-g" point="h-e" lat=""#
+                r#"<event version="2.0" uid="12_3" type="a-n-A" time="2026-03-04T12:00:00+00:00" start="2026-03-04T12:00:00+00:00" stale="2026-03-04T13:00:00+00:00" how="m-g"><point lat=""#
             ),
             "{xml}"
         );
-        assert!(xml.ends_with(r#"" detail="a-f-G-U-C">"#), "{xml}");
+        assert!(
+            xml.ends_with(r#"" ce="9999999" le="9999999"/><detail/></event>"#),
+            "{xml}"
+        );
         assert!((attribute(xml, "lon") + 45.0).abs() < 1e-9);
         // The published object always lists the time before the XML.
         assert!(json.starts_with(r#"{"cot_datetime":"#), "{json}");
@@ -462,6 +543,24 @@ mod tests {
              type: { value: a-f-G }\n\
              position: { geodetic: [latitude, longitude, altitude] }\n\
              stale_minutes: 10\n",
+        );
+        let message = object(json!({
+            "station_id": "KX7", "latitude": "64.8378", "longitude": "-147.7164", "altitude": "136.5",
+        }));
+        assert_eq!(
+            mapping.event(&message, noon()).unwrap().cot_xml_string,
+            r#"<event version="2.0" uid="KX7" type="a-f-G" time="2026-03-04T12:00:00+00:00" start="2026-03-04T12:00:00+00:00" stale="2026-03-04T12:10:00+00:00" how="m-g"><point lat="64.8378" lon="-147.7164" hae="136.5" ce="9999999" le="9999999"/><detail/></event>"#
+        );
+    }
+
+    #[test]
+    fn flat_mapping_writes_what_earlier_releases_wrote() {
+        let mapping = mapping(
+            "uid: [station_id]\n\
+             type: { value: a-f-G }\n\
+             position: { geodetic: [latitude, longitude, altitude] }\n\
+             stale_minutes: 10\n\
+             form: flat\n",
         );
         let message = object(json!({
             "station_id": "KX7", "latitude": "64.8378", "longitude": "-147.7164", "altitude": "136.5",

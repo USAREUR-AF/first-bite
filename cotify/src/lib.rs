@@ -11,4 +11,6 @@ pub mod mapping;
 pub use crate::event::{
     ecef_to_geodetic, event_times, event_xml, record_to_cot, record_to_cot_at, CotError, CotEvent,
 };
-pub use crate::mapping::{EventType, Mapping, MappingError, Position, DEFAULT_STALE_MINUTES};
+pub use crate::mapping::{
+    EventType, Form, Mapping, MappingError, Position, DEFAULT_STALE_MINUTES, UNKNOWN_ERROR,
+};
