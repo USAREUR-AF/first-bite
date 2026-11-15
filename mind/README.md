@@ -1,7 +1,7 @@
 # mind
 
 The `mind` binary: it reads frames from a source, decodes each UDP or TCP
-payload against a dictionary with [`bite`](../bite), and publishes one JSON
+payload against a dictionary with [`bite`](../bite), and publishes one
 record per packet through [`flow`](../flow). The root [README](../README.md)
 lists every option and environment variable.
 

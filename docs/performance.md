@@ -2,22 +2,31 @@
 
 Every figure here was measured by a command in this repository, on one core of
 an AMD Ryzen 7 8845HS (a 2024 laptop-class processor) under Linux, with a
-release build. Run the same commands to get the figures for your hardware.
+release build. The decode and pipeline figures are from 2026-11-15 on the
+code of release 1.1.0, publishing version 2 JSON records, with the machine
+also running other work (load average about 11). Run the same commands to get
+the figures for your hardware.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/performance-dark.svg">
-  <img src="img/performance.svg" width="100%" alt="Three measurements on one core. Decoder throughput on a logarithmic scale: the project's first decoder managed 194 messages per second and the current one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.9 microseconds for the whole pipeline, of which decoding is 0.69. Share of one core by message rate, computed from 2.9 microseconds per packet: 0.3 percent at 1,000 messages per second, 2.9 percent at 10,000 and 29 percent at 100,000.">
+  <img src="img/performance.svg" width="100%" alt="Three measurements on one core. Decoder throughput on a logarithmic scale: the project's first decoder managed 194 messages per second and the rewritten one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.2 microseconds for the whole pipeline, of which decoding is 0.47. Share of one core by message rate, computed from 2.2 microseconds per packet: 0.2 percent at 1,000 messages per second, 2.2 percent at 10,000 and 22 percent at 100,000.">
 </picture>
 
 | What | Result | Command |
 |---|---|---|
-| Decode one message (identify it, extract every field, render the values) | **0.69 µs**: 1.45 million messages, 9.3 million fields per second | `cargo run --release -p bite --example throughput -- dictionaries/weather-station` |
-| The same on CAN-style frames | 0.71 µs: 1.40 million frames per second | `… -- dictionaries/vehicle-can` |
-| Whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the JSON record, publish on ZeroMQ | **2.9 µs**: 340,000 packets per second | `mind --pcap-file load.pcap --dictionary dictionaries/weather-station` on 2,000,000 packets |
-| The same, also writing one log line per record | 145,000 packets per second | as above with `RUST_LOG=warn,mind=info` |
-| Memory while replaying a 145 MB capture | 10.7 MB resident | `/usr/bin/time -f %M` on the same run |
+| Decode one message (identify it, extract every field, render the values) | **0.47 µs**: 2.1 million messages, 13.6 million fields per second | `cargo run --release -p bite --example throughput -- dictionaries/weather-station` |
+| The same on CAN-style frames | 0.55 µs: 1.8 million frames per second (one run, load average about 21) | `… -- dictionaries/vehicle-can` |
+| Whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the record, publish it as JSON on ZeroMQ | **2.2 µs**: 450,000 packets per second, the median of seven runs (421,487 to 466,798) | `mind --pcap-file load.pcap --dictionary dictionaries/weather-station` on 2,000,000 packets |
+| The same, also writing one log line per record | 164,000 packets per second | as above with `RUST_LOG=warn,mind=info` |
+| Memory while replaying a 145 MB capture | 10.9 MB resident | `/usr/bin/time -f %M` on the same run |
 | Live capture on two interfaces at once | 500 of 500 packets decoded, none dropped | `mind lo eno1 --filter "udp port 40100"` |
-| Binary | 16.5 MB, one file, needs only glibc | `tools/build-portable.sh` |
+| `mind`, plain release build | 14.04 MB (14,040,000 bytes, to the nearest 10,000) | `make release` |
+| `mind`, portable build: one file that needs only glibc | 14.67 MB (14,673,768 bytes) | `make portable` (`tools/build-portable.sh` in Ubuntu 20.04) |
+
+The seven pipeline runs gave 448,058, 464,851, 459,722, 450,101, 466,798,
+423,295 and 421,487 frames per second; the median is 450,101, and
+1,000,000 µs / 450,101 = 2.2 µs per packet. Decoding takes 471 ns per message:
+1,000,000,000 / 471 = 2.1 million messages per second.
 
 The load file is the five weather-station vectors repeated:
 
@@ -27,18 +36,18 @@ RUST_LOG=warn,mind=info,mind::run=warn \
     target/release/mind --pcap-file load.pcap --dictionary dictionaries/weather-station
 ```
 
-`mind` prints the rate when a replay ends:
+`mind` prints the rate when a replay ends; the median run:
 
 ```text
 done: 2000000 frames, 2000000 records, 2000000 decoded, 0 not UDP or TCP, 0 malformed
-replayed in 5.851 s: 341844 frames per second
+replayed in 4.443 s: 450101 frames per second
 ```
 
 ## What the numbers mean
 
-At 2.9 µs per packet, a link carrying 1,000 messages per second uses about 0.3%
-of one core, and a record is on the bus about three microseconds after its
-frame is read. The capture runs beside the systems on the link, on a tap or a
+At 2.2 µs per packet, a link carrying 1,000 messages per second uses about 0.2%
+of one core (1,000 × 2.2 µs = 2.2 ms of each second), and a record is on the
+bus about two microseconds after its frame is read. The capture runs beside the systems on the link, on a tap or a
 mirror port, so none of that time is taken from them.
 
 The pipeline is one thread. The cost per packet is fixed by the work listed in
@@ -87,17 +96,19 @@ as shown, median of seven runs each, the runs of the three forms interleaved
 | Version 2 CBOR (`encoding: cbor` on the publisher) | 270,000 (259,000 to 276,000) | 3.7 µs |
 | Version 2 JSON, also writing one log line per record | 164,000 | 6.1 µs |
 
-Memory on the version 2 JSON run: 10.6 MB resident. The default `mind` binary
-is 15.95 MB and has 277 crates in its dependency tree, the same crates as
-before CBOR was added: the codec is part of `flow`.
+The default `mind` binary has 277 crates in its dependency tree, the same
+crates as before CBOR was added: the codec is part of `flow`.
 
 ## What changed from the first implementation
 
 The first decoder in this project looked every field up through a string-keyed
-map and copied the whole dictionary for each field it decoded. On the same
-1,658 recorded messages:
+map and copied the whole dictionary for each field it decoded. Both decoders
+were measured on the same 1,658 recorded messages, averaging 28 fields each,
+when the decoder was rewritten. The rewrite decoded them 200 times over,
+331,600 messages, in 194 ms: 331,600 / 0.194 s = 1,700,000 per second, and
+1,700,000 / 194 = about 8,800 times the first.
 
-| | First implementation | Now |
+| | First implementation | The rewrite |
 |---|---|---|
 | Messages decoded per second, one core | 194 | 1,700,000 |
 | Fields that straddle a byte boundary | returned as null | decoded |

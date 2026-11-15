@@ -19,14 +19,14 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/how-it-works-dark.svg">
-  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
+  <img src="docs/img/how-it-works.svg" width="100%" alt="Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one record of typed values per message, as JSON or CBOR, on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner's own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.">
 </picture>
 
 **first-bite takes binary messages off the wire and hands them, decoded, to
 the software their owner authorises.** It listens on a network tap or a
 switch mirror port, local or tunnelled (ERSPAN, GRE or VXLAN), decodes each
-fixed-layout message against a dictionary, and publishes one JSON record per
-message on a ZeroMQ PUB socket. Sinks forward the records to S3-compatible
+fixed-layout message against a dictionary, and publishes one record per
+message on a ZeroMQ PUB socket: typed values, as JSON by default or CBOR. Sinks forward the records to S3-compatible
 storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
 transform emits Cursor-on-Target. Records stay on the machine until its owner
 configures a destination: the record socket binds loopback by default and no
@@ -46,8 +46,8 @@ are not delayed, blocked or altered, and the link is unaffected if first-bite
 stops. A mirror port leaves forwarding as it was, but the switch does the
 copying and drops mirrored frames first when it is busy; a remote mirror also
 puts the mirrored traffic on the network that carries its tunnel. One core
-handles 340,000 packets per second, so a link carrying 1,000 messages per
-second uses about 0.3% of it.
+handles 450,000 packets per second, so a link carrying 1,000 messages per
+second uses about 0.2% of it.
 
 [Interactive decoder](https://usareur-af.github.io/first-bite/decoder/) ·
 [Documentation](https://usareur-af.github.io/first-bite/) ·
@@ -75,22 +75,24 @@ structures are on the [roadmap](ROADMAP.md).
 
 ## The numbers
 
-Measured on one core of an AMD Ryzen 7 8845HS with a release build;
-[docs/performance.md](docs/performance.md) has the command behind each figure.
+Measured on one core of an AMD Ryzen 7 8845HS with a release build of the
+1.1.0 code, publishing version 2 JSON records, on 2026-11-15 with the machine
+also running other work; [docs/performance.md](docs/performance.md) has the
+command behind each figure.
 
 | | Measured |
 |---|---|
-| Decode one message: identify it, extract every field, render the values | **0.69 µs**: 1.45 million messages, 9.3 million fields per second |
-| Whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the JSON record, publish | **2.9 µs**: 340,000 packets per second |
-| A link carrying 1,000 messages per second | about **0.3%** of one core |
-| Memory while replaying a 145 MB capture | **10.7 MB** resident |
+| Decode one message: identify it, extract every field, render the values | **0.47 µs**: 2.1 million messages, 13.6 million fields per second |
+| Whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the record, publish | **2.2 µs**: 450,000 packets per second |
+| A link carrying 1,000 messages per second | about **0.2%** of one core |
+| Memory while replaying a 145 MB capture | **10.9 MB** resident |
 | Live capture on two interfaces at once | **500 of 500** packets decoded, none dropped |
-| The binary | **16.5 MB**, one file, needs only glibc |
-| This project's first decoder against the current one, same recorded messages | 194 against **1,700,000** messages per second |
+| `mind`, portable build | **14.67 MB**, one file, needs only glibc |
+| This project's first decoder against its rewrite, same recorded messages | 194 against **1,700,000** messages per second |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/performance-dark.svg">
-  <img src="docs/img/performance.svg" width="100%" alt="Three measurements on one core. Decoder throughput on a logarithmic scale: the project&#x27;s first decoder managed 194 messages per second and the current one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.9 microseconds for the whole pipeline, of which decoding is 0.69. Share of one core by message rate, computed from 2.9 microseconds per packet: 0.3 percent at 1,000 messages per second, 2.9 percent at 10,000 and 29 percent at 100,000.">
+  <img src="docs/img/performance.svg" width="100%" alt="Three measurements on one core. Decoder throughput on a logarithmic scale: the project's first decoder managed 194 messages per second and the rewritten one 1,700,000 on the same recorded messages. Time per packet on a linear scale: 2.2 microseconds for the whole pipeline, of which decoding is 0.47. Share of one core by message rate, computed from 2.2 microseconds per packet: 0.2 percent at 1,000 messages per second, 2.2 percent at 10,000 and 22 percent at 100,000.">
 </picture>
 
 ## How it works
@@ -116,7 +118,7 @@ record matters. [docs/record.md](docs/record.md) lists every field.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/one-decode-many-consumers-dark.svg">
-  <img src="docs/img/one-decode-many-consumers.svg" width="100%" alt="Left, point to point: each of four consumers implements the binary interface and holds its own connection to native system A, so there are four parsers and four connections for A to serve. Right, with a tap: first-bite decodes once and publishes, the four consumers subscribe and read JSON, and there is one decoder and no connection to A or B.">
+  <img src="docs/img/one-decode-many-consumers.svg" width="100%" alt="Left, point to point: each of four consumers implements the binary interface and holds its own connection to native system A, so there are four parsers and four connections for A to serve. Right, with a tap: first-bite decodes once and publishes, the four consumers subscribe and read records, and there is one decoder and no connection to A or B.">
 </picture>
 
 ## Try it
@@ -304,7 +306,7 @@ the same fabric.
 
 The decoder takes a payload and, optionally, a frame identifier, and does not
 care where they came from. Decoding CAN-style frames (identifier as the
-discriminator, little-endian `lsb0` signals) is built and measured at 1.40
+discriminator, little-endian `lsb0` signals) is built and measured at 1.8
 million frames per second with [`dictionaries/vehicle-can`](dictionaries/vehicle-can).
 A SocketCAN capture source is designed, not built; sources for other buses are
 not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.

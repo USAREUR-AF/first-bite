@@ -33,11 +33,11 @@
   <div class="lockup"><img src="../../icon/first-bite-dark.svg" alt=""><div><b>first-bite</b><span>the first bite of every byte,<br>before it reaches its addressee</span></div></div>
   <p class="kicker">Technical brief</p>
   <h1>Binary messages off the wire, decoded and published, without touching the link</h1>
-  <p class="lede">first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to the destinations its owner configures. It never transmits on the link it listens to.</p>
+  <p class="lede">first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a record of typed values, JSON by default, to the destinations its owner configures. It never transmits on the link it listens to.</p>
   <figure><img src="../img/how-it-works.svg" alt="The link is copied by a tap or a mirror port; first-bite decodes the copy and publishes it."></figure>
   <div class="numbers">
-    <div><b>340,000 / s</b><span>packets through the whole pipeline on one core</span></div>
-    <div><b>0.3%</b><span>of one core for a link carrying 1,000 messages per second</span></div>
+    <div><b>450,000 / s</b><span>packets through the whole pipeline on one core</span></div>
+    <div><b>0.2%</b><span>of one core for a link carrying 1,000 messages per second</span></div>
     <div><b>0</b><span>frames sent on the capture interface</span></div>
   </div>
   <div class="meta"><span>Open source, Apache License 2.0</span><span>github.com/USAREUR-AF/first-bite</span></div>
@@ -63,8 +63,8 @@
       <h2>What a tap and one decoder change</h2>
       <ul>
         <li><strong>The native systems are not touched.</strong> No new peer, no configuration change, no added load. The copy is taken from the link.</li>
-        <li><strong>The interface document becomes maintainable data.</strong> A dictionary of JSON files holds every bit range and label, versioned and tested, so developers read and maintain it like code (page 5).</li>
-        <li><strong>Consumers read JSON from a socket</strong>, or from storage, an HTTP endpoint or a data fabric. Adding the tenth consumer costs the native systems what adding the first did: nothing.</li>
+        <li><strong>The interface document becomes maintainable data.</strong> A dictionary of JSON files holds every bit range and label, versioned and tested, so developers read and maintain it like code (page 6).</li>
+        <li><strong>Consumers read records, as JSON or CBOR</strong>, from a socket on the host, or from storage, an HTTP endpoint or a data fabric. Adding the tenth consumer costs the native systems what adding the first did: nothing.</li>
       </ul>
       <p>first-bite was built so that the owners of a tactical local network could read its traffic, which until then was visible only to the systems exchanging it.</p>
     </div>
@@ -86,7 +86,7 @@
   <div class="cols c3">
     <div class="step"><i>1</i><p><strong>Capture.</strong> libpcap on one or more interfaces, with an optional kernel filter. A tunnelled mirror is unwrapped first.</p></div>
     <div class="step"><i>2</i><p><strong>Decode.</strong> Find the interface by port and the message by its type field, then extract every field the dictionary names.</p></div>
-    <div class="step"><i>3</i><p><strong>Publish.</strong> One JSON record per packet on a ZeroMQ PUB socket, under the topic <code>interface/message</code>.</p></div>
+    <div class="step"><i>3</i><p><strong>Publish.</strong> One record per packet on a ZeroMQ PUB socket, under the topic <code>interface/message</code>: typed values, as JSON or CBOR.</p></div>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
@@ -181,25 +181,25 @@
 <section class="page">
   <p class="kicker">5. Performance</p>
   <h1>One core is far more than a link needs</h1>
-  <p class="lede">The whole pipeline takes 2.9 microseconds per packet on one core, so the decoder is not what limits a deployment. Every figure below was produced by a command in the repository and can be reproduced on your hardware.</p>
+  <p class="lede">The whole pipeline takes 2.2 microseconds per packet on one core, so the decoder is not what limits a deployment. Every figure below was produced by a command in the repository and can be reproduced on your hardware.</p>
   <figure><img src="../img/performance.svg" alt="Decoder throughput, time per packet and share of one core."></figure>
   <div class="cols c32">
     <div>
       <h2>Measured</h2>
       <table>
-        <tr><td class="num">0.69 µs</td><td>to decode one message: 1.45 million messages, 9.3 million fields per second</td></tr>
-        <tr><td class="num">2.9 µs</td><td>for the whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the JSON record, publish. 340,000 packets per second, over 2,000,000 packets</td></tr>
-        <tr><td class="num">10.7 MB</td><td>resident memory while replaying a 145 MB capture</td></tr>
+        <tr><td class="num">0.47 µs</td><td>to decode one message: 2.1 million messages, 13.6 million fields per second</td></tr>
+        <tr><td class="num">2.2 µs</td><td>for the whole pipeline: read a frame, parse Ethernet/IP/UDP, decode, build the record, publish it as JSON. 450,000 packets per second, the median of seven runs over 2,000,000 packets</td></tr>
+        <tr><td class="num">10.9 MB</td><td>resident memory while replaying a 145 MB capture</td></tr>
         <tr><td class="num">500 of 500</td><td>packets decoded in live capture on two interfaces at once, none dropped</td></tr>
-        <tr><td class="num">194 to 1,700,000</td><td>messages per second: this project's first decoder against the current one, on the same 1,658 recorded messages</td></tr>
+        <tr><td class="num">194 to 1,700,000</td><td>messages per second: this project's first decoder against its rewrite, on the same 1,658 recorded messages</td></tr>
       </table>
     </div>
     <div>
       <h2>How</h2>
-      <p>One core of an AMD Ryzen 7 8845HS, a 2024 laptop-class processor, under Linux, with a release build. The load is the weather-station vectors repeated; the pipeline is one thread.</p>
+      <p>One core of an AMD Ryzen 7 8845HS, a 2024 laptop-class processor, under Linux, with a release build of the 1.1.0 code on 2026-11-15, the machine also running other work. The load is the weather-station vectors repeated; the pipeline is one thread.</p>
       <p>The cost per packet does not grow with the dictionary: the interface and the message are each one hash lookup.</p>
       <h2>Not measured</h2>
-      <p>Live capture at high packet rates on a physical tap, where the network card, the kernel buffer and the sinks set the limit. The loss counters on page 8 show when one of them does.</p>
+      <p>Live capture at high packet rates on a physical tap, where the network card, the kernel buffer and the sinks set the limit. The loss counters on page 9 show when one of them does.</p>
     </div>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
@@ -209,16 +209,16 @@
 <section class="page">
   <p class="kicker">6. One decode, many consumers</p>
   <h1>Decoded once, delivered wherever it is needed</h1>
-  <p class="lede">Records leave first-bite on a ZeroMQ PUB socket. A consumer subscribes to the topics it wants, or reads what a sink forwarded. Adding a consumer changes nothing on the tapped link and nothing in the decoder.</p>
+  <p class="lede">A consumer on the host subscribes to the record socket, or reads what a sink forwarded. Adding one changes nothing on the tapped link or in the decoder.</p>
   <div class="cols c2">
     <div>
       <h2>Where records can go</h2>
       <table>
         <tr><th>Destination</th><th>How</th><th>Status</th></tr>
         <tr><td>A ZeroMQ subscriber on the same host</td><td>SUB socket with a topic filter; the socket binds loopback by default</td><td class="st b">built</td></tr>
-        <tr><td>S3-compatible or Azure Blob storage</td><td>sink</td><td class="st b">built</td></tr>
-        <tr><td>HTTP endpoint</td><td>sink, one POST per record</td><td class="st b">built</td></tr>
-        <tr><td>Any Zenoh router</td><td>sink, one key per interface and message</td><td class="st b">built</td></tr>
+        <tr><td>S3-compatible or Azure Blob storage</td><td>sink, over HTTPS</td><td class="st b">built</td></tr>
+        <tr><td>HTTPS endpoint</td><td>sink, one POST per record</td><td class="st b">built</td></tr>
+        <tr><td>A Zenoh router</td><td>sink over TLS or QUIC, one key per interface and message</td><td class="st b">built</td></tr>
         <tr><td>Local file</td><td>sink</td><td class="st b">built</td></tr>
         <tr><td>Cursor-on-Target</td><td>transform from a field mapping, on its own socket</td><td class="st b">built</td></tr>
       </table>
@@ -227,6 +227,8 @@
       <h2>On a goat data fabric (optional, off by default)</h2>
       <p>goat is the data fabric: the network, the certificate authority, the Zenoh routers and their access rules. first-bite is not another fabric or another way to manage data. Built with the <code>goat</code> feature, it is one of the ways data gets onto a goat fabric, under a certificate the goatnet issued. Without goat it runs as the rest of this brief describes.</p>
       <p><span class="st b">Built:</span> configuration from an onboarding archive, certificate checks, records, a schema declaration per key, an announcement and a heartbeat. <span class="st b">Measured:</span> the whole path against a stock Zenoh 1.9.0 router configured as goat configures one. <span class="st n">Not built:</span> a run against a real goatnet.</p>
+      <h2>The record</h2>
+      <p>Values are typed: numbers and booleans, not text. The socket and each sink write JSON by default or CBOR, set by <code>encoding</code>. One <code>security</code> block states the level every path is held to.</p>
     </div>
   </div>
   <figure><img src="../img/on-a-goat-fabric.svg" alt="first-bite as a publisher on a goat data fabric, what each is responsible for, and the same decoder without goat."></figure>
@@ -237,7 +239,7 @@
 <section class="page">
   <p class="kicker">7. Deployment</p>
   <h1>One archive beside the link, and nothing to install first</h1>
-  <p class="lede">A deployment is a tap or a mirror session, a small host with one or two spare network interfaces, the 16.5 MB <code>mind</code> binary and a dictionary. The binary carries libpcap and ZeroMQ inside it, so the target needs no package installed.</p>
+  <p class="lede">A deployment is a tap or a mirror session, a small host with one or two spare network interfaces, the 14.67 MB portable <code>mind</code> binary and a dictionary. The binary carries libpcap and ZeroMQ inside it, so the target needs no package installed.</p>
   <figure><img src="../img/platforms.svg" alt="Where first-bite runs: the standard and self-contained Linux builds, other platforms, the container, the decoder library and the offline build."></figure>
   <div class="cols c2">
     <div>
@@ -268,21 +270,21 @@ $ sudo deployment/install.sh \
         <tr><td>by interface</td><td>card or driver discarded frames</td><td>raise the receive ring</td></tr>
         <tr><td>in queue</td><td>pipeline behind; a sink is blocking</td><td>check the sink</td></tr>
       </table>
-      <p>The record socket binds loopback by default. To serve other hosts, bind it to an address on a network you trust, never to a capture interface.</p>
+      <p>The record socket binds loopback by default. Other hosts read through the Zenoh or HTTPS sinks, never from the socket.</p>
     </div>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
 
 <!-- 9 -->
-<section class="page">
+<section class="page trust">
   <p class="kicker">8. Trust</p>
   <h1>What you can verify before it goes near a network</h1>
   <p class="lede">Putting a new box beside an operational link is a decision about risk. These are the properties that bound it, and where to check each one.</p>
   <div class="cols c2">
     <div class="card">
       <h2>It listens only</h2>
-      <p>The capture path opens interfaces for reading and has no code that sends on them. On a passive tap the monitor ports have no path back to the link, whatever the software does; a mirror port relies on the switch.</p>
+      <p>The capture path opens interfaces for reading and has no code that sends on them. On a passive tap the monitor ports have no path back to the link; a mirror port relies on the switch.</p>
       <p>Check: <code>mind/src/source.rs</code>; <code>docs/tap.md</code>.</p>
     </div>
     <div class="card">
@@ -291,9 +293,9 @@ $ sudo deployment/install.sh \
       <p>Check: <code>deployment/first-bite.service</code>.</p>
     </div>
     <div class="card">
-      <h2>The record socket is yours to place</h2>
-      <p>The ZeroMQ socket is unauthenticated and unencrypted, so it binds <code>127.0.0.1</code> by default. Access control and encryption come from the transport you forward to: the Zenoh sink joins a fabric with the TLS certificate the fabric issued to it.</p>
-      <p>Check: <code>docs/deployment.md</code>, "The record socket".</p>
+      <h2>You state how records may leave</h2>
+      <p>The record socket is plaintext and unauthenticated and binds loopback by default; other hosts read through the Zenoh or HTTPS sinks. A <code>security</code> block sets the level every path is held to: TLS or mutual TLS, minimum TLS version, hybrid post-quantum key exchange, the FIPS module, QUIC. Under it <code>mind</code> refuses to start when a path cannot meet the level, and refuses the socket off loopback.</p>
+      <p>Check: <code>mind security show</code>; <code>docs/security/transport.md</code>.</p>
     </div>
     <div class="card">
       <h2>The build is checked and traceable</h2>
@@ -307,7 +309,7 @@ $ sudo deployment/install.sh \
     </div>
     <div class="card">
       <h2>The licence is Apache-2.0</h2>
-      <p>Use, modify and redistribute it, including inside a closed system. The repository holds the decoder, the pipeline, the sinks and three synthetic example dictionaries.</p>
+      <p>Use, modify and redistribute it, including inside a closed system. The repository holds the decoder, the pipeline, the sinks and four example dictionaries.</p>
       <p>It holds no dictionary for a restricted message set, no capture of real traffic and no identifier of a real deployment; a gate in CI refuses them.</p>
     </div>
   </div>

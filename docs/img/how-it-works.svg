@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 500" width="760" height="500" role="img" aria-labelledby="how-it-works-title how-it-works-desc" aria-label="The link is copied; first-bite decodes the copy and publishes it">
 <title id="how-it-works-title">The link is copied; first-bite decodes the copy and publishes it</title>
-<desc id="how-it-works-desc">Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one JSON record per message on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner&#x27;s own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.</desc>
+<desc id="how-it-works-desc">Two native systems exchange binary messages on a link. A tap or a switch mirror port sends a copy of every frame one way to first-bite, which captures it, decodes it against a dictionary of JSON files and publishes one record of typed values per message, as JSON or CBOR, on a ZeroMQ PUB socket. Object storage, an HTTP endpoint, a Zenoh data fabric, a Cursor-on-Target transform and a subscriber of the owner&#x27;s own read the records. Nothing is sent back to the link, so the native systems are not delayed, blocked or altered.</desc>
 <style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
 <rect class="bg" x="0.5" y="0.5" width="759" height="499" rx="12"/>
 <text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">The link is copied; first-bite decodes the copy and publishes it</text>
@@ -33,21 +33,21 @@
 <text x="266" y="238.9" font-size="13" text-anchor="middle" class="q">interface or file</text>
 <rect x="380" y="196" width="152" height="58" rx="8" class="bx"/>
 <text x="456" y="220.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Decode</text>
-<text x="456" y="238.9" font-size="13" text-anchor="middle" class="q">every field, 0.69 µs</text>
+<text x="456" y="238.9" font-size="13" text-anchor="middle" class="q">every field, 0.47 µs</text>
 <rect x="576" y="196" width="128" height="58" rx="8" class="bx"/>
 <text x="640" y="220.5" font-size="15" font-weight="700" text-anchor="middle" class="t">Publish</text>
-<text x="640" y="238.9" font-size="13" text-anchor="middle" class="q">JSON record</text>
+<text x="640" y="238.9" font-size="13" text-anchor="middle" class="q">typed record</text>
 <path d="M336 225L371 225" class="lna"/><path d="M380 225L370 230L370 220z" class="fa"/>
 <path d="M532 225L567 225" class="lna"/><path d="M576 225L566 230L566 220z" class="fa"/>
 <rect x="380" y="280" width="152" height="50" rx="8" class="bxd"/>
 <text x="456" y="300.2" font-size="14" font-weight="700" text-anchor="middle" class="t">Dictionary</text>
 <text x="456" y="318.4" font-size="13" text-anchor="middle" class="q">JSON files, not code</text>
 <path d="M456 280L456 263" class="lnd"/><path d="M456 254L461 264L451 264z" class="fl"/>
-<text x="56" y="296" font-size="26" font-weight="700" class="a">340,000</text>
+<text x="56" y="296" font-size="26" font-weight="700" class="a">450,000</text>
 <text x="56" y="316" font-size="13" class="q">packets per second on one core</text>
 <path d="M640 254L640 361" class="lna"/><path d="M640 370L635 360L645 360z" class="fa"/>
 <rect x="40" y="370" width="680" height="34" rx="8" class="bxp"/>
-<text x="380" y="391.2" font-size="14" font-weight="700" text-anchor="middle" class="t">ZeroMQ PUB socket: one JSON record per message</text>
+<text x="380" y="391.2" font-size="14" font-weight="700" text-anchor="middle" class="t">ZeroMQ PUB socket: one record per message, JSON or CBOR</text>
 <path d="M105 404L105 423" class="lna"/><path d="M105 432L100 422L110 422z" class="fa"/>
 <rect x="40" y="432" width="130" height="52" rx="8" class="bx"/>
 <text x="105" y="452.9" font-size="13" font-weight="700" text-anchor="middle" class="t">Object storage</text>
