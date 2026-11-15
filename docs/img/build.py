@@ -86,11 +86,13 @@ def thousands(v):
 
 
 class Fig:
-    def __init__(self, name, title, desc, height):
+    def __init__(self, name, title, desc, height, show_title=True):
+        """show_title=False: a large-type figure whose own headings carry the message."""
         self.name, self.title, self.desc, self.h = name, title, desc, height
         self.out = []
         self.out.append(f'<rect class="bg" x="0.5" y="0.5" width="{W - 1}" height="{height - 1}" rx="12"/>')
-        self.text(24, 38, title, 18, bold=True, role="title")
+        if show_title:
+            self.text(24, 38, title, 18, bold=True, role="title")
 
     # -- text ---------------------------------------------------------------
     def text(self, x, y, s, size=13, bold=False, cls="t", anchor="start", mono=False,
@@ -995,9 +997,62 @@ def quality_gates():
     return f
 
 
+# ---------------------------------------------------------------------------
+# Large-type figures for the opening page of the brief: they must read on a phone.
+# ---------------------------------------------------------------------------
+def locked_to_open():
+    f = Fig("locked-to-open", "A copy of a private link becomes values anyone can use",
+            "Today two machines exchange bytes in a private format and nobody else can read them. With "
+            "first-bite the same two machines carry on unchanged; a one-way copy of their traffic goes to "
+            "first-bite, which listens and never sends, and turns each message into named values such as "
+            "station KX7, temperature -12.34 and pressure 101325, for any software to read.",
+            330, show_title=False)
+    f.text(24, 36, "Today: only two machines can read the data", 22, True, "t", role="note")
+    f.box(24, 50, 140, 52, [("Machine A", 20, True, "t")], pad=6)
+    f.box(284, 50, 140, 52, [("Machine B", 20, True, "t")], pad=6)
+    f.line([(164, 76), (284, 76)], "lnk", nohead=True)
+    f.text(450, 72, "02 00 17 4b 58 37 00 fb", 20, False, "q", mono=True)
+    f.text(450, 98, "private bytes, unreadable", 20, False, "w")
+    f.line([(24, 120), (736, 120)], "lnr")
+    f.text(24, 154, "With first-bite: a copy becomes values anyone can use", 22, True, "a", role="note")
+    f.box(24, 170, 140, 52, [("Machine A", 20, True, "t")], pad=6)
+    f.box(284, 170, 140, 52, [("Machine B", 20, True, "t")], pad=6)
+    f.line([(164, 196), (284, 196)], "lnk", nohead=True)
+    f.disc(224, 196, 7, "fa")
+    f.line([(224, 196), (224, 252)], "lna", head="fa")
+    f.text(238, 244, "one-way copy", 20, False, "q")
+    f.box(84, 252, 280, 62, [("first-bite", 24, True, "a"), ("listens, never sends", 20, False, "q")], "bxa", pad=6)
+    f.line([(364, 284), (450, 284)], "lna", head="fa")
+    f.rect(450, 170, 286, 144, "bx", 8)
+    f.text(468, 198, "Named values", 20, True, "t")
+    for k, ln in enumerate(("station KX7", "temperature -12.34", "pressure 101325")):
+        f.text(468, 224 + k * 24, ln, 20, False, "t", mono=True, maxw=258)
+    f.text(468, 302, "for any software to read", 20, False, "g", maxw=258)
+    return f
+
+
+def where_it_fits():
+    f = Fig("where-it-fits", "first-bite brings old systems onto the goat data fabric",
+            "Old systems, unchanged, are read by first-bite, which publishes onto the goat data fabric. New "
+            "systems join the fabric directly. People and programs use the data from the fabric. first-bite "
+            "also runs with no goat at all.", 212, show_title=False)
+    f.box(416, 16, 176, 48, [("New systems", 22, True, "t")], pad=6)
+    f.line([(504, 64), (504, 92)], "ln", head="fl")
+    f.text(606, 47, "join directly", 20, False, "q")
+    f.box(24, 92, 166, 78, [("Old systems", 22, True, "t"), ("unchanged", 20, False, "q")], pad=6)
+    f.line([(190, 131), (226, 131)], "lna", head="fa")
+    f.box(226, 92, 154, 78, [("first-bite", 22, True, "a"), ("listens", 20, False, "q")], "bxa", pad=6)
+    f.line([(380, 131), (416, 131)], "lna", head="fa")
+    f.box(416, 92, 176, 78, [("goat", 24, True, "t"), ("data fabric", 20, False, "q")], "bxp", pad=6)
+    f.line([(592, 131), (628, 131)], "ln", head="fl")
+    f.box(628, 92, 108, 78, [("People,", 20, True, "t"), ("programs", 20, True, "t")], pad=4)
+    f.text(24, 198, "Without goat, first-bite still runs on its own.", 20, False, "q", role="note")
+    return f
+
+
 FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
            record_flow, loss_counters, ways_onto_the_fabric, on_a_goat_fabric, icd_to_dictionary,
-           icd_pipeline, bit_numbering, quality_gates]
+           icd_pipeline, bit_numbering, quality_gates, locked_to_open, where_it_fits]
 
 
 def main():

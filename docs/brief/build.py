@@ -4,7 +4,7 @@
     python3 docs/brief/build.py
 
 Chrome or Chromium is found from $CHROME, then the usual install paths and
-names. The script fails unless the PDF has exactly ten A4 pages (checked with
+names. The script fails unless the PDF has exactly eleven A4 pages (checked with
 pdfinfo when it is installed).
 """
 import os
@@ -16,7 +16,7 @@ import sys
 import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
-PAGES = 10
+PAGES = 11
 CANDIDATES = [
     os.environ.get("CHROME", ""),
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
