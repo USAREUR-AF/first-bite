@@ -1,6 +1,9 @@
 # first-bite
 
-![first-bite](./icon/first-bite.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./icon/first-bite-wordmark-dark.svg">
+  <img alt="first-bite: the first bite of every byte, before it reaches its addressee" src="./icon/first-bite-wordmark-light.svg" width="520">
+</picture>
 
 first-bite reads frames off a wire, decodes fixed-layout binary messages
 against a dictionary, and publishes each decoded message as a JSON record. The
