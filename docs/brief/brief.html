@@ -11,18 +11,19 @@
 <!-- opening page -->
 <section class="page open">
   <p class="kicker">first-bite on one page</p>
-  <h1>Old systems talk in private. <span class="nb">first-bite</span> lets everyone else listen.</h1>
+  <h1>Old systems speak a private language. <span class="nb">first-bite</span> makes it readable to those you authorise.</h1>
   <p class="big">Important equipment talks in private formats that only the two machines on a link understand. The meaning is locked in thick documents and old code, so nobody else sees the data, and any change is slow and risky.</p>
-  <figure><img src="../img/locked-to-open.svg" alt="Today only two machines can read the data. With first-bite a one-way copy becomes named values anyone can use."></figure>
-  <p class="big"><strong><span class="nb">first-bite</span> listens to a copy of that traffic</strong> and turns each message into named values any software can read. It touches nothing and never sends. One small program on one laptop-class core handles 340,000 packets a second.</p>
+  <figure><img src="../img/locked-to-open.svg" alt="Today only two machines can read the data. With first-bite a one-way copy becomes named values for the software the owner authorises."></figure>
+  <p class="big"><strong><span class="nb">first-bite</span> listens to a copy of that traffic</strong> and turns each message into named values. It is one small program that runs on your network and never sends on the link.</p>
   <div class="why">
     <div><b>See what a system really says</b><span>every message, every value, by name</span></div>
     <div><b>Prove old and new agree</b><span>read both during a migration and compare</span></div>
     <div><b>Add new uses, change nothing</b><span>the certified system is not touched</span></div>
     <div><b>A format you can maintain</b><span>data, not a 500-page document and old code</span></div>
+    <div class="wide"><b>You decide who reads it</b><span>nothing leaves the machine until you name a destination; a goat fabric admits by certificate</span></div>
   </div>
-  <figure><img src="../img/where-it-fits.svg" alt="Old systems, unchanged, reach the goat data fabric through first-bite; new systems join it directly; people and programs use the data."></figure>
-  <p class="big"><strong><span class="nb">first-bite</span> is part of GOAT.</strong> goat is the data fabric where new systems share data; <span class="nb">first-bite</span> is how old systems get onto it without being changed.</p>
+  <figure><img src="../img/where-it-fits.svg" alt="Old systems, unchanged, reach the goat data fabric through first-bite; new systems join it directly; people and programs with access use the data."></figure>
+  <p class="big"><strong><span class="nb">first-bite</span> is part of GOAT.</strong> goat is the data fabric where new systems share data; <span class="nb">first-bite</span> is how old systems get onto it, unchanged.</p>
   <p class="next">The rest of this brief: how it works, from interface document to format description, performance, security.</p>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
 </section>
@@ -32,7 +33,7 @@
   <div class="lockup"><img src="../../icon/first-bite-dark.svg" alt=""><div><b>first-bite</b><span>the first bite of every byte,<br>before it reaches its addressee</span></div></div>
   <p class="kicker">Technical brief</p>
   <h1>Binary messages off the wire, decoded and published, without touching the link</h1>
-  <p class="lede">first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to anyone who subscribes. It never transmits on the link it listens to.</p>
+  <p class="lede">first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a JSON record to the destinations its owner configures. It never transmits on the link it listens to.</p>
   <figure><img src="../img/how-it-works.svg" alt="The link is copied by a tap or a mirror port; first-bite decodes the copy and publishes it."></figure>
   <div class="numbers">
     <div><b>340,000 / s</b><span>packets through the whole pipeline on one core</span></div>
@@ -46,7 +47,7 @@
 <section class="page">
   <p class="kicker">1. The problem</p>
   <h1>The data is on the wire, and only two systems can read it</h1>
-  <p class="lede">A fixed-layout binary interface is built for the two systems at its ends. Everyone else who needs the data has to become a third end, and each one that does adds work for the native system and risk to the link.</p>
+  <p class="lede">A fixed-layout binary interface is built for the two systems at its ends. Every other system that needs the data has to become a third end, and each one that does adds work for the native system and risk to the link.</p>
   <figure><img src="../img/one-decode-many-consumers.svg" alt="Point-to-point integrations against one tap with publish and subscribe."><figcaption><b>Four consumers, two ways.</b> Left: each implements the binary interface and connects to a native system. Right: a tap, one decode, and consumers that read JSON.</figcaption></figure>
   <div class="cols c2">
     <div>
@@ -65,7 +66,7 @@
         <li><strong>The interface document becomes maintainable data.</strong> A dictionary of JSON files holds every bit range and label, versioned and tested, so developers read and maintain it like code (page 5).</li>
         <li><strong>Consumers read JSON from a socket</strong>, or from storage, an HTTP endpoint or a data fabric. Adding the tenth consumer costs the native systems what adding the first did: nothing.</li>
       </ul>
-      <p>first-bite was built to open up the traffic of a tactical local network that until then was visible only to the systems exchanging it.</p>
+      <p>first-bite was built so that the owners of a tactical local network could read its traffic, which until then was visible only to the systems exchanging it.</p>
     </div>
   </div>
   <div class="run"><img src="../../icon/first-bite-light.svg" alt=""><b>first-bite</b><span>technical brief</span><span class="n"></span></div>
@@ -214,7 +215,7 @@
       <h2>Where records can go</h2>
       <table>
         <tr><th>Destination</th><th>How</th><th>Status</th></tr>
-        <tr><td>Any ZeroMQ subscriber</td><td>SUB socket with a topic filter</td><td class="st b">built</td></tr>
+        <tr><td>A ZeroMQ subscriber on the same host</td><td>SUB socket with a topic filter; the socket binds loopback by default</td><td class="st b">built</td></tr>
         <tr><td>S3-compatible or Azure Blob storage</td><td>sink</td><td class="st b">built</td></tr>
         <tr><td>HTTP endpoint</td><td>sink, one POST per record</td><td class="st b">built</td></tr>
         <tr><td>Any Zenoh router</td><td>sink, one key per interface and message</td><td class="st b">built</td></tr>

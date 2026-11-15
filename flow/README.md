@@ -6,7 +6,7 @@ republish them.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../docs/img/record-flow-dark.svg">
-  <img src="../docs/img/record-flow.svg" width="100%" alt="mind hands each record to the publishers, a ZeroMQ PUB socket on tcp://127.0.0.1:12000 by default. A subscriber reads the socket, keeps the records on its topics and forwards each to one sink: object storage, HTTP, a local file or Zenoh. A subpub reads the socket the same way, transforms each record into Cursor-on-Target and publishes the result on a socket of its own, tcp://127.0.0.1:12001 by default. Any other ZeroMQ SUB socket can read either socket.">
+  <img src="../docs/img/record-flow.svg" width="100%" alt="mind hands each record to the publishers, a ZeroMQ PUB socket on tcp://127.0.0.1:12000 by default. A subscriber reads the socket, keeps the records on its topics and forwards each to one sink: object storage, HTTP, a local file or Zenoh. A subpub reads the socket the same way, transforms each record into Cursor-on-Target and publishes the result on a socket of its own, tcp://127.0.0.1:12001 by default. Both sockets bind this host only by default; a ZeroMQ SUB socket of your own can read either.">
 </picture>
 
 | Step | What | Where |
