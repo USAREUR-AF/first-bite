@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 256" width="760" height="256" role="img" aria-labelledby="t d">
+  <title id="t">first-bite: the first bite of every byte</title>
+  <desc id="d">The first-bite mark, two fangs biting into a byte on a wire, beside the name and the line "the first bite of every byte, before it reaches its addressee".</desc>
+  <rect width="760" height="256" rx="56" fill="#10161f"/>
+  <path d="M14 158 H24 M232 158 H236" fill="none" stroke="#6f8196" stroke-width="5" stroke-linecap="round"/>
+  <path d="M234 148 L250 158 L234 168 Z" fill="#6f8196"/>
+  <g stroke="#9db0c6" stroke-width="3">
+    <rect x="27.5"  y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="53.5"  y="146.5" width="21" height="23" rx="4" fill="#9db0c6"/>
+    <rect x="79.5"  y="146.5" width="21" height="23" rx="4" fill="#9db0c6"/>
+    <rect x="105.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="131.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="157.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="183.5" y="146.5" width="21" height="23" rx="4" fill="#9db0c6"/>
+    <rect x="209.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+  </g>
+  <path d="M30 58 Q128 116 226 58" fill="none" stroke="#f4f6f9" stroke-width="15" stroke-linecap="round"/>
+  <path d="M64 84 Q92 99 116 97 Q106 136 90 166 Q73 126 64 84 Z" fill="#f4f6f9" stroke="#10161f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M192 84 Q164 99 140 97 Q150 136 166 166 Q183 126 192 84 Z" fill="#f4f6f9" stroke="#10161f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M166 186 C166 186 152 206 152 216 a14 14 0 0 0 28 0 C180 206 166 186 166 186 Z" fill="#f04438"/>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+    <text x="292" y="128" font-size="84" font-weight="700" fill="#f4f6f9" letter-spacing="-2">first-bite</text>
+    <text x="296" y="172" font-size="25" fill="#9db0c6">the first bite of every byte,</text>
+    <text x="296" y="204" font-size="25" fill="#9db0c6">before it reaches its addressee</text>
+  </g>
+</svg>
