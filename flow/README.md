@@ -57,6 +57,7 @@ module in `src/sink/` and an arm there.
 | `sink::zenoh` | Zenoh put | `zenoh` |
 | `goat::sink` | Zenoh put on a goat data fabric, with goat's identity, key and announcement conventions; optional and off by default ([docs/goat/joining.md](../docs/goat/joining.md)) | `goat` |
 | `sink::rest` | HTTP POST | always built |
+| `sink::network` | UDP datagrams and TCP streams, optionally inside TLS; Cursor-on-Target to a TAK server with a `cot:` mapping | always built |
 | `sink::local_log` | local file: one JSON record per line, or a CBOR sequence | always built |
 | `sink::message_rates` | per-topic counts | always built |
 

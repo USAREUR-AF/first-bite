@@ -89,8 +89,8 @@ and its health record on `ops/<node-handle>/health`
 Both can make Cursor-on-Target events from the same track message, and the
 events differ, so a display fed by both shows two markers for one track.
 On a node that runs Open Billie for a sensor, leave first-bite's transform for
-that sensor's track message off. It is off unless `mind` is started with
-`--activate-subpubs` and a subpub names the message.
+that sensor's track message off. It is off unless a subscriber or a subpub
+carries a `cot:` mapping for the message.
 
 | Attribute | first-bite ([`cotify`](../cotify/README.md)) | Open Billie (`runtime/rust/translator/src/cot.rs`, `request.rs`) |
 |---|---|---|
@@ -102,7 +102,7 @@ that sensor's track message off. It is off unless `mind` is started with
 | `<point>` | `lat`, `lon`, `hae` from the mapping; `ce` and `le` `9999999` | `lat`, `lon`, `hae`; `ce` and `le` from the track's position uncertainty, else `9999999` |
 | `<detail>` | empty | `<track course speed>` when velocity is present; `<remarks>` with status tokens |
 | simulated or test data | not marked | `opex="s"` |
-| Where it goes | a ZeroMQ PUB socket, as `{"cot_datetime", "cot_xml_string"}` | the fabric, as `application/xml` |
+| Where it goes | to a TAK server over TCP or TLS, or to TAK clients over UDP, from a `udp` or `tcp` subscriber ([cot-to-tak.md](cot-to-tak.md)); or a ZeroMQ PUB socket, as `{"cot_datetime", "cot_xml_string"}`, from a subpub | the fabric, as `application/xml` |
 
 A first-bite mapping can be brought close to Open Billie's timing with
 `stale_minutes: 3`. The identifier and the type cannot be made identical by
@@ -274,6 +274,7 @@ first-bite dictionary describe the same thing:
 |---|---|
 | first-bite beside Open Billie or octo-pod without contending for the sensor or for keys | designed; follows from each one's code, not measured together |
 | complete CoT 2.0 events from first-bite (`form: event`) | built |
+| those events delivered to a TAK server (TCP, TLS with a client certificate) or to TAK clients (UDP, multicast) | built; measured against listeners on one machine, not against a TAK server |
 | first-bite records to the fabric through an Open Billie node's local router | designed, not measured |
 | a kid that decodes with `bite` and a dictionary | built; measured in containers; not measured on a provisioned node |
 | first-bite publishing into an octo-pod as a peer, under the pod's certificate, release gate and audit | designed, not measured |

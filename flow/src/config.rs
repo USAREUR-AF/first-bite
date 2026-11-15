@@ -96,8 +96,16 @@ pub struct SubscriberConfig {
     pub zenoh_config: Option<String>,
     /// Key expression each record is put on, with `{placeholders}`.
     pub key_template: Option<String>,
-    /// Field mapping for the Cursor-on-Target transform of a subpub.
+    /// Field mapping for Cursor-on-Target: the transform of a subpub, or
+    /// what a `udp` or `tcp` subscriber sends in place of the record.
     pub cot: Option<cotify::Mapping>,
+    // Network: `udp` and `tcp`
+    /// Where each payload is sent.
+    pub destinations: Option<Vec<crate::sink::network::DestinationConfig>>,
+    /// TLS for a `tcp` subscriber.
+    pub tls: Option<crate::sink::network::TlsConfig>,
+    /// `tcp`: payloads held per destination while its connection is down.
+    pub queue: Option<usize>,
     /// Where this sink differs from the security block.
     pub security: Option<crate::security::SinkOverride>,
 }

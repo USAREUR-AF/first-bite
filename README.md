@@ -27,8 +27,8 @@ the software their owner authorises.** It listens on a network tap or a
 switch mirror port, local or tunnelled (ERSPAN, GRE or VXLAN), decodes each
 fixed-layout message against a dictionary, and publishes one record per
 message on a ZeroMQ PUB socket: typed values, as JSON by default or CBOR. Sinks forward the records to S3-compatible
-storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
-transform emits Cursor-on-Target. Records stay on the machine until its owner
+storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and
+deliver Cursor-on-Target events to a TAK server or to TAK clients. Records stay on the machine until its owner
 configures a destination: the record socket binds loopback by default and no
 sink runs unless one is configured. The record socket is plaintext and
 unauthenticated and stays on the host; other hosts are served by the Zenoh

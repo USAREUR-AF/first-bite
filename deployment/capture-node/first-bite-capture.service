@@ -1,0 +1,62 @@
+# Capture an interface to rotating files with dumpcap. install.sh copies this
+# to /etc/systemd/system/first-bite-capture.service.
+[Unit]
+Description=first-bite capture node: write frames to rotating capture files
+Documentation=https://github.com/USAREUR-AF/first-bite/tree/main/deployment/capture-node
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=fbcapture
+Group=fbcapture
+EnvironmentFile=/etc/first-bite-capture/capture.env
+# A ring of files: a new file every CAPTURE_FILE_KB kilobytes or
+# CAPTURE_FILE_SECONDS seconds, whichever comes first, and at most
+# CAPTURE_FILES files, the oldest deleted to make room. dumpcap counts only
+# the files of its own run, so files left by an earlier run are cut back to
+# the newest CAPTURE_FILES before each start. The disk the capture can fill
+# is therefore 2 x CAPTURE_FILES x CAPTURE_FILE_KB.
+ExecStartPre=/usr/bin/python3 /usr/local/lib/first-bite-capture/mirror.py --prune ${CAPTURE_FILES}
+ExecStart=/usr/bin/dumpcap -q -i ${CAPTURE_INTERFACE} -f ${CAPTURE_FILTER} -s ${CAPTURE_SNAPLEN} \
+    -w /var/lib/first-bite-capture/capture.pcapng \
+    -b filesize:${CAPTURE_FILE_KB} -b duration:${CAPTURE_FILE_SECONDS} -b files:${CAPTURE_FILES}
+Restart=on-failure
+RestartSec=5
+
+StateDirectory=first-bite-capture
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/first-bite-capture
+
+# Packet capture as a non-root user.
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+
+# Hardening. The service opens a capture socket and writes files; it makes no
+# network connection.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_PACKET AF_NETLINK AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+RemoveIPC=yes
+SystemCallArchitectures=native
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

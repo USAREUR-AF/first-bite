@@ -1,0 +1,12 @@
+# /etc/logrotate.d/first-bite-capture
+# The mirror opens its log for each run, so the file can be renamed.
+/var/log/first-bite-capture/*.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 fbcapture fbcapture
+    su fbcapture fbcapture
+}

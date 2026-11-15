@@ -13,6 +13,8 @@
 //! | `rest` | any; not used | HTTP POST | always built |
 //! | `local` | unset, `locallog` | append to a local file | always built |
 //! | `stateful` | unset, `messagerates` | per-topic counts to a local file | always built |
+//! | `udp` | unset | one datagram per payload, unicast or multicast | always built |
+//! | `tcp` | unset | a stream of payloads, optionally inside TLS | always built |
 //! | `zenoh` | unset | Zenoh put | `zenoh` |
 //! | `goat` | unset | Zenoh put on a goat data fabric | `goat` |
 
@@ -22,6 +24,7 @@ pub mod aws_s3;
 pub mod azure_blob;
 pub mod local_log;
 pub mod message_rates;
+pub mod network;
 #[cfg(any(feature = "aws", feature = "azure"))]
 pub mod object_path;
 pub mod rest;
@@ -51,6 +54,10 @@ pub enum SinkError {
         status: reqwest::StatusCode,
         body: String,
     },
+    #[error("Cursor-on-Target: {0}")]
+    Cot(#[from] cotify::CotError),
+    #[error("{0}")]
+    Network(String),
     #[cfg(feature = "aws")]
     #[error("S3: {0}")]
     S3(String),
@@ -215,6 +222,7 @@ fn select(config: &SubscriberConfig, security: &Security) -> Result<Built, Probl
                 None,
             ))
         }
+        ("udp" | "tcp", None) => network::NetworkSink::secured(config, &policy),
         ("zenoh", None) => zenoh(config, &policy, security),
         ("goat", None) => goat(config, &policy, security),
         _ => Err(Problem::UnknownSink {

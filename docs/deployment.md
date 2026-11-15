@@ -415,6 +415,15 @@ tell cargo to use it.
 The offline machine needs the Rust toolchain, a C and C++ compiler, CMake and
 the libpcap headers (`libpcap-dev`) installed beforehand.
 
+## A site that allows capture only
+
+Where a site permits a box that records traffic and no live decoder or
+uplink, [`deployment/capture-node`](../deployment/capture-node/README.md)
+captures to a ring of files bounded by size and age and, where storage is
+reachable, copies completed files to an S3-compatible bucket. The files are
+decoded afterwards with `mind --pcap-file`. Built; measured in a container,
+not on a physical tap.
+
 ## Status
 
 | Piece | Status |

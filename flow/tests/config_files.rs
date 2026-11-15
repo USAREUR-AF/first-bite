@@ -204,3 +204,30 @@ fn subpubs_parse_and_carry_a_cot_mapping() {
         assert_eq!(mapping.stale_minutes, 60);
     }
 }
+
+/// Both subscribers of the TAK example parse; the UDP one builds, and the TLS
+/// one is refused only for the certificate files, which are not on this
+/// machine.
+#[test]
+fn tak_example_parses_and_names_only_its_certificate_files_as_missing() {
+    let cfg: SubscriberConfigs = parse(
+        include_str!("../config/subscribers.tak.example.yml"),
+        "subscribers.tak.example.yml",
+    )
+    .unwrap();
+    let names: Vec<&str> = cfg.subscribers.iter().map(|s| s.name.as_str()).collect();
+    assert_eq!(names, ["PositionsToTakServer", "PositionsToTakClients"]);
+    let error = match build_sink(&cfg.subscribers[0]) {
+        Ok(_) => panic!("built a TLS sink without its files"),
+        Err(e) => e.to_string(),
+    };
+    assert!(
+        error.starts_with("subscriber PositionsToTakServer: `tls.ca_file`: cannot read"),
+        "{error}"
+    );
+    assert!(build_sink(&cfg.subscribers[1]).is_ok());
+    for subscriber in &cfg.subscribers {
+        assert_eq!(subscriber.topics, ["WX/Position"]);
+        assert_eq!(subscriber.cot.as_ref().unwrap().uid, ["station_id"]);
+    }
+}
