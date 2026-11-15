@@ -1267,7 +1267,7 @@ dependencies = [
  "chrono",
  "cotify",
  "hex",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "log",
  "reqwest",
  "serde",
