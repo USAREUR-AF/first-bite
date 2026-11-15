@@ -1,0 +1,19 @@
+{
+    "interface": "SUPV",
+    "payload_hex": "03060c0702932a1864191000",
+    "expect": {
+        "message_type": "Vent Command",
+        "fields": {
+            "message_id": "3",
+            "message_length": "6",
+            "zone_number": "3",
+            "sequence_number": "7",
+            "time_of_day": "43199000",
+            "windward_vent_target": "50.0",
+            "leeward_vent_target": "12.5",
+            "vent_command_mode": "Go To Target",
+            "spare_84": "0"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.9."
+}

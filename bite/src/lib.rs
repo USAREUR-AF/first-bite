@@ -18,6 +18,7 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+pub mod authoring;
 pub mod bits;
 pub mod decode;
 pub mod dictionary;

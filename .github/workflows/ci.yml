@@ -145,6 +145,17 @@ jobs:
           shared-key: ci
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo test --workspace --locked
+      - name: Shipped dictionaries pass every gate
+        run: |
+          for d in dictionaries/*/; do
+            cargo run -q --locked -p bite -- fmt --check "$d"
+            cargo run -q --locked -p bite -- check --strict "$d"
+            cargo run -q --locked -p bite -- lint "$d"
+            cargo run -q --locked -p bite -- coverage "$d"
+          done
+      - name: The worked example retraces from its document
+        if: runner.os == 'Linux'
+        run: docs/icd-to-dictionary/06-worked-example/retrace.sh
 
   # The decoder library is what runs where a process may not capture packets
   # (iOS, iPadOS, Android, a browser), so it must keep compiling there.

@@ -1,0 +1,12 @@
+interface,message,type_id,defined,description,declared_bits,source_section,source_table,note
+ZONE,Zone Status,1,yes,Sent once a second while the controller is powered.,128,5.2,5-2,
+ZONE,Climate Report,2,yes,Sent every five seconds with the zone's air and weather measurements.,176,5.3,5-3,
+ZONE,Irrigation Report,3,yes,"Sent once a second while an irrigation run is in progress, and once when it ends.",144,5.4,5-4,
+ZONE,Vent Report,4,yes,Sent every five seconds with the position of the roof vents.,112,5.5,5-5,
+ZONE,Alarm,5,yes,"Sent when an alarm is raised, acknowledged or cleared.",112,5.6,5-6,
+ZONE,Event Log,6,yes,Sent on request with the most recent events of the zone.,80,5.7,5-7,"Words 6 onward hold Record Count records of two words each (Table 5-7b). The dictionary format has no repeated group, so the records are not decoded and declared_bits covers the fixed part only."
+ZONE,Maintenance Data,7,no,,,,,
+SUPV,Setpoint Command,1,yes,Sets the climate the zone holds in Automatic mode.,128,6.2,6-2,
+SUPV,Irrigation Command,2,yes,Starts an irrigation run on the valves selected.,112,6.3,6-3,
+SUPV,Vent Command,3,yes,Moves the roof vents.,96,6.4,6-4,
+SUPV,Time Synchronisation,4,yes,Sets the controller's calendar and clock offset.,112,6.5,6-5,

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 524" width="760" height="524" role="img" aria-labelledby="icd-pipeline-title icd-pipeline-desc" aria-label="Nine steps take an interface document to a versioned dictionary">
+<title id="icd-pipeline-title">Nine steps take an interface document to a versioned dictionary</title>
+<desc id="icd-pipeline-desc">The path from an interface control document to a dictionary, as nine steps in order, each with what it produces and the bite command that does or checks it. 1 Scope: document, revision and handling, bite new --repo. 2 Inventory: every interface and message, messages.csv. 3 Numbering: word size, bit 0 and first word, bite range. 4 Transcribe: one row per field, bite import-csv. 5 Check: bite fmt, check, lint and coverage. 6 Vectors: the document&#x27;s examples as test vectors, bite vectors new and encode. 7 Review: a second reader with the checklist, in a pull request. 8 Version: a version number the changes justify, bite diff --check-version. 9 Maintain: the next revision of the document, bite diff.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="523" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">Nine steps take an interface document to a versioned dictionary</text>
+<text x="92" y="66" font-size="13" data-role="note" class="q">step</text>
+<text x="200" y="66" font-size="13" class="q">what it settles</text>
+<text x="468" y="66" font-size="13" class="q">done or checked with</text>
+<circle cx="52" cy="98" r="13" class="fa"/>
+<text x="52" y="102.6" font-size="13" font-weight="700" text-anchor="middle" class="on">1</text>
+<rect x="80" y="78" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="103" font-size="14" font-weight="700" class="t">Scope</text>
+<text x="200" y="102.6" font-size="13" class="q">document, revision, handling</text>
+<rect x="456" y="78" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="102.6" font-size="13" class="t m">bite new --repo</text>
+<path d="M52 112L52 124" class="lna"/><path d="M52 133L47 123L57 123z" class="fa"/>
+<circle cx="52" cy="147" r="13" class="fa"/>
+<text x="52" y="151.6" font-size="13" font-weight="700" text-anchor="middle" class="on">2</text>
+<rect x="80" y="127" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="152" font-size="14" font-weight="700" class="t">Inventory</text>
+<text x="200" y="151.6" font-size="13" class="q">every interface and every message</text>
+<rect x="456" y="127" width="280" height="40" rx="8" class="bxp"/>
+<text x="468" y="151.6" font-size="13" class="t">messages.csv</text>
+<path d="M52 161L52 173" class="lna"/><path d="M52 182L47 172L57 172z" class="fa"/>
+<circle cx="52" cy="196" r="13" class="fa"/>
+<text x="52" y="200.6" font-size="13" font-weight="700" text-anchor="middle" class="on">3</text>
+<rect x="80" y="176" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="201" font-size="14" font-weight="700" class="t">Numbering</text>
+<text x="200" y="200.6" font-size="13" class="q">word size, bit 0, first word number</text>
+<rect x="456" y="176" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="200.6" font-size="13" class="t m">bite range</text>
+<path d="M52 210L52 222" class="lna"/><path d="M52 231L47 221L57 221z" class="fa"/>
+<circle cx="52" cy="245" r="13" class="fa"/>
+<text x="52" y="249.6" font-size="13" font-weight="700" text-anchor="middle" class="on">4</text>
+<rect x="80" y="225" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="250" font-size="14" font-weight="700" class="t">Transcribe</text>
+<text x="200" y="249.6" font-size="13" class="q">one row per field, as printed</text>
+<rect x="456" y="225" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="249.6" font-size="13" class="t m">bite import-csv</text>
+<path d="M52 259L52 271" class="lna"/><path d="M52 280L47 270L57 270z" class="fa"/>
+<circle cx="52" cy="294" r="13" class="fa"/>
+<text x="52" y="298.6" font-size="13" font-weight="700" text-anchor="middle" class="on">5</text>
+<rect x="80" y="274" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="299" font-size="14" font-weight="700" class="t">Check</text>
+<text x="200" y="298.6" font-size="13" class="q">format, structure, conventions, gaps</text>
+<rect x="456" y="274" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="298.6" font-size="13" class="t m">bite fmt, check, lint, coverage</text>
+<path d="M52 308L52 320" class="lna"/><path d="M52 329L47 319L57 319z" class="fa"/>
+<circle cx="52" cy="343" r="13" class="fa"/>
+<text x="52" y="347.6" font-size="13" font-weight="700" text-anchor="middle" class="on">6</text>
+<rect x="80" y="323" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="348" font-size="14" font-weight="700" class="t">Vectors</text>
+<text x="200" y="347.6" font-size="13" class="q">the document&#x27;s examples, as tests</text>
+<rect x="456" y="323" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="347.6" font-size="13" class="t m">bite vectors new, encode</text>
+<path d="M52 357L52 369" class="lna"/><path d="M52 378L47 368L57 368z" class="fa"/>
+<circle cx="52" cy="392" r="13" class="fa"/>
+<text x="52" y="396.6" font-size="13" font-weight="700" text-anchor="middle" class="on">7</text>
+<rect x="80" y="372" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="397" font-size="14" font-weight="700" class="t">Review</text>
+<text x="200" y="396.6" font-size="13" class="q">a second reader, with the checklist</text>
+<rect x="456" y="372" width="280" height="40" rx="8" class="bxp"/>
+<text x="468" y="396.6" font-size="13" class="t">pull request</text>
+<path d="M52 406L52 418" class="lna"/><path d="M52 427L47 417L57 417z" class="fa"/>
+<circle cx="52" cy="441" r="13" class="fa"/>
+<text x="52" y="445.6" font-size="13" font-weight="700" text-anchor="middle" class="on">8</text>
+<rect x="80" y="421" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="446" font-size="14" font-weight="700" class="t">Version</text>
+<text x="200" y="445.6" font-size="13" class="q">a version the changes justify</text>
+<rect x="456" y="421" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="445.6" font-size="13" class="t m">bite diff --check-version</text>
+<path d="M52 455L52 467" class="lna"/><path d="M52 476L47 466L57 466z" class="fa"/>
+<circle cx="52" cy="490" r="13" class="fa"/>
+<text x="52" y="494.6" font-size="13" font-weight="700" text-anchor="middle" class="on">9</text>
+<rect x="80" y="470" width="364" height="40" rx="8" class="bx"/>
+<text x="92" y="495" font-size="14" font-weight="700" class="t">Maintain</text>
+<text x="200" y="494.6" font-size="13" class="q">the document&#x27;s next revision</text>
+<rect x="456" y="470" width="280" height="40" rx="8" class="bxa"/>
+<text x="468" y="494.6" font-size="13" class="t m">bite diff</text>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 548" width="760" height="548" role="img" aria-labelledby="quality-gates-title quality-gates-desc" aria-label="Each gate catches a kind of mistake the gates before it cannot see">
+<title id="quality-gates-title">Each gate catches a kind of mistake the gates before it cannot see</title>
+<desc id="quality-gates-desc">A transcription passes seven gates before it is released, each narrower than the last. bite fmt --check catches two spellings of one definition and a key written twice. bite check --strict catches inverted and overlapping bit ranges and messages named but not defined. bite lint catches names, units, labels and sources that depart from the conventions. bite coverage --strict catches bits no field claims and fields with no source, description or unit. The vectors, run by bite check, catch a field at the wrong bits or with the wrong scale or sign, against the document&#x27;s own examples. A second reader catches a value copied wrong that still decodes. bite diff --check-version catches a breaking change released under a minor version.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="547" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">Each gate catches a kind of mistake the gates before it cannot see</text>
+<text x="24" y="66" font-size="13" font-weight="700" data-role="note" class="t">a transcription, as typed</text>
+<text x="404" y="66" font-size="13" class="q">catches</text>
+<rect x="24" y="80" width="356" height="44" rx="8" class="bxa"/>
+<text x="38" y="98" font-size="14" font-weight="700" class="t">Format</text>
+<text x="38" y="116" font-size="13" class="q m">bite fmt --check</text>
+<path d="M380 102L392 102" class="lnr" data-lint="nohead"/>
+<text x="404" y="98" font-size="13" class="t">two spellings of one definition;</text>
+<text x="404" y="116" font-size="13" class="t">a key written twice</text>
+<path d="M52 124L52 133" class="lna"/><path d="M52 142L47 132L57 132z" class="fa"/>
+<rect x="24" y="142" width="336" height="44" rx="8" class="bxa"/>
+<text x="38" y="160" font-size="14" font-weight="700" class="t">Structure</text>
+<text x="38" y="178" font-size="13" class="q m">bite check --strict</text>
+<path d="M360 164L392 164" class="lnr" data-lint="nohead"/>
+<text x="404" y="160" font-size="13" class="t">inverted and overlapping bit ranges;</text>
+<text x="404" y="178" font-size="13" class="t">messages named and not defined</text>
+<path d="M52 186L52 195" class="lna"/><path d="M52 204L47 194L57 194z" class="fa"/>
+<rect x="24" y="204" width="316" height="44" rx="8" class="bxa"/>
+<text x="38" y="222" font-size="14" font-weight="700" class="t">Conventions</text>
+<text x="38" y="240" font-size="13" class="q m">bite lint</text>
+<path d="M340 226L392 226" class="lnr" data-lint="nohead"/>
+<text x="404" y="222" font-size="13" class="t">names, units, labels and sources</text>
+<text x="404" y="240" font-size="13" class="t">that depart from the conventions</text>
+<path d="M52 248L52 257" class="lna"/><path d="M52 266L47 256L57 256z" class="fa"/>
+<rect x="24" y="266" width="296" height="44" rx="8" class="bxa"/>
+<text x="38" y="284" font-size="14" font-weight="700" class="t">Coverage</text>
+<text x="38" y="302" font-size="13" class="q m">bite coverage --strict</text>
+<path d="M320 288L392 288" class="lnr" data-lint="nohead"/>
+<text x="404" y="284" font-size="13" class="t">bits no field claims; fields with</text>
+<text x="404" y="302" font-size="13" class="t">no source, description or unit</text>
+<path d="M52 310L52 319" class="lna"/><path d="M52 328L47 318L57 318z" class="fa"/>
+<rect x="24" y="328" width="276" height="44" rx="8" class="bxa"/>
+<text x="38" y="346" font-size="14" font-weight="700" class="t">Vectors</text>
+<text x="38" y="364" font-size="13" class="q m">bite check</text>
+<path d="M300 350L392 350" class="lnr" data-lint="nohead"/>
+<text x="404" y="346" font-size="13" class="t">a field at the wrong bits, or with the</text>
+<text x="404" y="364" font-size="13" class="t">wrong scale or sign, against the document</text>
+<path d="M52 372L52 381" class="lna"/><path d="M52 390L47 380L57 380z" class="fa"/>
+<rect x="24" y="390" width="256" height="44" rx="8" class="bxp"/>
+<text x="38" y="408" font-size="14" font-weight="700" class="t">Second reader</text>
+<text x="38" y="426" font-size="13" class="q">review checklist</text>
+<path d="M280 412L392 412" class="lnr" data-lint="nohead"/>
+<text x="404" y="408" font-size="13" class="t">a value copied wrong</text>
+<text x="404" y="426" font-size="13" class="t">that still decodes</text>
+<path d="M52 434L52 443" class="lna"/><path d="M52 452L47 442L57 442z" class="fa"/>
+<rect x="24" y="452" width="236" height="44" rx="8" class="bxa"/>
+<text x="38" y="470" font-size="14" font-weight="700" class="t">Version</text>
+<text x="38" y="488" font-size="13" class="q m">bite diff --check-version</text>
+<path d="M260 474L392 474" class="lnr" data-lint="nohead"/>
+<text x="404" y="470" font-size="13" class="t">a breaking change released</text>
+<text x="404" y="488" font-size="13" class="t">under a minor version</text>
+<path d="M52 496L52 505" class="lna"/><path d="M52 514L47 504L57 504z" class="fa"/>
+<text x="24" y="534" font-size="13" font-weight="700" class="g">a released dictionary version</text>
+</svg>

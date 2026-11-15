@@ -1,0 +1,20 @@
+{
+    "interface": "SUPV",
+    "payload_hex": "01080c050149970008ca0640af000320",
+    "expect": {
+        "message_type": "Setpoint Command",
+        "fields": {
+            "message_id": "1",
+            "message_length": "8",
+            "zone_number": "3",
+            "sequence_number": "5",
+            "time_of_day": "21600000",
+            "day_temperature_setpoint": "22.50",
+            "night_temperature_setpoint": "16.00",
+            "humidity_setpoint": "70.0",
+            "spare_106": "0",
+            "co2_setpoint": "800"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.7."
+}

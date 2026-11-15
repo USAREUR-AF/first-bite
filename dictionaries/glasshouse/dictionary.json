@@ -1,0 +1,22 @@
+{
+    "name": "glasshouse",
+    "version": "1.0.0",
+    "description": "Synthetic example: a glasshouse zone controller and its supervisor, transcribed from the invented document GZC-ICD-001 in docs/icd-to-dictionary/06-worked-example.",
+    "source": {
+        "document": "GZC-ICD-001",
+        "revision": "B"
+    },
+    "lint": {
+        "units": [
+            "W/m2",
+            "mS/cm"
+        ],
+        "allow": [
+            {
+                "rule": "C004",
+                "at": "ZONE/Maintenance Data",
+                "reason": "Defined in GZC-MNT-004, which is not transcribed here."
+            }
+        ]
+    }
+}

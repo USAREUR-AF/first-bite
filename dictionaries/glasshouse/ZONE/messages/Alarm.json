@@ -1,0 +1,111 @@
+{
+    "description": "Sent when an alarm is raised, acknowledged or cleared.",
+    "source": {
+        "section": "5.6",
+        "table": "5-6"
+    },
+    "declared_bits": 112,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "alarm_code": {
+            "start": 64,
+            "stop": 72,
+            "values": {
+                "1": "High Temperature",
+                "2": "Low Temperature",
+                "3": "High Humidity",
+                "4": "Sensor Fault",
+                "5": "Pump Fault",
+                "6": "Vent Stalled",
+                "7": "Power Supply"
+            },
+            "description": "What the alarm is.",
+            "note": "Values 200 to 255 are manufacturer specific and have no label."
+        },
+        "severity": {
+            "start": 72,
+            "stop": 74,
+            "values": {
+                "0": "Advisory",
+                "1": "Caution",
+                "2": "Warning"
+            },
+            "description": "How serious the alarm is."
+        },
+        "acknowledged": {
+            "start": 74,
+            "stop": 75,
+            "type": "bool",
+            "description": "Set once an operator has acknowledged the alarm."
+        },
+        "spare_75": {
+            "start": 75,
+            "stop": 80
+        },
+        "occurrence_count": {
+            "start": 80,
+            "stop": 96,
+            "unit": "1",
+            "description": "Times this alarm has been raised since midnight."
+        },
+        "minutes_since_raised": {
+            "start": 96,
+            "stop": 107,
+            "unit": "min",
+            "description": "Whole minutes since the alarm was last raised."
+        },
+        "spare_107": {
+            "start": 107,
+            "stop": 112
+        }
+    }
+}

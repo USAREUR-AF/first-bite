@@ -1,5 +1,9 @@
 //! `bite`: inspect and check dictionaries, and decode payloads by hand.
 
+mod authoring_cli;
+
+use bite::authoring::rules::{rule_of_check_warning, LintConfig};
+use bite::authoring::Node;
 use bite::vectors::run_vectors;
 use bite::{Dictionary, Severity};
 use clap::{Parser, Subcommand};
@@ -44,6 +48,8 @@ enum Command {
         /// Payload bytes as hex.
         payload_hex: String,
     },
+    #[command(flatten)]
+    Authoring(authoring_cli::Command),
 }
 
 fn main() -> ExitCode {
@@ -68,6 +74,7 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
             frame_id,
             payload_hex,
         } => decode(&dictionary, interface, port, frame_id, &payload_hex),
+        Command::Authoring(command) => authoring_cli::run(command),
     }
 }
 
@@ -75,13 +82,41 @@ fn load(path: &Path) -> Result<Dictionary, String> {
     Dictionary::load(path).map_err(|e| e.to_string())
 }
 
+/// The findings `dictionary.json` allows with a reason, under `lint.allow`.
+fn allowed(path: &Path) -> LintConfig {
+    let node = std::fs::read_to_string(path.join("dictionary.json"))
+        .ok()
+        .and_then(|text| Node::parse(&text).ok());
+    LintConfig::read(node.as_ref())
+}
+
 fn check(path: &Path, strict: bool) -> Result<ExitCode, String> {
     let dictionary = load(path)?;
+    let config = allowed(path);
+    let mut allowed_warnings = 0;
     for issue in dictionary.issues() {
-        println!("{issue}");
+        let reason = (issue.severity == Severity::Warning)
+            .then(|| rule_of_check_warning(&issue.message))
+            .flatten()
+            .and_then(|rule| {
+                config
+                    .allows
+                    .iter()
+                    .find(|allow| allow.covers_at(rule, &issue.location))
+            });
+        match reason {
+            Some(allow) => {
+                allowed_warnings += 1;
+                println!(
+                    "allowed: {}: {} ({})",
+                    issue.location, issue.message, allow.reason
+                );
+            }
+            None => println!("{issue}"),
+        }
     }
     let errors = count(&dictionary, Severity::Error);
-    let warnings = count(&dictionary, Severity::Warning);
+    let warnings = count(&dictionary, Severity::Warning) - allowed_warnings;
 
     let results = run_vectors(&dictionary).map_err(|e| e.to_string())?;
     let mut failed = 0;
@@ -100,8 +135,13 @@ fn check(path: &Path, strict: bool) -> Result<ExitCode, String> {
         .map(|interface| interface.messages().len())
         .sum();
     println!(
-        "{} interfaces, {messages} messages, {errors} errors, {warnings} warnings, {}/{} vectors passed",
+        "{} interfaces, {messages} messages, {errors} errors, {warnings} warnings{}, {}/{} vectors passed",
         dictionary.interfaces().len(),
+        if allowed_warnings > 0 {
+            format!(" ({allowed_warnings} allowed in dictionary.json)")
+        } else {
+            String::new()
+        },
         results.len() - failed,
         results.len(),
     );

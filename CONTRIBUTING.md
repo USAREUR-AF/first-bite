@@ -23,7 +23,8 @@ Every CI check is a command you can run locally before you push.
 | Change touches | Run |
 |---|---|
 | Rust | `make lint` (rustfmt, clippy with warnings as errors) and `make test` |
-| a dictionary under `dictionaries/` | `cargo run -p bite -- check dictionaries/<name> --strict` |
+| a dictionary under `dictionaries/` | `cargo run -p bite -- check dictionaries/<name> --strict`, and the same with `fmt --check`, `lint` and `coverage` |
+| `docs/icd-to-dictionary/06-worked-example/` or `dictionaries/glasshouse/` | `docs/icd-to-dictionary/06-worked-example/retrace.sh` |
 | `Cargo.toml` or `Cargo.lock` | `make deny` and `make audit` |
 | `.github/workflows/` | `actionlint` and `yamllint .github` (both run by `make lint`) |
 | a workflow, a `Dockerfile`, a compose file, an image in the `Makefile` | `python3 tools/check-pins.py` — every action is pinned to a commit SHA and every image to a digest |

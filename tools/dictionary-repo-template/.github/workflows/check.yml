@@ -1,0 +1,40 @@
+# Runs the dictionary gates on every pull request, with a first-bite release
+# pinned by version and checksum.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # The first-bite release whose `bite` checks this dictionary, and the
+  # SHA-256 of its x86_64-linux-gnu archive, from that release's SHA256SUMS.
+  # Change both together.
+  FIRST_BITE_REPOSITORY: USAREUR-AF/first-bite
+  FIRST_BITE_VERSION: REPLACE-WITH-VERSION
+  FIRST_BITE_SHA256: REPLACE-WITH-SHA256
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned bite
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          archive="first-bite-${FIRST_BITE_VERSION}-x86_64-linux-gnu.tar.gz"
+          gh release download "v${FIRST_BITE_VERSION}" --repo "$FIRST_BITE_REPOSITORY" \
+            --pattern "$archive" --dir "$RUNNER_TEMP"
+          echo "${FIRST_BITE_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "$RUNNER_TEMP"
+          echo "${RUNNER_TEMP}/first-bite-${FIRST_BITE_VERSION}-x86_64-linux-gnu/deployment" >> "$GITHUB_PATH"
+      - run: bite --version
+      - run: make check

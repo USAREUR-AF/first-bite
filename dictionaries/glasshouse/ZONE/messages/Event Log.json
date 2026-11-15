@@ -1,0 +1,71 @@
+{
+    "description": "Sent on request with the most recent events of the zone.",
+    "source": {
+        "section": "5.7",
+        "table": "5-7"
+    },
+    "note": "Words 6 onward hold Record Count records of two words each (Table 5-7b). The dictionary format has no repeated group, so the records are not decoded and declared_bits covers the fixed part only.",
+    "declared_bits": 80,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "record_count": {
+            "start": 64,
+            "stop": 72,
+            "unit": "1",
+            "description": "Number of event records that follow, 0 to 20."
+        },
+        "spare_72": {
+            "start": 72,
+            "stop": 80
+        }
+    }
+}

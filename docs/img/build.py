@@ -808,8 +808,142 @@ def icd_to_dictionary():
     return f
 
 
+# ---------------------------------------------------------------------------
+# icd-pipeline
+# ---------------------------------------------------------------------------
+def icd_pipeline():
+    f = Fig("icd-pipeline", "Nine steps take an interface document to a versioned dictionary",
+            "The path from an interface control document to a dictionary, as nine steps in order, each with what "
+            "it produces and the bite command that does or checks it. 1 Scope: document, revision and handling, "
+            "bite new --repo. 2 Inventory: every interface and message, messages.csv. 3 Numbering: word size, "
+            "bit 0 and first word, bite range. 4 Transcribe: one row per field, bite import-csv. 5 Check: "
+            "bite fmt, check, lint and coverage. 6 Vectors: the document's examples as test vectors, bite "
+            "vectors new and encode. 7 Review: a second reader with the checklist, in a pull request. 8 Version: "
+            "a version number the changes justify, bite diff --check-version. 9 Maintain: the next revision of "
+            "the document, bite diff.", 524)
+    steps = [
+        ("Scope", "document, revision, handling", "bite new --repo"),
+        ("Inventory", "every interface and every message", "messages.csv"),
+        ("Numbering", "word size, bit 0, first word number", "bite range"),
+        ("Transcribe", "one row per field, as printed", "bite import-csv"),
+        ("Check", "format, structure, conventions, gaps", "bite fmt, check, lint, coverage"),
+        ("Vectors", "the document's examples, as tests", "bite vectors new, encode"),
+        ("Review", "a second reader, with the checklist", "pull request"),
+        ("Version", "a version the changes justify", "bite diff --check-version"),
+        ("Maintain", "the document's next revision", "bite diff"),
+    ]
+    f.text(92, 66, "step", 13, False, "q", role="note")
+    f.text(200, 66, "what it settles", 13, False, "q")
+    f.text(468, 66, "done or checked with", 13, False, "q")
+    top, pitch = 78, 49
+    for i, (name, what, tool) in enumerate(steps):
+        y = top + i * pitch
+        cy = y + 20
+        if i:
+            f.line([(52, cy - pitch + 14), (52, cy - 14)], "lna", head="fa")
+        f.disc(52, cy, 13, "fa", i + 1)
+        f.rect(80, y, 364, 40, "bx", 8)
+        f.text(92, cy + 5, name, 14, True, "t")
+        f.text(200, cy + 4.6, what, 13, False, "q", maxw=236)
+        human = tool in ("pull request", "messages.csv")
+        f.rect(456, y, 280, 40, "bxp" if human else "bxa", 8)
+        f.text(468, cy + 4.6, tool, 13, False, "t", mono=not human, maxw=260)
+    return f
+
+
+# ---------------------------------------------------------------------------
+# bit-numbering
+# ---------------------------------------------------------------------------
+def bit_numbering():
+    f = Fig("bit-numbering", "\"Word 3, bits 12-5\" is bits [35, 43) of the payload",
+            "One 16-bit word, the third of a message whose words are numbered from 1 and sent most significant "
+            "byte first, drawn most significant bit on the left. A document that calls the least significant bit "
+            "bit 0 numbers the cells 15 down to 0 and calls the marked field bits 12-5. A document that calls the "
+            "most significant bit bit 0 numbers them 0 up to 15 and calls the same field bits 3-10. The "
+            "dictionary numbers every bit of the payload from 0 at the first bit sent, so the word holds bits 32 "
+            "to 47 and the field is start 35, stop 43. Start is (3 - 1) x 16 + (15 - 12) = 35 and stop is start "
+            "plus the width of 8. The command bite range --word-bits 16 --bit0 lsb --first-word 1 --word 3 "
+            "--bits 12-5 prints the same.", 478)
+    x0, cw, y0, ch = 60, 40, 128, 40
+    f.text(x0, 66, "Word 3 of a message: 16-bit words, numbered from 1, most significant byte first", 13, False, "q", role="note")
+    f.rich(x0, 96, [("The document, bit 0 least significant: ", False, "t"), ("bits 12-5", True, "a")], 13)
+    inside = lambda k: 3 <= k <= 10
+    for k in range(16):
+        x = x0 + k * cw
+        f.rect(x, y0, cw, ch, "bxa" if inside(k) else "bx", 0)
+        f.text(x + cw / 2, y0 - 8, str(15 - k), 13, inside(k), "a" if inside(k) else "q", "middle")
+        f.text(x + cw / 2, y0 + ch + 62, str(k), 13, inside(k), "a" if inside(k) else "q", "middle")
+        f.text(x + cw / 2, y0 + ch + 118, str(32 + k), 13, k in (3, 11), "a" if k in (3, 11) else "q", "middle")
+    f.line([(x0 + 8 * cw, y0), (x0 + 8 * cw, y0 + ch)], "lnk", nohead=True)
+    for half, label in ((0, "payload byte 4"), (1, "payload byte 5")):
+        xs, xe = x0 + half * 8 * cw, x0 + (half + 1) * 8 * cw
+        f.raw(f'<path d="M{n(xs + 3)} {n(y0 + ch + 6)}v5H{n(xe - 3)}v-5" class="ln" data-lint="nohead"/>')
+        f.text((xs + xe) / 2, y0 + ch + 30, label, 13, False, "q", "middle")
+    f.rich(x0, y0 + ch + 86, [("A document with bit 0 most significant calls the same field ", False, "t"), ("bits 3-10", True, "a")], 13)
+    f.rich(x0, y0 + ch + 142, [("The dictionary counts from the first bit of the payload: ", False, "t"),
+                               ("start 35, stop 43", True, "a"), (" (the first bit after the field)", False, "q")], 13)
+    # how the numbers are reached
+    top = 336
+    f.rect(24, top, 712, 122, "bxp", 8)
+    f.text(40, top + 28, "start", 13, True, "t")
+    f.text(92, top + 28, "= (word - first word) x word size + bits above the field in its word", 13, False, "t")
+    f.text(92, top + 50, "= (3 - 1) x 16 + (15 - 12) = 35", 13, False, "t", mono=True)
+    f.text(430, top + 50, "stop = start + width = 35 + 8 = 43", 13, False, "t", mono=True)
+    f.line([(40, top + 66), (720, top + 66)], "lnr")
+    f.text(40, top + 92, "bite range --word-bits 16 --bit0 lsb --first-word 1 --word 3 --bits 12-5", 13, False, "a", mono=True)
+    f.text(40, top + 110, "does the arithmetic and draws the word", 13, False, "q")
+    return f
+
+
+# ---------------------------------------------------------------------------
+# quality-gates
+# ---------------------------------------------------------------------------
+def quality_gates():
+    f = Fig("quality-gates", "Each gate catches a kind of mistake the gates before it cannot see",
+            "A transcription passes seven gates before it is released, each narrower than the last. bite fmt "
+            "--check catches two spellings of one definition and a key written twice. bite check --strict "
+            "catches inverted and overlapping bit ranges and messages named but not defined. bite lint catches "
+            "names, units, labels and sources that depart from the conventions. bite coverage --strict catches "
+            "bits no field claims and fields with no source, description or unit. The vectors, run by bite "
+            "check, catch a field at the wrong bits or with the wrong scale or sign, against the document's own "
+            "examples. A second reader catches a value copied wrong that still decodes. bite diff "
+            "--check-version catches a breaking change released under a minor version.", 548)
+    gates = [
+        ("Format", "bite fmt --check", "two spellings of one definition;", "a key written twice"),
+        ("Structure", "bite check --strict", "inverted and overlapping bit ranges;", "messages named and not defined"),
+        ("Conventions", "bite lint", "names, units, labels and sources", "that depart from the conventions"),
+        ("Coverage", "bite coverage --strict", "bits no field claims; fields with", "no source, description or unit"),
+        ("Vectors", "bite check", "a field at the wrong bits, or with the", "wrong scale or sign, against the document"),
+        ("Second reader", "review checklist", "a value copied wrong", "that still decodes"),
+        ("Version", "bite diff --check-version", "a breaking change released", "under a minor version"),
+    ]
+    f.text(24, 66, "a transcription, as typed", 13, True, "t", role="note")
+    f.text(404, 66, "catches", 13, False, "q")
+    top, pitch, h = 80, 62, 44
+    for i, (name, tool, a, b) in enumerate(gates):
+        y = top + i * pitch
+        w = 356 - i * 20
+        f.rect(24, y, w, h, "bxp" if name == "Second reader" else "bxa", 8)
+        f.text(38, y + 18, name, 14, True, "t")
+        f.text(38, y + 36, tool, 13, False, "q", mono=name != "Second reader", maxw=w - 24)
+        f.line([(w + 24, y + h / 2), (392, y + h / 2)], "lnr")
+        f.text(404, y + 18, a, 13, False, "t", maxw=332)
+        f.text(404, y + 36, b, 13, False, "t", maxw=332)
+        if i < len(gates) - 1:
+            f.line([(52, y + h), (52, y + pitch)], "lna", head="fa")
+    y = top + len(gates) * pitch
+    f.line([(52, y - pitch + h), (52, y)], "lna", head="fa")
+    f.text(24, y + 20, "a released dictionary version", 13, True, "g")
+    return f
+
+
 FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
-           record_flow, loss_counters, three_projects, icd_to_dictionary]
+           icd_pipeline, bit_numbering, quality_gates]
+
+
+FIGURES = [how_it_works, tap_placement, frame_to_record, components, performance, one_decode, beyond_ip, platforms,
+           record_flow, loss_counters, three_projects, icd_to_dictionary,
+           icd_pipeline, bit_numbering, quality_gates]
 
 
 def main():

@@ -216,9 +216,15 @@ one file:
 A dictionary turns an interface control document, hundreds of pages of tables
 in a PDF, into versioned, reviewable, testable data that developers read and
 maintain like code; the decoder, the JSON Schema (`bite schema`) and the
-in-browser bit view all run from it. A documented method for going from a
-document to a dictionary, with tooling for the error-prone steps, is in
-progress.
+in-browser bit view all run from it. [From an ICD to a
+dictionary](docs/icd-to-dictionary/README.md) is the method: how to read the
+document, the conventions that make two transcribers produce the same files,
+and the `bite` commands for the error-prone steps (`range` converts "word 3,
+bits 12-5" to a bit range, `import-csv` and `export-csv` round-trip a
+spreadsheet, `fmt` makes the bytes canonical, `coverage` and `lint` find gaps,
+overlaps and missing sources, `diff` compares two revisions). It ends with a
+worked example that re-derives its dictionary from a synthetic interface
+document, byte for byte.
 
 Put payloads and what they must decode to in `vectors/`, and `bite check` runs
 them. A dictionary does not have to live in this repository: point
@@ -245,7 +251,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`flow/`](flow) | ZeroMQ publishers, sinks and transforms |
 | [`cotify/`](cotify) | Cursor-on-Target output |
 | [`dictionaries/`](dictionaries) | example dictionaries with vectors |
-| [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
+| [`docs/`](docs) | [architecture](docs/architecture.md), [dictionary format](docs/dictionary-format.md), [from an ICD to a dictionary](docs/icd-to-dictionary/README.md), [performance](docs/performance.md), [tap](docs/tap.md), [deployment](docs/deployment.md), [related projects](docs/related-projects.md), [illustrations](docs/img), [brief](docs/brief) |
 | [`site/`](site) | the documentation site; `make site` builds it |
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |
 | [`mocks/`](mocks) | local stand-ins for the sinks |

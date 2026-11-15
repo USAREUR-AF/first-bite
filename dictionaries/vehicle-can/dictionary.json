@@ -1,5 +1,21 @@
 {
     "name": "vehicle-can",
     "version": "1.0.0",
-    "description": "Synthetic example: two frames on a vehicle CAN bus. Messages are identified by the CAN identifier, and signals are little-endian with bit 0 the least significant bit of byte 0."
+    "description": "Synthetic example: two frames on a vehicle CAN bus. Messages are identified by the CAN identifier, and signals are little-endian with bit 0 the least significant bit of byte 0.",
+    "lint": {
+        "allow": [
+            {
+                "rule": "P001",
+                "reason": "Synthetic example: there is no source document to cite."
+            },
+            {
+                "rule": "P002",
+                "reason": "Synthetic example: there is no source document to cite."
+            },
+            {
+                "rule": "V002",
+                "reason": "Synthetic example: there is no source document to cite."
+            }
+        ]
+    }
 }

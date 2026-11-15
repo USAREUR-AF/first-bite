@@ -18,10 +18,13 @@ Each is a standalone SVG (no external CSS, fonts or scripts) in two files:
 | `three-projects` | first-bite beside Open Billie and octo-pod, from [`../related-projects.md`](../related-projects.md) |
 | `icd-to-dictionary` | an interface document transcribed into a dictionary, and the four things that run from it |
 | `platforms` | which archive runs where, from [`../deployment.md`](../deployment.md) |
+| `icd-pipeline` | the nine steps from an interface document to a versioned dictionary, each with the `bite` command that does or checks it |
+| `bit-numbering` | one 16-bit word under LSB-0 and MSB-0 numbering, with "word 3, bits 12-5" mapped to `[35, 43)` |
+| `quality-gates` | the seven gates a transcription passes and the kind of mistake each catches |
 
 ## Regenerate and preview
 
-`build.py` writes all twenty-four files. It needs Python 3 and nothing else.
+`build.py` writes all thirty files. It needs Python 3 and nothing else.
 
 ```bash
 python3 docs/img/build.py            # write the figures

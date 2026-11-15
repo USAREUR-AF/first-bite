@@ -1,0 +1,105 @@
+{
+    "description": "Starts an irrigation run on the valves selected.",
+    "source": {
+        "section": "6.3",
+        "table": "6-3"
+    },
+    "declared_bits": 112,
+    "fields": {
+        "message_id": {
+            "start": 0,
+            "stop": 8,
+            "unit": "1",
+            "description": "Identifies the message. See Table 5-1 and Table 6-1.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "message_length": {
+            "start": 8,
+            "stop": 16,
+            "unit": "words",
+            "description": "Length of the message in 16-bit words.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "zone_number": {
+            "start": 16,
+            "stop": 22,
+            "unit": "1",
+            "description": "Zone the message concerns, 1 to 32.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "sequence_number": {
+            "start": 22,
+            "stop": 32,
+            "unit": "1",
+            "description": "Incremented by the sender for each message; wraps from 1023 to 0.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "time_of_day": {
+            "start": 32,
+            "stop": 64,
+            "unit": "ms",
+            "description": "Milliseconds since local midnight when the message was built.",
+            "source": {
+                "section": "4",
+                "table": "4-1"
+            }
+        },
+        "spare_64": {
+            "start": 64,
+            "stop": 68
+        },
+        "open_valve_4": {
+            "start": 68,
+            "stop": 69,
+            "type": "bool",
+            "description": "Set to include valve 4 in the run."
+        },
+        "open_valve_3": {
+            "start": 69,
+            "stop": 70,
+            "type": "bool",
+            "description": "Set to include valve 3 in the run."
+        },
+        "open_valve_2": {
+            "start": 70,
+            "stop": 71,
+            "type": "bool",
+            "description": "Set to include valve 2 in the run."
+        },
+        "open_valve_1": {
+            "start": 71,
+            "stop": 72,
+            "type": "bool",
+            "description": "Set to include valve 1 in the run."
+        },
+        "spare_72": {
+            "start": 72,
+            "stop": 80
+        },
+        "run_time": {
+            "start": 80,
+            "stop": 96,
+            "unit": "s",
+            "description": "Longest time the run may last."
+        },
+        "volume_limit": {
+            "start": 96,
+            "stop": 112,
+            "scale": 0.1,
+            "unit": "L",
+            "description": "Volume at which the run ends."
+        }
+    }
+}

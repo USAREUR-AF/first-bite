@@ -1,0 +1,22 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "04070c13029335d09f404b001352",
+    "expect": {
+        "message_type": "Vent Report",
+        "fields": {
+            "message_id": "4",
+            "message_length": "7",
+            "zone_number": "3",
+            "sequence_number": "19",
+            "time_of_day": "43202000",
+            "roof_vent_offset_sign": "Negative",
+            "roof_vent_offset_magnitude": "12.5",
+            "spare_74": "0",
+            "windward_vent_position": "37.5",
+            "leeward_vent_position": "0.0",
+            "vent_drive_state": "Opening",
+            "motor_current": "850"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.4."
+}

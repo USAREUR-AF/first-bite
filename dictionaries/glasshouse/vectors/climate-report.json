@@ -1,0 +1,23 @@
+{
+    "interface": "ZONE",
+    "payload_hex": "020a0c12029331e8ff06cb6a76d0019f0dea01a9",
+    "expect": {
+        "message_type": "Climate Report",
+        "fields": {
+            "message_id": "2",
+            "message_length": "10",
+            "zone_number": "3",
+            "sequence_number": "18",
+            "time_of_day": "43201000",
+            "air_temperature": "-2.50",
+            "relative_humidity": "81.3",
+            "leaf_wetness": "42",
+            "outside_temperature": "-7.35",
+            "spare_108": "0",
+            "co2_concentration": "415",
+            "solar_irradiance": "356.2",
+            "wind_speed": "4.25"
+        }
+    },
+    "note": "GZC-ICD-001 revision B, appendix B.2."
+}

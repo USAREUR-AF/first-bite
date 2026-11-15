@@ -1,5 +1,5 @@
 {
-    "description": "A message to capture the charactistic of experiencing FOMO",
+    "description": "A message to capture the characteristic of experiencing FOMO.",
     "fields": {
         "message_length": {
             "start": 0,

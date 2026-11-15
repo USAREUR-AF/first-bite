@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 478" width="760" height="478" role="img" aria-labelledby="bit-numbering-title bit-numbering-desc" aria-label="&quot;Word 3, bits 12-5&quot; is bits [35, 43) of the payload">
+<title id="bit-numbering-title">&quot;Word 3, bits 12-5&quot; is bits [35, 43) of the payload</title>
+<desc id="bit-numbering-desc">One 16-bit word, the third of a message whose words are numbered from 1 and sent most significant byte first, drawn most significant bit on the left. A document that calls the least significant bit bit 0 numbers the cells 15 down to 0 and calls the marked field bits 12-5. A document that calls the most significant bit bit 0 numbers them 0 up to 15 and calls the same field bits 3-10. The dictionary numbers every bit of the payload from 0 at the first bit sent, so the word holds bits 32 to 47 and the field is start 35, stop 43. Start is (3 - 1) x 16 + (15 - 12) = 35 and stop is start plus the width of 8. The command bite range --word-bits 16 --bit0 lsb --first-word 1 --word 3 --bits 12-5 prints the same.</desc>
+<style>text{font-family:"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif}.m{font-family:Menlo, Consolas, "Liberation Mono", "Courier New", monospace}.t{fill:#16191f}.q{fill:#515a66}.a{fill:#1f4fbf}.g{fill:#24703a}.w{fill:#8a5300}.i{fill:#5b4bb0}.mu{fill:#5a606a}.on{fill:#ffffff}.bg{fill:#ffffff;stroke:#dfe3e8;stroke-width:1}.bx{fill:#ffffff;stroke:#7d8899;stroke-width:1.25}.bxp{fill:#f4f6f8;stroke:#dfe3e8;stroke-width:1.25}.bxa{fill:#e6edfb;stroke:#1f4fbf;stroke-width:1.25}.bxg{fill:#e3f4e7;stroke:#24703a;stroke-width:1.25}.bxw{fill:#fcefd6;stroke:#8a5300;stroke-width:1.25}.bxm{fill:#eeeeec;stroke:#5a606a;stroke-width:1.25;stroke-dasharray:2 4}.bxd{fill:#ffffff;stroke:#7d8899;stroke-width:1.25;stroke-dasharray:5 4}.ln{stroke:#7d8899;stroke-width:1.25;fill:none}.lnk{stroke:#16191f;stroke-width:3;fill:none}.lna{stroke:#1f4fbf;stroke-width:2;fill:none}.lnd{stroke:#7d8899;stroke-width:1.25;fill:none;stroke-dasharray:6 5}.lnr{stroke:#dfe3e8;stroke-width:1;fill:none}.fa{fill:#1f4fbf}.fl{fill:#7d8899}.fk{fill:#16191f}.fg{fill:#24703a}.fp{fill:#f4f6f8}.fr{fill:#dfe3e8}.f0{fill:#e6edfb}.f1{fill:#fcefd6}.f2{fill:#eeebfa}.f3{fill:#e3f4e7}.s0{stroke:#1f4fbf}.s1{stroke:#8a5300}.s2{stroke:#5b4bb0}.s3{stroke:#24703a}.c0{fill:#1f4fbf}.c1{fill:#8a5300}.c2{fill:#5b4bb0}.c3{fill:#24703a}.pp{fill:#ffffff}path,line{stroke-linejoin:round}</style>
+<rect class="bg" x="0.5" y="0.5" width="759" height="477" rx="12"/>
+<text x="24" y="38" font-size="18" font-weight="700" data-role="title" class="t">&quot;Word 3, bits 12-5&quot; is bits [35, 43) of the payload</text>
+<text x="60" y="66" font-size="13" data-role="note" class="q">Word 3 of a message: 16-bit words, numbered from 1, most significant byte first</text>
+<text x="60" y="96" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="t">The document, bit 0 least significant: </tspan><tspan class="a" font-weight="700">bits 12-5</tspan></text>
+<rect x="60" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="80" y="120" font-size="13" text-anchor="middle" class="q">15</text>
+<text x="80" y="230" font-size="13" text-anchor="middle" class="q">0</text>
+<text x="80" y="286" font-size="13" text-anchor="middle" class="q">32</text>
+<rect x="100" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="120" y="120" font-size="13" text-anchor="middle" class="q">14</text>
+<text x="120" y="230" font-size="13" text-anchor="middle" class="q">1</text>
+<text x="120" y="286" font-size="13" text-anchor="middle" class="q">33</text>
+<rect x="140" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="160" y="120" font-size="13" text-anchor="middle" class="q">13</text>
+<text x="160" y="230" font-size="13" text-anchor="middle" class="q">2</text>
+<text x="160" y="286" font-size="13" text-anchor="middle" class="q">34</text>
+<rect x="180" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="200" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">12</text>
+<text x="200" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">3</text>
+<text x="200" y="286" font-size="13" font-weight="700" text-anchor="middle" class="a">35</text>
+<rect x="220" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="240" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">11</text>
+<text x="240" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">4</text>
+<text x="240" y="286" font-size="13" text-anchor="middle" class="q">36</text>
+<rect x="260" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="280" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">10</text>
+<text x="280" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">5</text>
+<text x="280" y="286" font-size="13" text-anchor="middle" class="q">37</text>
+<rect x="300" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="320" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">9</text>
+<text x="320" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">6</text>
+<text x="320" y="286" font-size="13" text-anchor="middle" class="q">38</text>
+<rect x="340" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="360" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">8</text>
+<text x="360" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">7</text>
+<text x="360" y="286" font-size="13" text-anchor="middle" class="q">39</text>
+<rect x="380" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="400" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">7</text>
+<text x="400" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">8</text>
+<text x="400" y="286" font-size="13" text-anchor="middle" class="q">40</text>
+<rect x="420" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="440" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">6</text>
+<text x="440" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">9</text>
+<text x="440" y="286" font-size="13" text-anchor="middle" class="q">41</text>
+<rect x="460" y="128" width="40" height="40" rx="0" class="bxa"/>
+<text x="480" y="120" font-size="13" font-weight="700" text-anchor="middle" class="a">5</text>
+<text x="480" y="230" font-size="13" font-weight="700" text-anchor="middle" class="a">10</text>
+<text x="480" y="286" font-size="13" text-anchor="middle" class="q">42</text>
+<rect x="500" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="520" y="120" font-size="13" text-anchor="middle" class="q">4</text>
+<text x="520" y="230" font-size="13" text-anchor="middle" class="q">11</text>
+<text x="520" y="286" font-size="13" font-weight="700" text-anchor="middle" class="a">43</text>
+<rect x="540" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="560" y="120" font-size="13" text-anchor="middle" class="q">3</text>
+<text x="560" y="230" font-size="13" text-anchor="middle" class="q">12</text>
+<text x="560" y="286" font-size="13" text-anchor="middle" class="q">44</text>
+<rect x="580" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="600" y="120" font-size="13" text-anchor="middle" class="q">2</text>
+<text x="600" y="230" font-size="13" text-anchor="middle" class="q">13</text>
+<text x="600" y="286" font-size="13" text-anchor="middle" class="q">45</text>
+<rect x="620" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="640" y="120" font-size="13" text-anchor="middle" class="q">1</text>
+<text x="640" y="230" font-size="13" text-anchor="middle" class="q">14</text>
+<text x="640" y="286" font-size="13" text-anchor="middle" class="q">46</text>
+<rect x="660" y="128" width="40" height="40" rx="0" class="bx"/>
+<text x="680" y="120" font-size="13" text-anchor="middle" class="q">0</text>
+<text x="680" y="230" font-size="13" text-anchor="middle" class="q">15</text>
+<text x="680" y="286" font-size="13" text-anchor="middle" class="q">47</text>
+<path d="M380 128L380 168" class="lnk" data-lint="nohead"/>
+<path d="M63 174v5H377v-5" class="ln" data-lint="nohead"/>
+<text x="220" y="198" font-size="13" text-anchor="middle" class="q">payload byte 4</text>
+<path d="M383 174v5H697v-5" class="ln" data-lint="nohead"/>
+<text x="540" y="198" font-size="13" text-anchor="middle" class="q">payload byte 5</text>
+<text x="60" y="254" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="t">A document with bit 0 most significant calls the same field </tspan><tspan class="a" font-weight="700">bits 3-10</tspan></text>
+<text x="60" y="310" font-size="13" data-role="note" class="t" xml:space="preserve"><tspan class="t">The dictionary counts from the first bit of the payload: </tspan><tspan class="a" font-weight="700">start 35, stop 43</tspan><tspan class="q"> (the first bit after the field)</tspan></text>
+<rect x="24" y="336" width="712" height="122" rx="8" class="bxp"/>
+<text x="40" y="364" font-size="13" font-weight="700" class="t">start</text>
+<text x="92" y="364" font-size="13" class="t">= (word - first word) x word size + bits above the field in its word</text>
+<text x="92" y="386" font-size="13" class="t m">= (3 - 1) x 16 + (15 - 12) = 35</text>
+<text x="430" y="386" font-size="13" class="t m">stop = start + width = 35 + 8 = 43</text>
+<path d="M40 402L720 402" class="lnr" data-lint="nohead"/>
+<text x="40" y="428" font-size="13" class="a m">bite range --word-bits 16 --bit0 lsb --first-word 1 --word 3 --bits 12-5</text>
+<text x="40" y="446" font-size="13" class="q">does the arithmetic and draws the word</text>
+</svg>
