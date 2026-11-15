@@ -119,30 +119,17 @@ fn timestamp(header: &pcap::PacketHeader) -> SystemTime {
     UNIX_EPOCH + Duration::new(seconds, micros * 1_000)
 }
 
-/// Wait until `fd` has something to read or `limit` has passed. The caller
-/// reads again either way, so the result is not needed.
+/// How long an idle live capture waits before reading again. The capture is
+/// non-blocking, so this bounds both the delay before the first frame after a
+/// quiet spell and the time a stop request takes to be seen.
 #[cfg(unix)]
-fn wait_readable(fd: std::os::fd::RawFd, limit: Duration) {
-    let mut poll = libc::pollfd {
-        fd,
-        events: libc::POLLIN,
-        revents: 0,
-    };
-    let millis = i32::try_from(limit.as_millis()).unwrap_or(i32::MAX);
-    // SAFETY: `poll` is one valid pollfd and the count passed is one.
-    unsafe { libc::poll(&mut poll, 1, millis) };
-}
+const IDLE_WAIT: Duration = Duration::from_millis(1);
 
 /// Frames from a network interface.
 pub struct LiveCapture {
     capture: pcap::Capture<pcap::Active>,
     link: LinkType,
     device: String,
-    /// The descriptor to wait on between reads. The capture is non-blocking:
-    /// a blocking read on Linux does not return on a link with no matching
-    /// traffic, so a stop request would wait for the next frame.
-    #[cfg(unix)]
-    fd: std::os::fd::RawFd,
 }
 
 impl LiveCapture {
@@ -158,11 +145,12 @@ impl LiveCapture {
             capture.filter(filter, true)?;
         }
         let link = link_type(capture.get_datalink())?;
+        // Non-blocking: a blocking read on Linux does not return on a link
+        // with no matching traffic, so a stop request would wait for the next
+        // frame.
         #[cfg(unix)]
         let capture = capture.setnonblock()?;
         Ok(LiveCapture {
-            #[cfg(unix)]
-            fd: std::os::fd::AsRawFd::as_raw_fd(&capture),
             capture,
             link,
             device: device.to_string(),
@@ -193,7 +181,7 @@ impl FrameSource for LiveCapture {
             })),
             Err(pcap::Error::TimeoutExpired) => {
                 #[cfg(unix)]
-                wait_readable(self.fd, POLL_INTERVAL);
+                std::thread::sleep(IDLE_WAIT);
                 Ok(None)
             }
             Err(e) => Err(e.into()),
