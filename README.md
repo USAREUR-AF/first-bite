@@ -326,6 +326,17 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [`deployment/`](deployment) | systemd unit, install script, log shipping |
 | [`mocks/`](mocks) | local stand-ins for the sinks |
 
+## Related repositories
+
+| Repository | What it holds |
+|---|---|
+| [hello-galaxy-first-bite](https://github.com/USAREUR-AF/hello-galaxy-first-bite) | five runnable steps: decode a capture, tap a link, write a dictionary from an interface document, publish onto a goat fabric, make Cursor-on-Target |
+| [hello-galaxy-record-consumers](https://github.com/USAREUR-AF/hello-galaxy-record-consumers) | consumers of first-bite's records on Kubernetes: a receiver that makes its tables from a dictionary, a latest-status board, who may post and who may read |
+| [first-bite-env](https://github.com/USAREUR-AF/first-bite-env) | a template for the private overlay a deployment keeps its dictionaries and configuration in |
+| [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | publishes first-bite's records as tracks over Cursor-on-Target, SAPIENT and ASTERIX, with optional vendor adapters |
+
+Every public goat repository is listed in the [goat documentation](https://usareur-af.github.io/goatdocs/reference/repositories/).
+
 ## Acknowledgements
 
 Scarlett Swerdlow transcribed the first dictionaries this decoder read, field
