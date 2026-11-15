@@ -10,10 +10,10 @@ The conventions referred to are in goatcore's
 
 ## What is published where
 
-| Data | Key expression | goat prefix class |
-|---|---|---|
-| one decoded record per packet, as JSON | `telemetry/<system>/<location>/<interface>/<message>` | `telemetry/`: wire-faithful surfaces for non-canonical formats; situational QoS |
-| Cursor-on-Target events, when the transform is on | `telemetry/cot/<location>/<uid>` | same |
+| Data | Key expression | goat prefix class | Status |
+|---|---|---|---|
+| one decoded record per packet, as JSON | `telemetry/<system>/<location>/<interface>/<message>` | `telemetry/`: wire-faithful surfaces for non-canonical formats; situational QoS | built |
+| Cursor-on-Target events, when the transform is on | `telemetry/cot/<location>/<uid>` | same | designed, not built: the transform publishes on ZeroMQ only, and the key template has no placeholder for the event's `uid` |
 
 `<system>`, `<location>` come from `DATA_SOURCE_SYSTEM_TYPE` and
 `DATA_SOURCE_GEO_LOCATION`; `<interface>` and `<message>` from the dictionary.
@@ -63,6 +63,17 @@ record's `message`; the published form renders every value as a string.
 | JSON Schema per message from a dictionary | built |
 | publishing the typed form so the schema validates the record as sent | designed, not built |
 | publishing the schemas at `attest/schema/<topic-pattern>` and the announcement at `services/shims/<format>/<instance>/announce` | designed, not built |
+
+## Beside Open Billie and octo-pod
+
+[Open Billie](https://github.com/USAREUR-AF/open-billie) publishes normalised
+tracks (Cursor-on-Target, ASTERIX CAT062, SAPIENT) from a sensor node onto the
+same kind of fabric. [octo-pod](https://github.com/USAREUR-AF/octo-pod)
+carries feeds from equipment that cannot join the fabric, unchanged, under a
+release gate and an audit record. [related-projects.md](related-projects.md)
+compares the three, gives the keys each publishes on, and says what to
+configure when first-bite runs with either, including publishing into a pod
+so that no fabric certificate is held by first-bite.
 
 ## Without a native session
 

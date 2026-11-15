@@ -12,6 +12,7 @@
 //!   geodetic: [latitude, longitude, altitude]   # degrees, degrees, metres HAE
 //!   # or: ecef: [x, y, z]                        # metres, WGS 84 Earth-centred
 //! stale_minutes: 60
+//! form: event                  # or `flat`; see [`Form`]
 //! ```
 
 use serde::Deserialize;
@@ -39,6 +40,23 @@ pub enum MappingError {
     PositionAmbiguous,
 }
 
+/// The XML an event is written as.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Form {
+    /// A complete CoT 2.0 event: `<event …><point lat lon hae ce le/><detail/></event>`.
+    /// The position errors `ce` and `le` are written as [`UNKNOWN_ERROR`].
+    #[default]
+    Event,
+    /// One unclosed `<event>` start tag carrying the position as attributes
+    /// (`point="h-e" lat lon hae detail="a-f-G-U-C"`): the output of releases
+    /// before `form` existed, for consumers written against it.
+    Flat,
+}
+
+/// What `ce` and `le` are set to: the CoT value for an error that is not known.
+pub const UNKNOWN_ERROR: &str = "9999999";
+
 /// How one kind of decoded message becomes a CoT event.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "RawMapping")]
@@ -49,6 +67,8 @@ pub struct Mapping {
     pub position: Position,
     /// Minutes after its creation at which the event goes stale.
     pub stale_minutes: u32,
+    /// The XML the event is written as.
+    pub form: Form,
 }
 
 /// Where the CoT type string comes from.
@@ -88,6 +108,8 @@ struct RawMapping {
     position: RawPosition,
     #[serde(default = "default_stale_minutes")]
     stale_minutes: u32,
+    #[serde(default)]
+    form: Form,
 }
 
 fn default_stale_minutes() -> u32 {
@@ -122,6 +144,7 @@ impl TryFrom<RawMapping> for Mapping {
             event_type: raw.event_type.try_into()?,
             position: raw.position.try_into()?,
             stale_minutes: raw.stale_minutes,
+            form: raw.form,
         })
     }
 }
@@ -193,6 +216,19 @@ mod tests {
             }
         );
         assert_eq!(mapping.stale_minutes, 15);
+        assert_eq!(mapping.form, Form::Event);
+    }
+
+    #[test]
+    fn form_is_event_or_flat() {
+        let with_form = |form: &str| {
+            parse(&format!(
+                "uid: [id]\ntype: {{ value: a-f-G }}\nposition: {{ geodetic: [a, b, c] }}\nform: {form}\n"
+            ))
+        };
+        assert_eq!(with_form("event").unwrap().form, Form::Event);
+        assert_eq!(with_form("flat").unwrap().form, Form::Flat);
+        assert!(with_form("nested").is_err());
     }
 
     #[test]

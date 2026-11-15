@@ -268,7 +268,7 @@ mod tests {
         );
         assert!(
             xml.ends_with(
-                r#" how="m-g" point="h-e" lat="64.8378" lon="-147.7164" hae="136.5" detail="a-f-G-U-C">"#
+                r#" how="m-g"><point lat="64.8378" lon="-147.7164" hae="136.5" ce="9999999" le="9999999"/><detail/></event>"#
             ),
             "{xml}"
         );

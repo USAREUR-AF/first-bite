@@ -103,6 +103,12 @@ The one transform is Cursor-on-Target (`subtype: cot`), driven by a mapping in
 the configuration that says which fields give the identifier, the type and the
 position. Subpubs run when `mind` is started with `--activate-subpubs`.
 
+Cursor-on-Target here is a per-message field mapping. A node that needs tracks
+normalised into Cursor-on-Target, ASTERIX CAT062 or SAPIENT with one identity
+scheme across sensors runs [Open Billie](https://github.com/USAREUR-AF/open-billie)
+for that; [related-projects.md](related-projects.md) says how first-bite fits
+with it and with [octo-pod](https://github.com/USAREUR-AF/octo-pod).
+
 ## Beyond IP
 
 `bite` decodes a payload and, optionally, a frame identifier; it does not care

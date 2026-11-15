@@ -25,6 +25,10 @@ subpubs:
           geodetic: [latitude, longitude, altitude]   # degrees, degrees, metres HAE
           # or: ecef: [x, y, z]                        # metres, WGS 84 Earth-centred
         stale_minutes: 60
+        # The XML written. `event` (the default) is a complete CoT 2.0 event
+        # with a <point> element. `flat` is one unclosed <event> start tag
+        # with the position as attributes, as releases before this key wrote.
+        # form: flat
     publisher:
       name: "cot"
       publisher_type: PUB # PUB, PUSH

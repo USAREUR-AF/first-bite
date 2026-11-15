@@ -201,6 +201,7 @@ subpubs:
         position:
           geodetic: [latitude, longitude, altitude]   # or: ecef: [x, y, z]
         stale_minutes: 60
+        # form: flat                      # the XML of earlier releases; default is event
     publisher:
       name: "cot"
       publisher_type: PUB
