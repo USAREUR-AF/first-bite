@@ -61,7 +61,11 @@ module in `src/sink/` and an arm there.
 | `sink::message_rates` | per-topic counts | always built |
 
 `flow` enables no feature by default. `mind` forwards the four features and
-enables `azure` and `aws` by default.
+enables `azure` and `aws` by default. Three more features, `pqc` (on by
+default in `mind`), `quic` and `fips`, select transport security that has to
+be compiled in; [`src/security/`](src/security) holds every sink to the
+`security` block of the configuration
+([`docs/security/transport.md`](../docs/security/transport.md)).
 
 ## Standalone subscribers
 

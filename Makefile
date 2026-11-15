@@ -13,7 +13,9 @@ RUST_LOG ?= warn,mind=debug,flow=debug
 PORTABLE_IMAGE ?= ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce31e2c428701f6682bd2fafe15388214
 STATIC_IMAGE ?= alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 PORTABLE_DIR = target/ubuntu-20.04/release
+FIPS_DIR = target/ubuntu-20.04-fips/release
 STATIC_DIR = target/alpine-3.24/$(shell uname -m | sed s/arm64/aarch64/)-unknown-linux-musl/release
+STATIC_FIPS_DIR = target/alpine-3.24-fips/$(shell uname -m | sed s/arm64/aarch64/)-unknown-linux-musl/release
 # Bare images the release binaries are run in after the build.
 PORTABLE_RUNS_IN ?= ubuntu:20.04 ubuntu:22.04 ubuntu:24.04 ubuntu:26.04
 STATIC_RUNS_IN ?= busybox:musl alpine:3.24 ubuntu:20.04
@@ -27,7 +29,7 @@ DECODER_TARGETS ?= aarch64-apple-ios aarch64-linux-android x86_64-pc-windows-msv
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build release portable portable-check portable-dir static static-check static-dir image image-check decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
+.PHONY: help build release portable portable-check portable-dir portable-fips portable-fips-check portable-fips-dir security-selftest static-fips static-fips-check static static-check static-dir image image-check decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
 
 help: ## list the targets
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -47,6 +49,15 @@ portable-check: ## run the `portable` binaries in bare Ubuntu 20.04 to 26.04 con
 portable-dir: # where `portable` leaves mind and bite
 	@echo $(PORTABLE_DIR)
 
+portable-fips: ## the `portable` binaries with the upstream FIPS module build of AWS-LC as crypto provider (needs docker)
+	BUILD_VARIANT=fips tools/build-in-container.sh $(PORTABLE_IMAGE) tools/build-portable.sh --features mind/fips
+
+portable-fips-check: ## run the `portable-fips` binaries in bare Ubuntu containers; mind must report the FIPS module active
+	SMOKE_EXPECT_FIPS=yes tools/smoke-test.sh $(FIPS_DIR) $(PORTABLE_RUNS_IN)
+
+portable-fips-dir: # where `portable-fips` leaves mind and bite
+	@echo $(FIPS_DIR)
+
 static: ## fully static release binaries, built in Alpine (needs docker)
 	tools/build-in-container.sh $(STATIC_IMAGE) tools/build-static.sh
 
@@ -55,6 +66,12 @@ static-check: ## run the `static` binaries in bare busybox, Alpine and Ubuntu co
 
 static-dir: # where `static` leaves mind and bite
 	@echo $(STATIC_DIR)
+
+static-fips: ## the `static` binaries with the upstream FIPS module build of AWS-LC as crypto provider (needs docker)
+	BUILD_VARIANT=fips tools/build-in-container.sh $(STATIC_IMAGE) tools/build-static.sh --features mind/fips
+
+static-fips-check: ## run the `static-fips` binaries in bare containers; mind must report the FIPS module active
+	SMOKE_EXPECT_FIPS=yes tools/smoke-test.sh $(STATIC_FIPS_DIR) $(STATIC_RUNS_IN)
 
 # The build's own attestations are off: the release workflow attests the
 # published image, and a single-platform image stays a plain manifest.
@@ -127,6 +144,9 @@ deny: ## licence, ban and source policy (needs cargo-deny)
 
 audit: ## RustSec advisories (needs cargo-audit)
 	cargo audit
+
+security-selftest: ## prove the transport security levels with local servers and throwaway certificates (needs docker, OpenSSL 3.5)
+	tools/security-selftest.sh
 
 vendor: ## copy every dependency into vendor/ for an air-gapped build
 	@cargo vendor --locked --versioned-dirs vendor

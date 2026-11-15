@@ -4,7 +4,8 @@
 use crate::config::{load_subscriber_configs, SubscriberConfig};
 use crate::error::{ConfigError, Error};
 use crate::feed::{Feed, FeedConfig};
-use crate::sink::{build_sink, Sink, SinkError};
+use crate::security::Security;
+use crate::sink::{build_sink_secured, Sink, SinkError};
 use log::{error, info, warn};
 use std::thread;
 use tokio::runtime::{Builder, Handle};
@@ -30,12 +31,24 @@ impl Subscribers {
     /// Build the subscribers of the configuration file. With no file there
     /// are none.
     pub fn load() -> Result<Self, Error> {
-        Ok(Self::from_configs(&load_subscriber_configs()?)?)
+        let security = crate::security::activate()?;
+        Ok(Self::from_configs_secured(
+            &load_subscriber_configs()?,
+            &security,
+        )?)
     }
 
-    /// Build one subscriber per entry. The first entry that cannot be built
-    /// is the error.
+    /// Build one subscriber per entry, held to the security block in force.
+    /// The first entry that cannot be built is the error.
     pub fn from_configs(configs: &[SubscriberConfig]) -> Result<Self, ConfigError> {
+        Self::from_configs_secured(configs, &crate::security::current())
+    }
+
+    /// Build one subscriber per entry, held to `security`.
+    pub fn from_configs_secured(
+        configs: &[SubscriberConfig],
+        security: &Security,
+    ) -> Result<Self, ConfigError> {
         let subscribers = configs
             .iter()
             .map(|config| {
@@ -46,7 +59,7 @@ impl Subscribers {
                     })?;
                 Ok(Subscriber {
                     feed,
-                    sink: build_sink(config)?,
+                    sink: build_sink_secured(config, security)?,
                 })
             })
             .collect::<Result<Vec<_>, ConfigError>>()?;

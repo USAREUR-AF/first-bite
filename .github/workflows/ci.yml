@@ -157,6 +157,47 @@ jobs:
         if: runner.os == 'Linux'
         run: docs/icd-to-dictionary/06-worked-example/retrace.sh
 
+  # The transport security that is compiled in by cargo features
+  # (docs/security/transport.md): the Zenoh sink with QUIC and hybrid
+  # post-quantum key exchange, and the FIPS module build of the crypto
+  # provider. The FIPS module's build needs CMake and Go besides the C
+  # compiler; both are part of the runner image, and the step below fails with
+  # their names if either is missing.
+  security-features:
+    name: test (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: quic, pqc
+            features: mind/zenoh,mind/quic,mind/pqc
+          - name: fips
+            features: mind/zenoh,mind/fips
+    env:
+      FEATURES: ${{ matrix.features }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: rustup toolchain install stable --no-self-update --profile minimal --component rustfmt --component clippy
+      - name: libpcap headers
+        timeout-minutes: 5
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends libpcap-dev
+      - name: CMake and Go for the FIPS module build
+        if: matrix.name == 'fips'
+        run: cmake --version && go version
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: ci-security-${{ matrix.name == 'fips' && 'fips' || 'quic-pqc' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo clippy --workspace --all-targets --locked --features "$FEATURES" -- -D warnings
+      - run: cargo test --workspace --locked --features "$FEATURES"
+
   # The decoder library is what runs where a process may not capture packets
   # (iOS, iPadOS, Android, a browser), so it must keep compiling there.
   decoder-targets:
@@ -195,7 +236,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [changes, scripts, fmt, clippy, test, decoder-targets, decoder-msrv]
+    needs: [changes, scripts, fmt, clippy, test, security-features, decoder-targets, decoder-msrv]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

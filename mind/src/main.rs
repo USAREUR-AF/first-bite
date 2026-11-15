@@ -5,7 +5,7 @@ use datamodels::packets::{
 use flow::{Publishers, SubPubs, Subscribers};
 use log::{error, info};
 use logger::loggers::setup_logger;
-use mind::cli::Opt;
+use mind::cli::{Command, Opt};
 use mind::splash::print_splash_screen;
 use mind::{
     CaptureOptions, Decapsulation, Error, FileCapture, FrameSource, LiveCapture, MultiCapture,
@@ -28,6 +28,9 @@ fn main() -> ExitCode {
         return code;
     }
     let opt = Opt::parse();
+    if let Some(Command::Security(security)) = &opt.command {
+        return mind::security::run(security, load_environment_file);
+    }
     // The env file may set values the logger reads, so it is loaded first and
     // its outcome reported once the logger exists.
     let env_file = opt.env_file.as_deref().map(load_environment_file);
@@ -62,6 +65,9 @@ enum StartError {
 }
 
 fn start(opt: Opt) -> Result<(), StartError> {
+    // The security block is read and the crypto provider installed before
+    // anything can open a connection.
+    flow::security::activate().map_err(flow::Error::from)?;
     let dictionary = mind::dictionary::load(opt.dictionary.clone()).map_err(Error::from)?;
     let version = RecordVersion::from_env().map_err(Error::RecordVersion)?;
     mind::goat::register(dictionary.as_deref(), version);

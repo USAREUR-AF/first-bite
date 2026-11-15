@@ -30,7 +30,13 @@ message on a ZeroMQ PUB socket. Sinks forward the records to S3-compatible
 storage, Azure Blob, an HTTP endpoint, a Zenoh data fabric or a file, and a
 transform emits Cursor-on-Target. Records stay on the machine until its owner
 configures a destination: the record socket binds loopback by default and no
-sink runs unless one is configured.
+sink runs unless one is configured. The record socket is plaintext and
+unauthenticated and stays on the host; other hosts are served by the Zenoh
+sink or an HTTPS sink, and a `security` block in the configuration states the
+level every path is held to (TLS or mutual TLS, minimum TLS version, hybrid
+post-quantum key exchange, the FIPS module). `mind` refuses to start when a
+path cannot meet it. [docs/security/transport.md](docs/security/transport.md)
+is the guide.
 
 The name says what it does: it takes the first bite of every byte while it is
 still on the wire, before the addressee does, and takes nothing from it. It
@@ -129,7 +135,7 @@ cargo run -p bite -- decode dictionaries/weather-station --port 40100 \
     0200174b583700fb2e18bcda9b4236000004030201beef
 
 # Replay a capture file through the whole pipeline; records go to
-# completelog_<time>.log and to ZeroMQ on tcp://*:12000.
+# completelog_<time>.log and to ZeroMQ on tcp://127.0.0.1:12000.
 cargo run -p mind -- --pcap-file examples/weather-station.pcap \
     --dictionary dictionaries/weather-station --output
 ```
@@ -219,8 +225,9 @@ Configuration read from the environment:
 |---|---|
 | `BITE_DICT_PATH` | dictionary directory |
 | `FIRST_BITE_RECORD_VERSION` | `2` (default): typed values in the record. `1`: every value as text. [docs/record.md](docs/record.md) |
-| `PUBLISHER_CONFIG_PATH` | ZeroMQ publishers; default is one PUB socket on `tcp://*:12000` |
+| `PUBLISHER_CONFIG_PATH` | ZeroMQ publishers; default is one PUB socket on `tcp://127.0.0.1:12000` |
 | `SUBSCRIBER_CONFIG_PATH` | sinks; none when unset |
+| `SECURITY_CONFIG_PATH` | the `security` block, when it is not written in the subscriber file; `mind security show` prints the effective level of every path |
 | `SUBPUB_CONFIG_PATH` | transforms, used with `--activate-subpubs` |
 | `DATA_SOURCE_NETWORK_NAME`, `DATA_SOURCE_GEO_LOCATION`, `DATA_SOURCE_SYSTEM_TYPE`, `DATA_SOURCE_OWNER`, `DATA_PACKET_CLASSIFICATION`, `DATA_PACKET_ACCM` | copied into every record |
 | `RUST_LOG` | log level, for example `warn,mind=info` |

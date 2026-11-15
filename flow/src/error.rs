@@ -29,6 +29,9 @@ pub enum Problem {
     },
     #[error("the publisher binds port {0}, which is the port the subscriber reads; the output would feed the input")]
     Loopback(String),
+    /// A requirement of the security block that the entry cannot meet.
+    #[error("{0}")]
+    Security(String),
     #[error("`{key}` refers to the environment variable {variable}, which is not set")]
     UnsetVariable { key: &'static str, variable: String },
     #[error(
@@ -75,6 +78,9 @@ pub enum ConfigError {
     },
     #[error("subpub {subpub}: {problem}")]
     SubPub { subpub: String, problem: Problem },
+    /// The security block itself cannot be used.
+    #[error("security: {0}")]
+    Security(String),
 }
 
 /// Why publishers, subscribers or subpubs could not start.

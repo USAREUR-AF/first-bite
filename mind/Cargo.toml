@@ -1,17 +1,21 @@
 [package]
 name = "mind"
-version = "1.0.1"
+version = "1.1.0"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
 description = "first-bite process control: capture packets, decode them, publish the records"
 
 [features]
-default = ["azure", "aws"]
+default = ["azure", "aws", "pqc"]
 # Sinks compiled into the binary; see flow/README.md.
 azure = ["flow/azure"]
 aws = ["flow/aws"]
 zenoh = ["flow/zenoh"]
+# Transport security compiled into the binary; see docs/security/transport.md.
+quic = ["flow/quic"]
+fips = ["flow/fips"]
+pqc = ["flow/pqc"]
 # Joining a goat data fabric; implies zenoh. See docs/goat/joining.md.
 goat = ["zenoh", "flow/goat"]
 

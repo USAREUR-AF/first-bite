@@ -5,10 +5,12 @@
 //! defaults. The payload is the record as JSON, tagged `application/json`,
 //! or with `encoding: cbor` as CBOR, tagged `application/cbor`.
 
-use super::{Sink, SinkError};
+use super::{Built, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::encoding::Encoding as RecordEncoding;
 use crate::error::Problem;
+use crate::security::zenoh_config::{check, ZenohFacts};
+use crate::security::{provider, Policy, Security};
 use async_trait::async_trait;
 use log::{debug, info};
 use serde::Deserialize;
@@ -190,6 +192,34 @@ pub fn zenoh_encoding(encoding: RecordEncoding) -> Encoding {
 
 impl ZenohSink {
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
+        let base = Security::unstated().base;
+        Self::build(config, &base, &base).map(|built| built.0)
+    }
+
+    /// The sink held to `policy`: the Zenoh configuration is read and what
+    /// it will do on the wire is checked against the level. `base` is the
+    /// security block, whose TLS settings the Zenoh client inherits.
+    pub(crate) fn secured(
+        config: &SubscriberConfig,
+        policy: &Policy,
+        base: &Policy,
+    ) -> Result<Built, Problem> {
+        let (sink, posture, targets) = Self::build(config, policy, base)?;
+        Ok(Built::new(sink, posture, targets))
+    }
+
+    fn build(
+        config: &SubscriberConfig,
+        policy: &Policy,
+        base: &Policy,
+    ) -> Result<
+        (
+            Self,
+            crate::security::PathPosture,
+            Vec<crate::security::ProbeTarget>,
+        ),
+        Problem,
+    > {
         let template = config
             .key_template
             .as_deref()
@@ -200,18 +230,28 @@ impl ZenohSink {
         })?;
         let config_path = config.zenoh_config.as_deref().map(PathBuf::from);
         // Read the file now so that a wrong path or a bad file stops startup.
-        if let Some(path) = &config_path {
-            zenoh::Config::from_file(path).map_err(|e| Problem::InvalidValue {
+        let zenoh_config = match &config_path {
+            Some(path) => zenoh::Config::from_file(path).map_err(|e| Problem::InvalidValue {
                 key: "zenoh_config",
                 reason: format!("{}: {e}", path.display()),
-            })?;
-        }
-        Ok(ZenohSink {
+            })?,
+            None => zenoh::Config::default(),
+        };
+        let (posture, targets) = check(
+            &config.name,
+            &ZenohFacts::read(&zenoh_config),
+            policy,
+            base,
+            cfg!(feature = "quic"),
+        )?;
+        provider::ensure_installed(base);
+        let sink = ZenohSink {
             config_path,
             template,
             encoding: RecordEncoding::from_config(config.encoding.as_deref())?,
             session: OnceCell::new(),
-        })
+        };
+        Ok((sink, posture, targets))
     }
 
     /// The sink's one session, opened on first use.

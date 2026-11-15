@@ -6,6 +6,8 @@
 //!   object storage, HTTP, local files, Zenoh.
 //! * [`SubPubs`] reads them, transforms each record and publishes the result
 //!   on a second socket.
+//! * [`security`] holds every one of those paths to the level the
+//!   configuration states.
 //!
 //! A record is JSON text inside the process; each publisher and sink writes
 //! it as JSON or CBOR, as its `encoding` key says (see [`encoding`]).
@@ -22,6 +24,7 @@ mod feed;
 pub mod goat;
 pub mod publish;
 pub mod secret;
+pub mod security;
 pub mod sink;
 pub mod subpub;
 pub mod subscribe;
@@ -33,6 +36,6 @@ pub use crate::encoding::{Encoding, EncodingError};
 pub use crate::error::{ConfigError, Error, Problem};
 pub use crate::publish::{PublishError, Publisher, Publishers};
 pub use crate::secret::Secret;
-pub use crate::sink::{build_sink, Sink, SinkError};
+pub use crate::sink::{build_sink, build_sink_secured, describe_sink, Sink, SinkError};
 pub use crate::subpub::{SubPubs, Transform, TransformError};
 pub use crate::subscribe::Subscribers;

@@ -24,7 +24,7 @@ version 2 JSON (line breaks added):
  "data_source_geo_location":null,"data_source_network_name":null,
  "data_source_system_type":null,"data_source_owner":null,
  "data_packet_classification":null,"data_packet_accm":null,
- "data_model_version":"2.0.0","application_version":"1.0.1",
+ "data_model_version":"2.0.0","application_version":"1.1.0",
  "dictionary":"weather-station","dictionary_version":"1.0.0"}
 ```
 

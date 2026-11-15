@@ -10,23 +10,34 @@ readme = "README.md"
 [features]
 default = []
 # Each feature compiles one sink and the client library it needs.
-azure = ["dep:base64", "dep:hex", "dep:hmac", "dep:sha2"]
-aws = ["dep:aws-sdk-s3", "dep:hex", "dep:sha2"]
+azure = ["dep:base64", "dep:hex", "dep:sha2"]
+aws = ["dep:aws-sdk-s3", "dep:aws-smithy-runtime-api", "dep:aws-smithy-types", "dep:hex", "dep:rustls-native-certs", "dep:sha2"]
 zenoh = ["dep:zenoh"]
+# Transport security that has to be compiled in; docs/security/transport.md.
+# QUIC transport for the Zenoh sink.
+quic = ["zenoh", "zenoh/transport_quic"]
+# The crypto provider is the upstream FIPS module build of AWS-LC.
+fips = ["rustls/fips"]
+# Hybrid post-quantum key exchange (X25519MLKEM768) can be offered.
+pqc = []
 # Joining a goat data fabric: the Zenoh sink plus goat's identity, key and
 # announcement conventions. Off unless asked for; see docs/goat/joining.md.
 goat = ["zenoh", "dep:hex", "dep:sha2", "dep:rustls-pki-types", "dep:rustls-webpki", "dep:x509-parser"]
 
 [dependencies]
 async-trait.workspace = true
+aws-lc-rs.workspace = true
 aws-sdk-s3 = { workspace = true, optional = true }
+aws-smithy-runtime-api = { workspace = true, optional = true }
+aws-smithy-types = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 chrono.workspace = true
 cotify.workspace = true
 hex = { workspace = true, optional = true }
-hmac = { workspace = true, optional = true }
 log.workspace = true
 reqwest.workspace = true
+rustls.workspace = true
+rustls-native-certs = { workspace = true, optional = true }
 rustls-pki-types = { workspace = true, optional = true }
 rustls-webpki = { workspace = true, optional = true }
 serde.workspace = true
@@ -35,6 +46,7 @@ serde_norway.workspace = true
 sha2 = { workspace = true, optional = true }
 thiserror.workspace = true
 tokio.workspace = true
+webpki-roots.workspace = true
 x509-parser = { workspace = true, optional = true }
 zenoh = { workspace = true, optional = true }
 zmq.workspace = true

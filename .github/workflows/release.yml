@@ -10,6 +10,11 @@
 #   first-bite-<version>-aarch64-linux-musl.tar.gz
 #       the self-contained Linux build: fully static. Built only for a
 #       vX.Y.0 tag, or by workflow_dispatch with the input `static`
+#   first-bite-<version>-x86_64-linux-gnu-fips.tar.gz
+#   first-bite-<version>-aarch64-linux-gnu-fips.tar.gz
+#       the standard Linux build with the upstream FIPS module build of
+#       AWS-LC as its crypto provider (cargo feature `fips`). Built only for
+#       a vX.Y.0 tag, or by workflow_dispatch with the input `fips`
 #   first-bite-<version>-aarch64-apple-darwin.tar.gz
 #   first-bite-<version>-x86_64-apple-darwin.tar.gz
 #   first-bite-<version>-x86_64-pc-windows-msvc.zip     bite.exe only
@@ -57,6 +62,10 @@ on:
     inputs:
       static:
         description: also build the self-contained (static musl) Linux binaries
+        type: boolean
+        default: false
+      fips:
+        description: also build the Linux binaries with the FIPS module build of the crypto provider
         type: boolean
         default: false
 
@@ -129,6 +138,42 @@ jobs:
       - run: make static-check
       - name: Package
         run: tools/package-release.sh "$PLATFORM" "$(make -s static-dir)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: first-bite-${{ env.PLATFORM }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  # The standard build with the cargo feature `fips`: the crypto provider is
+  # the upstream FIPS module build of AWS-LC, linked statically. The check
+  # also requires `mind security show` to report the module active. Built as
+  # often as the self-contained variant.
+  linux-fips:
+    name: build ${{ matrix.arch }}-linux-gnu-fips
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.fips)
+      || (github.ref_type == 'tag' && endsWith(github.ref_name, '.0')) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.arch }}-linux-gnu-fips
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: make portable-fips
+      - run: make portable-fips-check
+      - name: Package
+        run: tools/package-release.sh "$PLATFORM" "$(make -s portable-fips-dir)"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: first-bite-${{ env.PLATFORM }}
@@ -372,7 +417,9 @@ jobs:
   # its image is published.
   publish:
     name: publish the GitHub release
-    needs: [linux, linux-static, macos, windows, sbom, image-publish]
+    needs: [linux, linux-static, linux-fips, macos, windows, sbom, image-publish]
+    # linux-static and linux-fips are skipped for most tags; a skipped job
+    # must not skip this one.
     if: ${{ !cancelled() && !failure() && github.event_name == 'push' && github.ref_type == 'tag' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15

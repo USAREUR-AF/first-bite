@@ -66,6 +66,7 @@ impl SubPubs {
     /// Build the subpubs of the configuration file. With no file there are
     /// none.
     pub fn load() -> Result<Self, Error> {
+        crate::security::activate()?;
         Self::from_configs(&load_subpub_configs()?)
     }
 
@@ -135,6 +136,9 @@ impl SubPubs {
 /// subscriber reads would feed its own output back in, and is refused.
 fn check(config: &SubPubConfig) -> Result<(FeedConfig, Transform), Problem> {
     let transform = Transform::from_config(&config.subscriber)?;
+    let security = crate::security::current();
+    let policy = security.for_sink(config.subscriber.security.as_ref())?;
+    crate::security::check_feed(&config.subscriber, &policy)?;
     let mut feed = FeedConfig::from_config(&config.subscriber)?;
     feed.name = config.name.clone();
     let publisher_port = config.publisher.address.rsplit(':').next().unwrap_or("");

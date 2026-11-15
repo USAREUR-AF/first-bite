@@ -24,6 +24,7 @@ not compiled in, or a missing key stops startup with an error naming the entry.
 | [`goat.example.yml`](goat.example.yml) | Optional: the settings for joining a goat data fabric, read only by a build with the `goat` feature. |
 | [`subpubs.local.yml`](subpubs.local.yml) | Local development: weather-station `Position` records to Cursor-on-Target on port 12001. |
 | [`subpubs.example.yml`](subpubs.example.yml) | The same transform with every key explained. |
+| [`security.example.yml`](security.example.yml) | The security block with every key explained. |
 
 Your own files hold addresses. Keep them outside the repository, or name
 them `config/<anything>.yml`: `flow/.gitignore` ignores every YAML file here
@@ -70,6 +71,56 @@ Set the variables where the service reads its environment:
 `/etc/first-bite/first-bite.env`, mode 0640 `root:firstbite`
 ([docs/deployment.md](../../docs/deployment.md)).
 
+## Security
+
+One `security` block states how records may leave the host; every publisher,
+subscriber and subpub is held to it before anything connects, and an entry
+that cannot meet it stops startup with an error naming the entry and the
+requirement. [`docs/security/transport.md`](../../docs/security/transport.md)
+explains the levels and how to choose one.
+
+The block is the top-level `security:` key of the subscriber file, or of a
+file of its own found like the other three: `SECURITY_CONFIG_PATH`, else
+`config/security.yml` beside the executable. Written in both, startup is
+refused. With no block nothing is required of any path.
+
+```yaml
+security:
+  transport: tls                      # the level; the only required key
+  min_tls: 1.3
+  key_exchange: hybrid-pqc-preferred
+  fips: "off"
+  quic: allowed
+  client_cert: /etc/first-bite/tls/client.pem
+  client_key: /etc/first-bite/tls/client.key
+  ca_bundle: /etc/first-bite/tls/ca.pem
+  allow_plaintext_bind: false
+```
+
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `transport` | `unenforced`, `loopback-plaintext`, `tls`, `mtls` | required | `loopback-plaintext`: no sink may leave the host. `tls`: every network sink uses TLS and authenticates the server. `mtls`: and presents a client certificate. |
+| `min_tls` | `1.2`, `1.3` | `1.3` | lowest TLS version a sink negotiates |
+| `key_exchange` | `classical`, `hybrid-pqc-preferred`, `hybrid-pqc-required` | `hybrid-pqc-preferred` in a binary with the cargo feature `pqc`, else `classical` | whether X25519MLKEM768 is offered, and whether anything else is |
+| `fips` | `off`, `required` | `off` | `required` needs a binary built with the cargo feature `fips` |
+| `quic` | `allowed`, `required` | `allowed` | `required`: every Zenoh endpoint is `quic/`; needs the cargo feature `quic` |
+| `client_cert`, `client_key` | paths of PEM files | none | client certificate chain and key of the REST, Azure and S3 sinks |
+| `ca_bundle` | path of a PEM file | none | authorities those sinks trust, in place of their usual roots |
+| `allow_plaintext_bind` | `true`, `false` | `false` | permit a ZeroMQ socket to bind an address that is not loopback; startup logs a warning naming it |
+
+A subscriber may carry its own `security:` key with any of `transport`,
+`min_tls`, `key_exchange`, `fips`, `quic`, `client_cert`, `client_key` and
+`ca_bundle`. A value that differs from the block needs `reason`:
+
+```yaml
+    security:
+      transport: loopback-plaintext
+      reason: "local emulator on the development machine"
+```
+
+`mind security check` reports what startup would refuse; `mind security show`
+prints what every entry will use.
+
 ## Publishers
 
 ```yaml
@@ -110,7 +161,9 @@ which is where flow's own subscribers connect. Binding another address
 (`tcp://*:12000`, an interface address) exposes every decoded record to that
 network. The same holds for the publisher of a subpub. A publisher bound to
 anything but a loopback address, `localhost`, `ipc://` or `inproc://` logs a
-warning at startup that says so.
+warning at startup that says so; under a `security` block it is refused
+unless `allow_plaintext_bind: true` is set. Consumers on other hosts are
+served by the Zenoh and HTTPS sinks.
 
 ## Subscribers
 
@@ -152,7 +205,11 @@ chosen when building `mind`:
 cargo build --release -p mind                      # azure + aws
 cargo build --release -p mind --features zenoh     # azure + aws + zenoh
 cargo build --release -p mind --no-default-features --features zenoh
+cargo build --release -p mind --features zenoh,quic   # Zenoh over QUIC as well
 ```
+
+The features `pqc` (default), `quic` and `fips` belong to the security block;
+see [`docs/security/transport.md`](../../docs/security/transport.md).
 
 ### `objectstorage` / `azureobject`
 
@@ -205,6 +262,8 @@ The Azure sink does not follow an HTTP redirect.
 | `endpoint_url` | required: a host or address (sent over `http://`), or a URL starting `http://` or `https://` |
 | `endpoint_port` | required |
 | `endpoint_path` | optional, e.g. `/records` |
+| `security.client_cert`, `security.client_key` | optional: client certificate and key (PEM files) for this endpoint, in place of the security block's |
+| `security.ca_bundle` | optional: authorities (PEM file) this endpoint's certificate is checked against, in place of the public web roots |
 
 A server error or a failed connection is retried three times, after 2, 4 and
 8 seconds. A redirect is not followed: it is reported as an error, and the
@@ -228,7 +287,7 @@ verification off.
 
 | Key | |
 |---|---|
-| `zenoh_config` | optional: path of a standard Zenoh JSON5 configuration file. Endpoints, mode and TLS identity are set there. Without it the session uses Zenoh's defaults. |
+| `zenoh_config` | optional: path of a standard Zenoh JSON5 configuration file. Endpoints, mode and TLS identity are set there. Without it the session uses Zenoh's defaults: `peer` mode, a plaintext listener on every interface and multicast scouting, which every level but `unenforced` refuses. Under a `security` block the file's endpoints (`tls/`, `quic/`, `tcp/`), scouting and client certificate are checked against the level. |
 | `key_template` | optional: the key each record is put on. Default `telemetry/{system}/{location}/{interface}/{message}`. |
 
 Placeholders in `key_template`:

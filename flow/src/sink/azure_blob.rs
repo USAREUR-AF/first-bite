@@ -4,18 +4,19 @@
 //! `Create Container`, authorised with the account's Shared Key.
 
 use super::object_path::{time_then_topic, topic_then_time};
-use super::{quoted, read_body, required, required_secret, Sink, SinkError};
+use super::{quoted, read_body, required, required_secret, Built, Sink, SinkError};
 use crate::config::SubscriberConfig;
 use crate::encoding::Encoding;
 use crate::error::Problem;
+use crate::security::http::{secure, HttpSink, Roots, Secured};
+use crate::security::{Policy, Security};
 use async_trait::async_trait;
+use aws_lc_rs::hmac;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use chrono::{DateTime, Utc};
-use hmac::{Hmac, KeyInit, Mac};
 use log::{debug, info};
 use reqwest::{Method, StatusCode, Url};
-use sha2::Sha256;
 use std::time::Duration;
 
 /// Storage service version sent as `x-ms-version` when `cloud_api_version`
@@ -38,6 +39,16 @@ pub struct AzureBlobSink {
 
 impl AzureBlobSink {
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
+        Self::build(config, &Security::unstated().base).map(|(sink, _)| sink)
+    }
+
+    /// The sink held to `policy`; see [`crate::security`].
+    pub(crate) fn secured(config: &SubscriberConfig, policy: &Policy) -> Result<Built, Problem> {
+        let (sink, secured) = Self::build(config, policy)?;
+        Ok(Built::new(sink, secured.posture, secured.target))
+    }
+
+    fn build(config: &SubscriberConfig, policy: &Policy) -> Result<(Self, Secured), Problem> {
         let account = required(&config.cloud_account, "cloud_account")?;
         let access_key = required_secret(&config.cloud_access_key, "cloud_access_key")?;
         let container = required(&config.cloud_container, "cloud_container")?;
@@ -60,14 +71,32 @@ impl AzureBlobSink {
             .map_err(|()| invalid_url(format!("{service_url:?} cannot carry a path")))?
             .pop_if_empty()
             .push(container);
+        let public = config.cloud_location_type.as_deref() == Some("Public");
+        let secured = secure(
+            &HttpSink {
+                name: &config.name,
+                kind: "objectstorage/azureobject",
+                key: location_key,
+                url: &service_url,
+                roots: Roots::BuiltIn,
+                unstated_key_exchange: None,
+                no_client_certificate: public.then_some(
+                    "the public Azure Blob service authorises requests by Shared Key and takes \
+                     no client certificate",
+                ),
+                outside_provider: None,
+            },
+            policy,
+        )?;
         // A storage service answers a write itself. A redirect would carry
         // the record, and on the same host the signed request, elsewhere.
-        let client = reqwest::Client::builder()
+        let client = secured
+            .client_builder()
             .timeout(REQUEST_TIMEOUT)
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| invalid_url(format!("cannot build the HTTP client: {e}")))?;
-        Ok(AzureBlobSink {
+        let sink = AzureBlobSink {
             client,
             account: account.to_string(),
             key,
@@ -79,7 +108,8 @@ impl AzureBlobSink {
                 .unwrap_or(DEFAULT_API_VERSION)
                 .to_string(),
             encoding: Encoding::from_config(config.encoding.as_deref())?,
-        })
+        };
+        Ok((sink, secured))
     }
 
     /// URL of a blob in the container; `/` in the name separates path
@@ -220,16 +250,11 @@ fn string_to_sign(
     text
 }
 
-/// Base64 of the HMAC-SHA256 of `text` under the account key.
+/// Base64 of the HMAC-SHA256 of `text` under the account key, computed by
+/// the process's crypto provider.
 fn sign(key: &[u8], text: &str) -> String {
-    // HMAC accepts a key of any length, so this never takes the error arm.
-    match Hmac::<Sha256>::new_from_slice(key) {
-        Ok(mut mac) => {
-            mac.update(text.as_bytes());
-            STANDARD.encode(mac.finalize().into_bytes())
-        }
-        Err(_) => String::new(),
-    }
+    let key = hmac::Key::new(hmac::HMAC_SHA256, key);
+    STANDARD.encode(hmac::sign(&key, text.as_bytes()))
 }
 
 fn status_error(status: StatusCode, body: &[u8]) -> SinkError {
