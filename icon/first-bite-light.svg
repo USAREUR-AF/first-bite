@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t d">
+  <title id="t">first-bite</title>
+  <desc id="d">Two fangs biting into a byte, eight bits in a row, while it travels along a wire to its addressee. The bits read 01100010: 0x62, the letter b.</desc>
+  <!-- the wire the byte is travelling on, towards its addressee -->
+  <path d="M14 158 H24 M232 158 H236" fill="none" stroke="#8593a3" stroke-width="5" stroke-linecap="round"/>
+  <path d="M234 148 L250 158 L234 168 Z" fill="#8593a3"/>
+  <!-- the byte: 0 1 1 0 0 0 1 0 -->
+  <g stroke="#5d7186" stroke-width="3">
+    <rect x="27.5"  y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="53.5"  y="146.5" width="21" height="23" rx="4" fill="#5d7186"/>
+    <rect x="79.5"  y="146.5" width="21" height="23" rx="4" fill="#5d7186"/>
+    <rect x="105.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="131.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="157.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+    <rect x="183.5" y="146.5" width="21" height="23" rx="4" fill="#5d7186"/>
+    <rect x="209.5" y="146.5" width="21" height="23" rx="4" fill="none"/>
+  </g>
+  <!-- the bite -->
+  <path d="M30 58 Q128 116 226 58" fill="none" stroke="#1b2430" stroke-width="15" stroke-linecap="round"/>
+  <path d="M64 84 Q92 99 116 97 Q106 136 90 166 Q73 126 64 84 Z" fill="#1b2430" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M192 84 Q164 99 140 97 Q150 136 166 166 Q183 126 192 84 Z" fill="#1b2430" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+  <!-- first blood -->
+  <path d="M166 186 C166 186 152 206 152 216 a14 14 0 0 0 28 0 C180 206 166 186 166 186 Z" fill="#d92d20"/>
+</svg>
