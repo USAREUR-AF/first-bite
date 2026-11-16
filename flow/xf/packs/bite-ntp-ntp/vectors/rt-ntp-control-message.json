@@ -1,0 +1,10 @@
+{
+  "name": "rt-ntp-control-message",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "06",
+  "expect": "06",
+  "model": {
+    "@kind": "ntp_control_message"
+  }
+}

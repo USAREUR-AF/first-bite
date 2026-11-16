@@ -22,6 +22,10 @@ fips = ["rustls/fips"]
 pqc = []
 # Joining a goat data fabric: the Zenoh sink plus goat's identity, key and
 # announcement conventions. Off unless asked for; see docs/goat/joining.md.
+# The `xf` transform: convert a record's payload to another format with the
+# goat-transformers engine and the packs in flow/xf. Off unless asked for; see
+# README.md, "The xf transform".
+goat-transformers = ["dep:goat-transformers", "dep:base64", "dep:hex"]
 goat = ["zenoh", "dep:hex", "dep:sha2", "dep:rustls-pki-types", "dep:rustls-webpki", "dep:x509-parser"]
 
 [dependencies]
@@ -33,6 +37,7 @@ aws-smithy-types = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 chrono.workspace = true
 cotify.workspace = true
+goat-transformers = { workspace = true, optional = true }
 hex = { workspace = true, optional = true }
 log.workspace = true
 reqwest.workspace = true
@@ -54,6 +59,7 @@ zenoh = { workspace = true, optional = true }
 zmq.workspace = true
 
 [dev-dependencies]
+bite.workspace = true
 ciborium.workspace = true
 quick-xml.workspace = true
 rcgen.workspace = true

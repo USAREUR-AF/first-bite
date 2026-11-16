@@ -1,0 +1,37 @@
+[
+  {
+    "format": "bite-glasshouse-supv",
+    "dictionary": "glasshouse",
+    "interface": "SUPV",
+    "frame_id_bytes": 0,
+    "module": "glasshouse"
+  },
+  {
+    "format": "bite-glasshouse-zone",
+    "dictionary": "glasshouse",
+    "interface": "ZONE",
+    "frame_id_bytes": 0,
+    "module": "glasshouse"
+  },
+  {
+    "format": "bite-ntp-ntp",
+    "dictionary": "ntp",
+    "interface": "NTP",
+    "frame_id_bytes": 0,
+    "module": "ntp"
+  },
+  {
+    "format": "bite-vehicle-can-powertrain",
+    "dictionary": "vehicle-can",
+    "interface": "POWERTRAIN",
+    "frame_id_bytes": 4,
+    "module": "vehicle_can"
+  },
+  {
+    "format": "bite-weather-station-wx",
+    "dictionary": "weather-station",
+    "interface": "WX",
+    "frame_id_bytes": 0,
+    "module": "weather_station"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "name": "dict-irrigation-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "02071c06014997fa0500025809c4",
+  "expect": "02071c06014997fa0500025809c4",
+  "model": {
+    "@kind": "irrigation_command",
+    "glasshouse.message_id": "2",
+    "glasshouse.message_length": "7",
+    "glasshouse.zone_number": "7",
+    "glasshouse.sequence_number": "6",
+    "glasshouse.time_of_day": "21600250",
+    "glasshouse.spare_64": "0",
+    "glasshouse.open_valve_4": "false",
+    "glasshouse.open_valve_3": "true",
+    "glasshouse.open_valve_2": "false",
+    "glasshouse.open_valve_1": "true",
+    "glasshouse.spare_72": "0",
+    "glasshouse.run_time": "600",
+    "glasshouse.volume_limit": "250"
+  }
+}

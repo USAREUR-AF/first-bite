@@ -1,0 +1,19 @@
+{
+  "name": "rt-vent-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "036949a55a5a5a5ab46925a5",
+  "expect": "036949a55a5a5a5ab46925a5",
+  "model": {
+    "@kind": "vent_command",
+    "glasshouse.message_id": "3",
+    "glasshouse.message_length": "105",
+    "glasshouse.zone_number": "18",
+    "glasshouse.sequence_number": "421",
+    "glasshouse.time_of_day": "1515870810",
+    "glasshouse.windward_vent_target": "90",
+    "glasshouse.leeward_vent_target": "52.5",
+    "glasshouse.vent_command_mode": "Close All",
+    "glasshouse.spare_84": "1445"
+  }
+}

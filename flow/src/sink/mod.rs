@@ -56,6 +56,9 @@ pub enum SinkError {
     },
     #[error("Cursor-on-Target: {0}")]
     Cot(#[from] cotify::CotError),
+    #[cfg(feature = "goat-transformers")]
+    #[error("xf: {0}")]
+    Xf(#[from] crate::xf::XfError),
     #[error("{0}")]
     Network(String),
     #[cfg(feature = "aws")]

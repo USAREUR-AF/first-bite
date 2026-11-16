@@ -31,6 +31,9 @@ pub mod subpub;
 pub mod subscribe;
 #[cfg(test)]
 mod test_support;
+pub mod xf;
+#[cfg(feature = "goat-transformers")]
+mod xf_embedded;
 
 pub use crate::config::{PublisherConfig, SubPubConfig, SubscriberConfig};
 pub use crate::delivery::{SinkReport, Tracker};

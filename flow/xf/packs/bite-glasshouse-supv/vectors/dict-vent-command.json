@@ -1,0 +1,19 @@
+{
+  "name": "dict-vent-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "03060c0702932a1864191000",
+  "expect": "03060c0702932a1864191000",
+  "model": {
+    "@kind": "vent_command",
+    "glasshouse.message_id": "3",
+    "glasshouse.message_length": "6",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "7",
+    "glasshouse.time_of_day": "43199000",
+    "glasshouse.windward_vent_target": "50",
+    "glasshouse.leeward_vent_target": "12.5",
+    "glasshouse.vent_command_mode": "Go To Target",
+    "glasshouse.spare_84": "0"
+  }
+}

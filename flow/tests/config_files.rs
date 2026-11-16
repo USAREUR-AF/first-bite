@@ -199,7 +199,12 @@ fn subpubs_parse_and_carry_a_cot_mapping() {
         assert_eq!(subpub.subscriber.topics, ["WX/Position"]);
         assert_eq!(subpub.publisher.address, "tcp://127.0.0.1:12001");
         assert_eq!(subpub.publisher.topic_suffix.as_deref(), Some(suffix));
-        let Transform::Cot(mapping) = Transform::from_config(&subpub.subscriber).unwrap();
+        // `Cot` is the only variant unless the `goat-transformers` feature adds `Xf`.
+        #[allow(unreachable_patterns)]
+        let mapping = match Transform::from_config(&subpub.subscriber).unwrap() {
+            Transform::Cot(mapping) => mapping,
+            other => panic!("{name}: not the cot transform: {other:?}"),
+        };
         assert_eq!(mapping.uid, ["station_id"]);
         assert_eq!(mapping.stale_minutes, 60);
     }

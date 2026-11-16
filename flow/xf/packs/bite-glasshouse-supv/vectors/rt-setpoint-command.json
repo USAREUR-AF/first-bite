@@ -1,0 +1,20 @@
+{
+  "name": "rt-setpoint-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "01b4a6d2a5a5a5a55a5ab4b45a52a5a5",
+  "expect": "01b4a6d2a5a5a5a55a5ab4b45a52a5a5",
+  "model": {
+    "@kind": "setpoint_command",
+    "glasshouse.message_id": "1",
+    "glasshouse.message_length": "180",
+    "glasshouse.zone_number": "41",
+    "glasshouse.sequence_number": "722",
+    "glasshouse.time_of_day": "2779096485",
+    "glasshouse.day_temperature_setpoint": "231.3",
+    "glasshouse.night_temperature_setpoint": "-192.76",
+    "glasshouse.humidity_setpoint": "36.1",
+    "glasshouse.spare_106": "18",
+    "glasshouse.co2_setpoint": "42405"
+  }
+}

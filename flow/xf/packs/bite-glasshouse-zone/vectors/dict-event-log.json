@@ -1,0 +1,17 @@
+{
+  "name": "dict-event-log",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "06090c14029339b802001102123412021240",
+  "expect": "06090c14029339b80200",
+  "model": {
+    "@kind": "event_log",
+    "glasshouse.message_id": "6",
+    "glasshouse.message_length": "9",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "20",
+    "glasshouse.time_of_day": "43203000",
+    "glasshouse.record_count": "2",
+    "glasshouse.spare_72": "0"
+  }
+}

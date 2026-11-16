@@ -1,0 +1,27 @@
+{
+  "name": "rt-broadcast",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "adb469d2a5a5a5a55a5a5a5ab4b4b4b469696969d2d2d2d2a5a5a5a55a5a5a5ab4b4b4b469696969d2d2d2d2a5a5a5a5",
+  "expect": "adb469d2a5a5a5a55a5a5a5ab4b4b4b469696969d2d2d2d2a5a5a5a55a5a5a5ab4b4b4b469696969d2d2d2d2a5a5a5a5",
+  "model": {
+    "@kind": "broadcast",
+    "ntp.leap_indicator": "last minute of the day has 59 seconds",
+    "ntp.version_number": "5",
+    "ntp.mode": "broadcast",
+    "ntp.stratum": "180",
+    "ntp.poll": "105",
+    "ntp.precision": "-46",
+    "ntp.root_delay": "42405.647048950195",
+    "ntp.root_dispersion": "23130.352935791016",
+    "ntp.reference_id": "3031741620",
+    "ntp.reference_timestamp_seconds": "1768515945",
+    "ntp.reference_timestamp_fraction": "0.823529411572963",
+    "ntp.origin_timestamp_seconds": "2779096485",
+    "ntp.origin_timestamp_fraction": "0.3529411763884127",
+    "ntp.receive_timestamp_seconds": "3031741620",
+    "ntp.receive_timestamp_fraction": "0.4117647057864815",
+    "ntp.transmit_timestamp_seconds": "3537031890",
+    "ntp.transmit_timestamp_fraction": "0.6470588233787566"
+  }
+}

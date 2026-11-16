@@ -1,0 +1,17 @@
+{
+  "name": "dict-engine-status",
+  "from": "bite-vehicle-can-powertrain",
+  "to": "bite-vehicle-can-powertrain",
+  "input": "00010000c83282b54d6aff00",
+  "expect": "00010000c83282b54d6aff",
+  "model": {
+    "@kind": "engine_status",
+    "vehicle_can.powertrain_frame_id": "256",
+    "vehicle_can.engine_speed": "3250",
+    "vehicle_can.coolant_temperature": "90",
+    "vehicle_can.throttle_position": "43.7",
+    "vehicle_can.gear": "Third",
+    "vehicle_can.check_engine": "true",
+    "vehicle_can.engine_torque": "-75"
+  }
+}

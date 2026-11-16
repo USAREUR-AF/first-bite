@@ -18,11 +18,16 @@ pub enum Problem {
         sink: &'static str,
         feature: &'static str,
     },
+    #[error(
+        "the `xf` transform is not compiled in; rebuild with the cargo feature \
+         `goat-transformers` (cargo build -p mind --features goat-transformers)"
+    )]
+    XfFeatureOff,
     #[error("`{0}` is required")]
     MissingKey(&'static str),
     #[error("`{key}`: {reason}")]
     InvalidValue { key: &'static str, reason: String },
-    #[error("unknown transform: subscriber_type {subscriber_type:?} with subtype {}; the transform is subscriber_type \"transformer\" with subtype \"cot\"", display_subtype(.subtype))]
+    #[error("unknown transform: subscriber_type {subscriber_type:?} with subtype {}; the transform is subscriber_type \"transformer\" with subtype \"cot\" or \"xf\"", display_subtype(.subtype))]
     UnknownTransform {
         subscriber_type: String,
         subtype: Option<String>,

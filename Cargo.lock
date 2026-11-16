@@ -1361,9 +1361,11 @@ dependencies = [
  "aws-smithy-runtime-api",
  "aws-smithy-types",
  "base64 0.23.1",
+ "bite",
  "chrono",
  "ciborium",
  "cotify",
+ "goat-transformers",
  "hex",
  "log",
  "quick-xml",
@@ -1588,6 +1590,11 @@ name = "glob"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
+
+[[package]]
+name = "goat-transformers"
+version = "0.1.0"
+source = "git+https://github.com/USAREUR-AF/goat-transformers?rev=0be9fc9cf926139d7c188465e56f0320f348657a#0be9fc9cf926139d7c188465e56f0320f348657a"
 
 [[package]]
 name = "half"

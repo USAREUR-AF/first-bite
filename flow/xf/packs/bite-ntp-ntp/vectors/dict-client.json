@@ -1,0 +1,27 @@
+{
+  "name": "dict-client",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "23000000000000000000000000000000000000000000000000000000000000000000000000000000ed13554040000000",
+  "expect": "23000000000000000000000000000000000000000000000000000000000000000000000000000000ed13554040000000",
+  "model": {
+    "@kind": "client",
+    "ntp.leap_indicator": "no warning",
+    "ntp.version_number": "4",
+    "ntp.mode": "client",
+    "ntp.stratum": "unspecified or invalid",
+    "ntp.poll": "0",
+    "ntp.precision": "0",
+    "ntp.root_delay": "0",
+    "ntp.root_dispersion": "0",
+    "ntp.reference_id": "0",
+    "ntp.reference_timestamp_seconds": "0",
+    "ntp.reference_timestamp_fraction": "0",
+    "ntp.origin_timestamp_seconds": "0",
+    "ntp.origin_timestamp_fraction": "0",
+    "ntp.receive_timestamp_seconds": "0",
+    "ntp.receive_timestamp_fraction": "0",
+    "ntp.transmit_timestamp_seconds": "3977467200",
+    "ntp.transmit_timestamp_fraction": "0.25"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "rt-climate-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "02d2965ab4b4b4b46969b4a5a5a46969d2d2a5a5",
+  "expect": "02d2965ab4b4b4b46969b4a5a5a46969d2d2a5a5",
+  "model": {
+    "@kind": "climate_report",
+    "glasshouse.message_id": "2",
+    "glasshouse.message_length": "210",
+    "glasshouse.zone_number": "37",
+    "glasshouse.sequence_number": "602",
+    "glasshouse.time_of_day": "3031741620",
+    "glasshouse.air_temperature": "269.85",
+    "glasshouse.relative_humidity": "72.2",
+    "glasshouse.leaf_wetness": "37",
+    "glasshouse.outside_temperature": "30.099999999999994",
+    "glasshouse.spare_108": "4",
+    "glasshouse.co2_concentration": "26985",
+    "glasshouse.solar_irradiance": "5397",
+    "glasshouse.wind_speed": "424.05"
+  }
+}

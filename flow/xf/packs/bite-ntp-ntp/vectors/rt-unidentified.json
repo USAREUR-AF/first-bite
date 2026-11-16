@@ -1,0 +1,11 @@
+{
+  "name": "rt-unidentified",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "07",
+  "expect": "07",
+  "model": {
+    "@kind": "unidentified",
+    "ntp.ntp_message_type_code": "7"
+  }
+}

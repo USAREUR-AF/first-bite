@@ -1,0 +1,11 @@
+{
+  "name": "dict-private-use",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "1700000000000000",
+  "expect": "07",
+  "model": {
+    "@kind": "unidentified",
+    "ntp.ntp_message_type_code": "7"
+  }
+}

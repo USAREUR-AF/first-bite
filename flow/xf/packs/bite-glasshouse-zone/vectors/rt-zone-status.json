@@ -1,0 +1,23 @@
+{
+  "name": "rt-zone-status",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "01d2965ab4b4b4b49469d2d241423132",
+  "expect": "01d2965ab4b4b4b49469d2d241423132",
+  "model": {
+    "@kind": "zone_status",
+    "glasshouse.message_id": "1",
+    "glasshouse.message_length": "210",
+    "glasshouse.zone_number": "37",
+    "glasshouse.sequence_number": "602",
+    "glasshouse.time_of_day": "3031741620",
+    "glasshouse.operating_mode": "9",
+    "glasshouse.door_open": "false",
+    "glasshouse.heating_active": "true",
+    "glasshouse.irrigation_active": "false",
+    "glasshouse.alarm_present": "false",
+    "glasshouse.spare_72": "105",
+    "glasshouse.supply_voltage": "539.7",
+    "glasshouse.zone_label": "AB12"
+  }
+}

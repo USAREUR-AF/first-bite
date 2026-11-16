@@ -4,8 +4,10 @@
 //!
 //! The payload is what the subscriber makes of a record. With a `cot:`
 //! mapping it is the Cursor-on-Target event built from the record, which is
-//! what a TAK server or client reads. Without one it is the record itself,
-//! in the subscriber's `encoding`.
+//! what a TAK server or client reads. With an `xf:` block it is the text the
+//! goat-transformers engine writes for the record's payload in the block's
+//! target format (cargo feature `goat-transformers`). Without either it is
+//! the record itself, in the subscriber's `encoding`.
 //!
 //! Destinations are the ones the configuration lists; there is no default.
 //!
@@ -112,6 +114,9 @@ enum Payload {
     Record(Encoding),
     /// The Cursor-on-Target event a mapping builds from the record.
     Cot(Box<cotify::Mapping>),
+    /// What the goat-transformers engine makes of the record's payload.
+    #[cfg(feature = "goat-transformers")]
+    Xf(Box<crate::xf::Xf>),
 }
 
 impl Payload {
@@ -138,8 +143,21 @@ impl Payload {
                     .cot_xml_string
                     .into_bytes())
             }
+            #[cfg(feature = "goat-transformers")]
+            Payload::Xf(xf) => Ok(xf.convert_at(record, Utc::now())?.text.into_bytes()),
         }
     }
+}
+
+/// The payload of a subscriber with an `xf:` block.
+#[cfg(feature = "goat-transformers")]
+fn xf_payload(config: &crate::xf::XfConfig) -> Result<Payload, Problem> {
+    Ok(Payload::Xf(Box::new(crate::xf::Xf::from_config(config)?)))
+}
+
+#[cfg(not(feature = "goat-transformers"))]
+fn xf_payload(_: &crate::xf::XfConfig) -> Result<Payload, Problem> {
+    Err(Problem::XfFeatureOff)
 }
 
 /// What a network sink puts on the wire.
@@ -610,10 +628,23 @@ impl NetworkSink {
             (Some(0), _) => return Err(invalid("queue", "must be at least 1".to_string())),
             (Some(queue), _) => queue,
         };
-        let payload = match &config.cot {
-            Some(mapping) => Payload::Cot(Box::new(mapping.clone())),
-            None => Payload::Record(Encoding::from_config(config.encoding.as_deref())?),
+        let payload = match (&config.cot, &config.xf) {
+            (Some(_), Some(_)) => {
+                return Err(invalid(
+                    "xf",
+                    "does not apply with `cot`: give one of the two".to_string(),
+                ))
+            }
+            (Some(mapping), None) => Payload::Cot(Box::new(mapping.clone())),
+            (None, Some(xf)) => xf_payload(xf)?,
+            (None, None) => Payload::Record(Encoding::from_config(config.encoding.as_deref())?),
         };
+        if config.xf.is_some() && config.encoding.is_some() {
+            return Err(invalid(
+                "encoding",
+                "does not apply with `xf`: the target format is sent as it is written".to_string(),
+            ));
+        }
         if config.cot.is_some() && config.encoding.is_some() {
             return Err(invalid(
                 "encoding",

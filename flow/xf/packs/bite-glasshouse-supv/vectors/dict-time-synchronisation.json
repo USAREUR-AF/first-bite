@@ -1,0 +1,21 @@
+{
+  "name": "dict-time-synchronisation",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "04070c0800000000356ffe200000",
+  "expect": "04070c0800000000356ffe200000",
+  "model": {
+    "@kind": "time_synchronisation",
+    "glasshouse.message_id": "4",
+    "glasshouse.message_length": "7",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "8",
+    "glasshouse.time_of_day": "0",
+    "glasshouse.year": "26",
+    "glasshouse.month": "11",
+    "glasshouse.day": "15",
+    "glasshouse.utc_offset": "-480",
+    "glasshouse.daylight_saving_active": "false",
+    "glasshouse.spare_97": "0"
+  }
+}

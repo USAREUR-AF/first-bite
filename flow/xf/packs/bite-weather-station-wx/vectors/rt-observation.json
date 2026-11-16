@@ -1,0 +1,19 @@
+{
+  "name": "rt-observation",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "02696941423132a5a5a5a5a4b442360000d2d2d2d2a5a5",
+  "expect": "02696941423132a5a5a5a5a4b442360000d2d2d2d2a5a5",
+  "model": {
+    "@kind": "observation",
+    "weather_station.observation_message_type": "Observation",
+    "weather_station.message_length": "26985",
+    "weather_station.station_id": "AB12",
+    "weather_station.temperature": "-231.31",
+    "weather_station.pressure": "678490",
+    "weather_station.wind_direction": "120.4",
+    "weather_station.humidity": "45.5",
+    "weather_station.sample_serial": "3537031890",
+    "weather_station.checksum": "42405"
+  }
+}

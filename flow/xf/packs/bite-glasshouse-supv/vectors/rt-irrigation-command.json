@@ -1,0 +1,23 @@
+{
+  "name": "rt-irrigation-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "02d2965ab4b4b4b49469d2d2a5a5",
+  "expect": "02d2965ab4b4b4b49469d2d2a5a5",
+  "model": {
+    "@kind": "irrigation_command",
+    "glasshouse.message_id": "2",
+    "glasshouse.message_length": "210",
+    "glasshouse.zone_number": "37",
+    "glasshouse.sequence_number": "602",
+    "glasshouse.time_of_day": "3031741620",
+    "glasshouse.spare_64": "9",
+    "glasshouse.open_valve_4": "false",
+    "glasshouse.open_valve_3": "true",
+    "glasshouse.open_valve_2": "false",
+    "glasshouse.open_valve_1": "false",
+    "glasshouse.spare_72": "105",
+    "glasshouse.run_time": "53970",
+    "glasshouse.volume_limit": "4240.5"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "dict-unknown-type",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "2a0003",
+  "expect": "2a",
+  "model": {
+    "@kind": "unidentified",
+    "weather_station.wx_message_type_code": "42"
+  }
+}

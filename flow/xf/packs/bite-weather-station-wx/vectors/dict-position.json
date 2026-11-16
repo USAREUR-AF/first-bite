@@ -1,0 +1,20 @@
+{
+  "name": "dict-position",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "03001b4b5837004050359e83e425afc06276ecbfb15b5743088000",
+  "expect": "03001b4b5837004050359e83e425afc06276ecbfb15b5743088000",
+  "model": {
+    "@kind": "position",
+    "weather_station.position_message_type": "Position",
+    "weather_station.message_length": "27",
+    "uid": "KX7",
+    "weather_station.station_id": "KX7",
+    "lat": "64.8378",
+    "weather_station.latitude": "64.8378",
+    "lon": "-147.7164",
+    "weather_station.longitude": "-147.7164",
+    "hae": "136.5",
+    "weather_station.altitude": "136.5"
+  }
+}

@@ -99,6 +99,11 @@ pub struct SubscriberConfig {
     /// Field mapping for Cursor-on-Target: the transform of a subpub, or
     /// what a `udp` or `tcp` subscriber sends in place of the record.
     pub cot: Option<cotify::Mapping>,
+    /// A conversion by the goat-transformers engine: the transform of a
+    /// subpub with `subtype: "xf"`, or what a `udp` or `tcp` subscriber
+    /// sends in place of the record. Needs the cargo feature
+    /// `goat-transformers`.
+    pub xf: Option<crate::xf::XfConfig>,
     // Network: `udp` and `tcp`
     /// Where each payload is sent.
     pub destinations: Option<Vec<crate::sink::network::DestinationConfig>>,

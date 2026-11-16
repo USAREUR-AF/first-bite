@@ -25,6 +25,7 @@ not compiled in, or a missing key stops startup with an error naming the entry.
 | [`goat.example.yml`](goat.example.yml) | Optional: the settings for joining a goat data fabric, read only by a build with the `goat` feature. |
 | [`subpubs.local.yml`](subpubs.local.yml) | Local development: weather-station `Position` records to Cursor-on-Target on port 12001. |
 | [`subpubs.example.yml`](subpubs.example.yml) | The same transform with every key explained. |
+| [`subpubs.xf.example.yml`](subpubs.xf.example.yml) | The same records to Cursor-on-Target through the `xf` transform, read only by a build with the `goat-transformers` feature. |
 | [`security.example.yml`](security.example.yml) | The security block with every key explained. |
 
 Your own files hold addresses. Keep them outside the repository, or name
@@ -304,7 +305,8 @@ What is sent:
 | Subscriber has | Payload | On `udp` | On `tcp` |
 |---|---|---|---|
 | a `cot:` block | the Cursor-on-Target event built from the record ([`cotify/README.md`](../../cotify/README.md)), as XML | one event per datagram | events one after another, as a TAK server's streaming input reads them |
-| no `cot:` block | the record, in the subscriber's `encoding` | one record per datagram | JSON: one record per line. CBOR: one item after another |
+| an `xf:` block (cargo feature `goat-transformers`) | what the `xf` transform writes for the record's payload in the block's `to` format ([Subpubs](#subpubs)): Cursor-on-Target XML for `cot-xml` | one output per datagram | outputs one after another |
+| neither block | the record, in the subscriber's `encoding` | one record per datagram | JSON: one record per line. CBOR: one item after another |
 
 | Key | |
 |---|---|
@@ -393,8 +395,11 @@ record on its topics, and publishes the result on a socket of its own. The
 output topic is the input topic followed by `/<topic_suffix>`. The publisher
 must bind a different port from the one the subscriber reads.
 
-The one transform is Cursor-on-Target: `subscriber_type: "transformer"`,
-`subtype: "cot"`, and a `cot:` block naming the fields of your messages.
+There are two transforms. Cursor-on-Target is `subscriber_type:
+"transformer"`, `subtype: "cot"`, and a `cot:` block naming the fields of your
+messages. [`xf`](#the-xf-transform), in a build with the cargo feature
+`goat-transformers`, converts the record's payload to a format named in an
+`xf:` block.
 
 ```yaml
 subpubs:
@@ -425,3 +430,39 @@ subpubs:
 
 The `cot:` keys are described in [`cotify/README.md`](../../cotify/README.md).
 Each output message is a JSON object with `cot_datetime` and `cot_xml_string`.
+
+### The `xf` transform
+
+`subscriber_type: "transformer"`, `subtype: "xf"`, and an `xf:` block
+([`subpubs.xf.example.yml`](subpubs.xf.example.yml)). The transform decodes
+the record's payload (`data_encoded_inner`) with the pack of its dictionary
+and interface, and writes what it holds in the `to` format.
+[`flow/README.md`](../README.md#the-xf-transform) says what a pack is, how to
+make one for your own dictionary, and what differs from `cot`. A `mind` built
+without the feature refuses the entry at startup and names the feature.
+
+```yaml
+      subscriber_type: "transformer"
+      subtype: "xf"
+      xf:
+        to: "cot-xml"
+        context:
+          type: "a-f-G"
+          how: "m-g"
+        stale_minutes: 60
+        require: [uid, lat, lon]
+```
+
+| Key | |
+|---|---|
+| `to` | required: the format to write. Built in: `cot-xml`, `geojson`, and the pack of every interface of the dictionaries in this repository |
+| `context` | values the payload does not carry, by shared key: `type`, `how`, `callsign`, `ce`, `le`, `course`, `speed_ms`, `uid`, `lat`, `lon`, `hae`, `time_ms`, `stale_ms`. A value the payload carries is kept. A key no pack declares, or a value of the wrong type, is refused at startup |
+| `stale_minutes` | minutes after its creation at which the output goes stale; 60 when unset |
+| `require` | shared keys a record must give, from its payload or the context; a record that lacks one is logged and not converted. Without it a message with no position becomes an event with no position |
+| `from` | the pack of the payload; default: the pack generated for the record's `dictionary` and `subsystem` |
+| `packs` | a directory of further packs, as [`tools/bite2pack`](../../tools/bite2pack/README.md) writes one for your dictionaries |
+
+For `to: "cot-xml"` each output message is the JSON object the `cot` transform
+publishes, `cot_datetime` and `cot_xml_string`. For another format it is
+`xf_datetime`, `xf_format` and `xf_string`, the last holding the format's text
+(JSON, XML, or hexadecimal for a binary format).

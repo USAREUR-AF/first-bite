@@ -99,11 +99,20 @@ will use. All TLS goes through one crypto provider installed at start.
 
 A subpub is a subscriber, a transform and a publisher: it reads records, turns
 each into something else, and publishes the result on another ZeroMQ socket.
-The one transform is Cursor-on-Target (`subtype: cot`), driven by a mapping in
-the configuration that says which fields give the identifier, the type and the
-position. Subpubs run when `mind` is started with `--activate-subpubs`. A
-`udp` or `tcp` subscriber takes the same mapping and sends the event to a TAK
-server or to TAK clients, with no subpub between.
+The transform a build always has is Cursor-on-Target (`subtype: cot`), driven
+by a mapping in the configuration that says which fields give the identifier,
+the type and the position. Subpubs run when `mind` is started with
+`--activate-subpubs`. A `udp` or `tcp` subscriber takes the same mapping and
+sends the event to a TAK server or to TAK clients, with no subpub between.
+
+A build with the cargo feature `goat-transformers` has a second transform,
+`subtype: xf`. It hands the record's payload to the
+[goat-transformers](https://github.com/USAREUR-AF/goat-transformers) engine,
+which reads each format from a data file, a pack: `tools/bite2pack` writes the
+pack of a dictionary, and the target (Cursor-on-Target XML, GeoJSON) has one
+of its own. The feature is off by default and `cot` is unchanged by it;
+[flow/README.md](../flow/README.md#the-xf-transform) holds the measured
+comparison of the two.
 
 Cursor-on-Target here is a per-message field mapping. A node that needs tracks
 normalised into Cursor-on-Target, ASTERIX CAT062 or SAPIENT with one identity
