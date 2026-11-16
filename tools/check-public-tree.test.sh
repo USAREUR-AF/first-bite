@@ -114,6 +114,47 @@ caught "annotation without a reason" "private-ipv4: planted:2" "10"".1.2.3 # ops
 # 4. needles
 caught "needle" "needle $(printf '%s' 'Fort Example' | shasum -a 256 2>/dev/null | cut -c1-12 || true): planted:2" \
   "deployed at fort example today" "Fort Example"
+# Many needles are read in one pass; the one that matches is still named.
+many_needles="$(for i in $(seq 1 2000); do printf 'zz-not-here-%s\n' "$i"; done; printf 'Fort Example\n')"
+caught "needle among two thousand" \
+  "needle $(printf '%s' 'Fort Example' | shasum -a 256 2>/dev/null | cut -c1-12 || true): planted:2" \
+  "deployed at fort example today" "$many_needles"
+caught "regular-expression needle" \
+  "needle $(printf '%s' 're:Fort [0-9]{3}' | shasum -a 256 2>/dev/null | cut -c1-12 || true): planted:2" \
+  "moved to Fort 123 today" "$(printf 'zz-not-here\nre:Fort [0-9]{3}\n')"
+caught "regular-expression needle in a path" \
+  "needle $(printf '%s' 're:^plan' | shasum -a 256 2>/dev/null | cut -c1-12 || true): path of planted" \
+  "nothing to see" "re:^plan"
+
+# A needle list that holds no match passes; one that cannot be used fails.
+cases=$((cases + 1))
+printf 'nothing to see here\n' >"$work/clean"
+if ! output="$(check "$many_needles")"; then
+  echo "FAIL clean tree with two thousand needles: the check refused it"
+  printf '    %s\n' "${output//$'\n'/$'\n'    }"
+  failures=$((failures + 1))
+fi
+rm -f "$work/clean"
+cases=$((cases + 1))
+mkdir "$work/.leak-needles"
+if output="$(check "")"; then
+  echo "FAIL unreadable .leak-needles: the check passed"
+  failures=$((failures + 1))
+elif ! grep -qF ".leak-needles cannot be read" <<<"$output"; then
+  echo "FAIL unreadable .leak-needles: the reason is not printed"
+  failures=$((failures + 1))
+fi
+rmdir "$work/.leak-needles"
+cases=$((cases + 1))
+printf 'nothing to see here\n' >"$work/clean"
+if output="$(check "re:(unclosed")"; then
+  echo "FAIL a needle grep cannot read: the check passed"
+  failures=$((failures + 1))
+elif ! grep -qF "the needle check could not run" <<<"$output"; then
+  echo "FAIL a needle grep cannot read: the reason is not printed"
+  failures=$((failures + 1))
+fi
+rm -f "$work/clean"
 
 # What must pass.
 passes "plain text" "nothing to see: version 1.10.20, build 12:34:56, ratio 3:2"
