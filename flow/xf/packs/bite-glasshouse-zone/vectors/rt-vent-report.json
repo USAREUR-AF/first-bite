@@ -1,0 +1,22 @@
+{
+  "name": "rt-vent-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "04a568b469696969695ab46925a5",
+  "expect": "04a568b469696969695ab46925a5",
+  "model": {
+    "@kind": "vent_report",
+    "glasshouse.message_id": "4",
+    "glasshouse.message_length": "165",
+    "glasshouse.zone_number": "26",
+    "glasshouse.sequence_number": "180",
+    "glasshouse.time_of_day": "1768515945",
+    "glasshouse.roof_vent_offset_sign": "Positive",
+    "glasshouse.roof_vent_offset_magnitude": "42.1",
+    "glasshouse.spare_74": "26",
+    "glasshouse.windward_vent_position": "90",
+    "glasshouse.leeward_vent_position": "52.5",
+    "glasshouse.vent_drive_state": "Closing",
+    "glasshouse.motor_current": "1445"
+  }
+}

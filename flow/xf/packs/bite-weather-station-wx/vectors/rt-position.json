@@ -1,0 +1,20 @@
+{
+  "name": "rt-position",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "03b4b4414231324050359e83e425af4050359e83e425af42360000",
+  "expect": "03b4b4414231324050359e83e425af4050359e83e425af42360000",
+  "model": {
+    "@kind": "position",
+    "weather_station.position_message_type": "Position",
+    "weather_station.message_length": "46260",
+    "uid": "AB12",
+    "weather_station.station_id": "AB12",
+    "lat": "64.8378",
+    "weather_station.latitude": "64.8378",
+    "lon": "64.8378",
+    "weather_station.longitude": "64.8378",
+    "hae": "45.5",
+    "weather_station.altitude": "45.5"
+  }
+}

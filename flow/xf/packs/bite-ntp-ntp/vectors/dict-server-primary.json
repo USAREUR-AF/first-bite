@@ -1,0 +1,27 @@
+{
+  "name": "dict-server-primary",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "240106ec000000000000001047505300ed13553f80000000ed13554040000000ed13554041000000ed13554041400000",
+  "expect": "240106ec000000000000001047505300ed13553f80000000ed13554040000000ed13554041000000ed13554041400000",
+  "model": {
+    "@kind": "server",
+    "ntp.leap_indicator": "no warning",
+    "ntp.version_number": "4",
+    "ntp.mode": "server",
+    "ntp.stratum": "primary server (e.g., equipped with a GPS receiver)",
+    "ntp.poll": "6",
+    "ntp.precision": "-20",
+    "ntp.root_delay": "0",
+    "ntp.root_dispersion": "0.000244140625",
+    "ntp.reference_id": "1196446464",
+    "ntp.reference_timestamp_seconds": "3977467199",
+    "ntp.reference_timestamp_fraction": "0.5",
+    "ntp.origin_timestamp_seconds": "3977467200",
+    "ntp.origin_timestamp_fraction": "0.25",
+    "ntp.receive_timestamp_seconds": "3977467200",
+    "ntp.receive_timestamp_fraction": "0.25390625",
+    "ntp.transmit_timestamp_seconds": "3977467200",
+    "ntp.transmit_timestamp_fraction": "0.2548828125"
+  }
+}

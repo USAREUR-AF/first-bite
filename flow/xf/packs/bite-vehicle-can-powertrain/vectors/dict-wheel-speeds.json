@@ -1,0 +1,15 @@
+{
+  "name": "dict-wheel-speeds",
+  "from": "bite-vehicle-can-powertrain",
+  "to": "bite-vehicle-can-powertrain",
+  "input": "01090000daaa5b49ab6b0500",
+  "expect": "01090000daaa5b49ab6b05",
+  "model": {
+    "@kind": "wheel_speeds",
+    "vehicle_can.powertrain_frame_id": "2305",
+    "vehicle_can.front_left": "27.78",
+    "vehicle_can.front_right": "27.81",
+    "vehicle_can.rear_left": "27.7",
+    "vehicle_can.rear_right": "27.75"
+  }
+}

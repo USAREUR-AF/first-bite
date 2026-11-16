@@ -1,0 +1,18 @@
+{
+  "name": "rt-heartbeat",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "01d2d2414231325a5a5a5a65",
+  "expect": "01d2d2414231325a5a5a5a65",
+  "model": {
+    "@kind": "heartbeat",
+    "weather_station.heartbeat_message_type": "Heartbeat",
+    "weather_station.message_length": "53970",
+    "weather_station.station_id": "AB12",
+    "weather_station.uptime": "1515870810",
+    "weather_station.battery_low": "false",
+    "weather_station.sensor_fault": "true",
+    "weather_station.mode": "Calibrating",
+    "weather_station.reserved": "5"
+  }
+}

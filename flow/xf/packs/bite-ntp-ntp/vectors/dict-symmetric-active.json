@@ -1,0 +1,27 @@
+{
+  "name": "dict-symmetric-active",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "61020aee000180000000ffffcb007109edeed2f0ffffffffedeed6c500010000edeed6c680000001edeed6c77fffffff",
+  "expect": "61020aee000180000000ffffcb007109edeed2f0ffffffffedeed6c500010000edeed6c680000001edeed6c77fffffff",
+  "model": {
+    "@kind": "symmetric_active",
+    "ntp.leap_indicator": "last minute of the day has 61 seconds",
+    "ntp.version_number": "4",
+    "ntp.mode": "symmetric active",
+    "ntp.stratum": "2",
+    "ntp.poll": "10",
+    "ntp.precision": "-18",
+    "ntp.root_delay": "1.5",
+    "ntp.root_dispersion": "0.9999847412109375",
+    "ntp.reference_id": "3405803785",
+    "ntp.reference_timestamp_seconds": "3991851760",
+    "ntp.reference_timestamp_fraction": "0.9999999997671694",
+    "ntp.origin_timestamp_seconds": "3991852741",
+    "ntp.origin_timestamp_fraction": "0.0000152587890625",
+    "ntp.receive_timestamp_seconds": "3991852742",
+    "ntp.receive_timestamp_fraction": "0.5000000002328306",
+    "ntp.transmit_timestamp_seconds": "3991852743",
+    "ntp.transmit_timestamp_fraction": "0.49999999976716936"
+  }
+}

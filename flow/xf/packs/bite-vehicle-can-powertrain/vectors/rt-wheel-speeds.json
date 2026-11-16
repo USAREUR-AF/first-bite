@@ -1,0 +1,15 @@
+{
+  "name": "rt-wheel-speeds",
+  "from": "bite-vehicle-can-powertrain",
+  "to": "bite-vehicle-can-powertrain",
+  "input": "01595a5ab4342d49cbd202",
+  "expect": "01595a5ab4342d49cbd202",
+  "model": {
+    "@kind": "wheel_speeds",
+    "vehicle_can.powertrain_frame_id": "1515870465",
+    "vehicle_can.front_left": "53",
+    "vehicle_can.front_right": "24.09",
+    "vehicle_can.rear_left": "48.18",
+    "vehicle_can.rear_right": "14.45"
+  }
+}

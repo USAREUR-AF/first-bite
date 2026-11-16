@@ -1,0 +1,22 @@
+{
+  "name": "dict-alarm",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "050730040038cefc058000030fa0",
+  "expect": "050730040038cefc058000030fa0",
+  "model": {
+    "@kind": "alarm",
+    "glasshouse.message_id": "5",
+    "glasshouse.message_length": "7",
+    "glasshouse.zone_number": "12",
+    "glasshouse.sequence_number": "4",
+    "glasshouse.time_of_day": "3723004",
+    "glasshouse.alarm_code": "Pump Fault",
+    "glasshouse.severity": "Warning",
+    "glasshouse.acknowledged": "false",
+    "glasshouse.spare_75": "0",
+    "glasshouse.occurrence_count": "3",
+    "glasshouse.minutes_since_raised": "125",
+    "glasshouse.spare_107": "0"
+  }
+}

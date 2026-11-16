@@ -1,0 +1,11 @@
+{
+  "name": "rt-unidentified",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "ff",
+  "expect": "ff",
+  "model": {
+    "@kind": "unidentified",
+    "glasshouse.zone_message_type_code": "255"
+  }
+}

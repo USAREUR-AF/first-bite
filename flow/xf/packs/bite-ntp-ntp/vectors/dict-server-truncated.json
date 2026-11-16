@@ -1,0 +1,25 @@
+{
+  "name": "dict-server-truncated",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "240206e90000060000000a80c0000201ed135500c0000000ed13554040000000ed13554043000000",
+  "expect": "240206e90000060000000a80c0000201ed135500c0000000ed13554040000000ed135540430000000000000000000000",
+  "model": {
+    "@kind": "server",
+    "ntp.leap_indicator": "no warning",
+    "ntp.version_number": "4",
+    "ntp.mode": "server",
+    "ntp.stratum": "2",
+    "ntp.poll": "6",
+    "ntp.precision": "-23",
+    "ntp.root_delay": "0.0234375",
+    "ntp.root_dispersion": "0.041015625",
+    "ntp.reference_id": "3221225985",
+    "ntp.reference_timestamp_seconds": "3977467136",
+    "ntp.reference_timestamp_fraction": "0.75",
+    "ntp.origin_timestamp_seconds": "3977467200",
+    "ntp.origin_timestamp_fraction": "0.25",
+    "ntp.receive_timestamp_seconds": "3977467200",
+    "ntp.receive_timestamp_fraction": "0.26171875"
+  }
+}

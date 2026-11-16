@@ -1,0 +1,27 @@
+{
+  "name": "dict-server-kiss-of-death",
+  "from": "bite-ntp-ntp",
+  "to": "bite-ntp-ntp",
+  "input": "e40006e90000000000000000524154450000000000000000ed1355404000000000000000000000000000000000000000",
+  "expect": "e40006e90000000000000000524154450000000000000000ed1355404000000000000000000000000000000000000000",
+  "model": {
+    "@kind": "server",
+    "ntp.leap_indicator": "unknown (clock unsynchronized)",
+    "ntp.version_number": "4",
+    "ntp.mode": "server",
+    "ntp.stratum": "unspecified or invalid",
+    "ntp.poll": "6",
+    "ntp.precision": "-23",
+    "ntp.root_delay": "0",
+    "ntp.root_dispersion": "0",
+    "ntp.reference_id": "1380013125",
+    "ntp.reference_timestamp_seconds": "0",
+    "ntp.reference_timestamp_fraction": "0",
+    "ntp.origin_timestamp_seconds": "3977467200",
+    "ntp.origin_timestamp_fraction": "0.25",
+    "ntp.receive_timestamp_seconds": "0",
+    "ntp.receive_timestamp_fraction": "0",
+    "ntp.transmit_timestamp_seconds": "0",
+    "ntp.transmit_timestamp_fraction": "0"
+  }
+}

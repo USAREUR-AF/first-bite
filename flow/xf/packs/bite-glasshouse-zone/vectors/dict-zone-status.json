@@ -1,0 +1,23 @@
+{
+  "name": "dict-zone-status",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "01080c1102932e002500096f4e332020",
+  "expect": "01080c1102932e002500096f4e330000",
+  "model": {
+    "@kind": "zone_status",
+    "glasshouse.message_id": "1",
+    "glasshouse.message_length": "8",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "17",
+    "glasshouse.time_of_day": "43200000",
+    "glasshouse.operating_mode": "Automatic",
+    "glasshouse.door_open": "false",
+    "glasshouse.heating_active": "true",
+    "glasshouse.irrigation_active": "false",
+    "glasshouse.alarm_present": "true",
+    "glasshouse.spare_72": "0",
+    "glasshouse.supply_voltage": "24.15",
+    "glasshouse.zone_label": "N3"
+  }
+}

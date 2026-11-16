@@ -1,0 +1,26 @@
+{
+  "name": "dict-irrigation-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "03091fff014998f40520003212d6873e073a",
+  "expect": "03091fff014998f40520003212d6873e073a",
+  "model": {
+    "@kind": "irrigation_report",
+    "glasshouse.message_id": "3",
+    "glasshouse.message_length": "9",
+    "glasshouse.zone_number": "7",
+    "glasshouse.sequence_number": "1023",
+    "glasshouse.time_of_day": "21600500",
+    "glasshouse.spare_64": "0",
+    "glasshouse.valve_4_open": "false",
+    "glasshouse.valve_3_open": "true",
+    "glasshouse.valve_2_open": "false",
+    "glasshouse.valve_1_open": "true",
+    "glasshouse.pump_state": "Running",
+    "glasshouse.spare_76": "0",
+    "glasshouse.flow_rate": "12.5",
+    "glasshouse.volume_delivered": "123456.7",
+    "glasshouse.nutrient_solution_ph": "6.2",
+    "glasshouse.electrical_conductivity": "1.85"
+  }
+}

@@ -1,0 +1,41 @@
+# The subpub of subpubs.example.yml with the `xf` transform in place of `cot`:
+# weather-station Position records become Cursor-on-Target (CoT) events, built
+# from the record's payload by the goat-transformers engine. Needs a `mind`
+# built with the cargo feature `goat-transformers`; flow/README.md, "The xf
+# transform", describes every key and what differs from `cot`.
+#
+# Which fields carry the identifier and the position is stated in the pack of
+# the dictionary (flow/xf/bindings.json for the dictionaries in this
+# repository), not here.
+subpubs:
+  - name: Position2CoT # used in log lines
+    subscriber:
+      name: "positions"
+      subscriber_type: "transformer"
+      subtype: "xf"
+      zmq_url: "127.0.0.1" # the publisher socket to read
+      zmq_port: 12000
+      topics:
+        - "WX/Position" # <interface>/<message type>
+      xf:
+        to: "cot-xml" # the format to write; `geojson` is built in too
+        context: # values the payload does not carry
+          type: "a-f-G" # CoT type; "a-u-X" when left out
+          how: "m-g"
+        stale_minutes: 60
+        # A record whose payload gives none of these is not converted.
+        require: [uid, lat, lon]
+        # The pack of the payload. The default is the pack generated for the
+        # record's dictionary and interface.
+        # from: "bite-weather-station-wx"
+        # Packs of your own dictionaries, as tools/bite2pack writes them.
+        # packs: "/etc/first-bite/packs"
+    publisher:
+      name: "cot"
+      publisher_type: PUB # PUB, PUSH
+      # Must not be the port the subscriber reads. The socket is
+      # unauthenticated and unencrypted: bound to 127.0.0.1 it is reachable
+      # only from this machine.
+      address: "tcp://127.0.0.1:12001"
+      topic: "subsystem/message_type"
+      topic_suffix: "CoT" # published on WX/Position/CoT

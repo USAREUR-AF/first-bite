@@ -1,0 +1,10 @@
+{
+  "weather-station": {
+    "WX/Position": {
+      "uid": "station_id",
+      "lat": "latitude",
+      "lon": "longitude",
+      "hae": "altitude"
+    }
+  }
+}

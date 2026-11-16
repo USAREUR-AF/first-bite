@@ -1,0 +1,22 @@
+{
+  "name": "rt-alarm",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "05a568b469696969d25469695a45",
+  "expect": "05a568b469696969d25469695a45",
+  "model": {
+    "@kind": "alarm",
+    "glasshouse.message_id": "5",
+    "glasshouse.message_length": "165",
+    "glasshouse.zone_number": "26",
+    "glasshouse.sequence_number": "180",
+    "glasshouse.time_of_day": "1768515945",
+    "glasshouse.alarm_code": "210",
+    "glasshouse.severity": "Caution",
+    "glasshouse.acknowledged": "false",
+    "glasshouse.spare_75": "20",
+    "glasshouse.occurrence_count": "26985",
+    "glasshouse.minutes_since_raised": "722",
+    "glasshouse.spare_107": "5"
+  }
+}

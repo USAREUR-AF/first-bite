@@ -1,0 +1,11 @@
+{
+  "name": "rt-unidentified",
+  "from": "bite-vehicle-can-powertrain",
+  "to": "bite-vehicle-can-powertrain",
+  "input": "ffffffff",
+  "expect": "ffffffff",
+  "model": {
+    "@kind": "unidentified",
+    "vehicle_can.powertrain_frame_id": "4294967295"
+  }
+}

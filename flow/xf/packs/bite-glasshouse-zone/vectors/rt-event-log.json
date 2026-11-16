@@ -1,0 +1,17 @@
+{
+  "name": "rt-event-log",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "06a568b469696969d2a5",
+  "expect": "06a568b469696969d2a5",
+  "model": {
+    "@kind": "event_log",
+    "glasshouse.message_id": "6",
+    "glasshouse.message_length": "165",
+    "glasshouse.zone_number": "26",
+    "glasshouse.sequence_number": "180",
+    "glasshouse.time_of_day": "1768515945",
+    "glasshouse.record_count": "210",
+    "glasshouse.spare_72": "165"
+  }
+}

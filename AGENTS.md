@@ -18,6 +18,8 @@ It is part of [goat](https://github.com/USAREUR-AF/goatcore), the open-source da
 | `mind/` | the `mind` binary: `source.rs` (where frames come from), `pipeline.rs` (frame to record), `run.rs` (the loop), `cli.rs` |
 | `flow/` | ZeroMQ publishers; sinks behind cargo features `azure`, `aws`, `zenoh`; transforms |
 | `cotify/` | Cursor-on-Target XML from a record and a field mapping |
+| `flow/src/xf.rs`, `flow/xf/` | the optional `xf` transform (cargo feature `goat-transformers`) and the packs compiled into it; `flow/xf` is generated, by `tools/bite2pack/refresh.sh` |
+| `tools/bite2pack/` | a dictionary to packs for the goat-transformers engine |
 | `datamodels/`, `logger/` | the shared record type; the log line format |
 | `dictionaries/` | example dictionaries; each carries `vectors/` |
 | `docs/dictionary-format.md` | the dictionary format and everything `bite check` reports |

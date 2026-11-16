@@ -17,6 +17,10 @@ use std::thread;
 pub enum Transform {
     /// Build a Cursor-on-Target event from the fields a mapping names.
     Cot(cotify::Mapping),
+    /// Convert the record's payload to another format with the
+    /// goat-transformers engine.
+    #[cfg(feature = "goat-transformers")]
+    Xf(crate::xf::Xf),
 }
 
 /// Why one record was not transformed.
@@ -24,11 +28,15 @@ pub enum Transform {
 pub enum TransformError {
     #[error("Cursor-on-Target: {0}")]
     Cot(#[from] cotify::CotError),
+    #[cfg(feature = "goat-transformers")]
+    #[error("xf: {0}")]
+    Xf(#[from] crate::xf::XfError),
 }
 
 impl Transform {
     /// The transform a subpub's subscriber asks for: `subscriber_type:
-    /// "transformer"` with `subtype: "cot"` and a `cot:` mapping.
+    /// "transformer"` with `subtype: "cot"` and a `cot:` mapping, or with
+    /// `subtype: "xf"` and an `xf:` block.
     pub fn from_config(config: &SubscriberConfig) -> Result<Self, Problem> {
         match (config.subscriber_type.as_str(), config.subtype.as_deref()) {
             ("transformer", Some("cot")) => config
@@ -36,6 +44,7 @@ impl Transform {
                 .clone()
                 .map(Transform::Cot)
                 .ok_or(Problem::MissingKey("cot")),
+            ("transformer", Some("xf")) => Self::xf(config),
             _ => Err(Problem::UnknownTransform {
                 subscriber_type: config.subscriber_type.clone(),
                 subtype: config.subtype.clone(),
@@ -43,9 +52,22 @@ impl Transform {
         }
     }
 
+    #[cfg(feature = "goat-transformers")]
+    fn xf(config: &SubscriberConfig) -> Result<Self, Problem> {
+        let xf = config.xf.as_ref().ok_or(Problem::MissingKey("xf"))?;
+        crate::xf::Xf::from_config(xf).map(Transform::Xf)
+    }
+
+    #[cfg(not(feature = "goat-transformers"))]
+    fn xf(_: &SubscriberConfig) -> Result<Self, Problem> {
+        Err(Problem::XfFeatureOff)
+    }
+
     pub fn apply(&self, record: &str) -> Result<String, TransformError> {
         match self {
             Transform::Cot(mapping) => Ok(cotify::record_to_cot(mapping, record)?),
+            #[cfg(feature = "goat-transformers")]
+            Transform::Xf(xf) => Ok(xf.apply(record)?),
         }
     }
 }

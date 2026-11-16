@@ -1,0 +1,17 @@
+{
+  "name": "rt-engine-status",
+  "from": "bite-vehicle-can-powertrain",
+  "to": "bite-vehicle-can-powertrain",
+  "input": "00d1d2d2a5a55ab424a5a5",
+  "expect": "00d1d2d2a5a55ab424a5a5",
+  "model": {
+    "@kind": "engine_status",
+    "vehicle_can.powertrain_frame_id": "3537031424",
+    "vehicle_can.engine_speed": "10601.25",
+    "vehicle_can.coolant_temperature": "50",
+    "vehicle_can.throttle_position": "18",
+    "vehicle_can.gear": "9",
+    "vehicle_can.check_engine": "false",
+    "vehicle_can.engine_torque": "-11565.5"
+  }
+}

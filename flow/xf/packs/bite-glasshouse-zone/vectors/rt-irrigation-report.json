@@ -1,0 +1,26 @@
+{
+  "name": "rt-irrigation-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "035ad169d2d2d2d2525ab4b4696969d2a5a5",
+  "expect": "035ad169d2d2d2d2525ab4b4696969d2a5a5",
+  "model": {
+    "@kind": "irrigation_report",
+    "glasshouse.message_id": "3",
+    "glasshouse.message_length": "90",
+    "glasshouse.zone_number": "52",
+    "glasshouse.sequence_number": "361",
+    "glasshouse.time_of_day": "3537031890",
+    "glasshouse.spare_64": "5",
+    "glasshouse.valve_4_open": "false",
+    "glasshouse.valve_3_open": "false",
+    "glasshouse.valve_2_open": "true",
+    "glasshouse.valve_1_open": "false",
+    "glasshouse.pump_state": "5",
+    "glasshouse.spare_76": "10",
+    "glasshouse.flow_rate": "11565",
+    "glasshouse.volume_delivered": "690826.5",
+    "glasshouse.nutrient_solution_ph": "21",
+    "glasshouse.electrical_conductivity": "42.405"
+  }
+}

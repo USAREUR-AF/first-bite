@@ -82,6 +82,9 @@ jobs:
         run: |
           python3 tools/check-pins.py --self-test
           python3 tools/check-pins.py
+      # flow/xf is generated from dictionaries/; it must be what they give.
+      - name: generated packs are current
+        run: tools/bite2pack/refresh.sh --check
 
   fmt:
     needs: changes
@@ -177,6 +180,10 @@ jobs:
             features: mind/zenoh,mind/quic,mind/pqc
           - name: fips
             features: mind/zenoh,mind/fips
+          # The `xf` transform (flow/README.md): the engine it takes from
+          # goat-transformers, and the packs in flow/xf against bite.
+          - name: goat-transformers
+            features: mind/goat-transformers
     env:
       FEATURES: ${{ matrix.features }}
     steps:
@@ -193,7 +200,7 @@ jobs:
         run: cmake --version && go version
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          shared-key: ci-security-${{ matrix.name == 'fips' && 'fips' || 'quic-pqc' }}
+          shared-key: ci-security-${{ matrix.name == 'fips' && 'fips' || matrix.name == 'goat-transformers' && 'xf' || 'quic-pqc' }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo clippy --workspace --all-targets --locked --features "$FEATURES" -- -D warnings
       - run: cargo test --workspace --locked --features "$FEATURES"

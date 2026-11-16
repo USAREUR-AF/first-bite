@@ -25,6 +25,8 @@ Every CI check is a command you can run locally before you push.
 | Rust | `make lint` (rustfmt, clippy with warnings as errors) and `make test` |
 | the decoder, the dictionary loader or the frame pipeline (`bite/src/`, `mind/src/pipeline.rs`, `mind/src/decap.rs`) | the fuzz target for it, for a few minutes: [fuzz/README.md](fuzz/README.md). CI fuzzes the pull request too |
 | a dictionary under `dictionaries/` | `cargo run -p bite -- check dictionaries/<name> --strict`, and the same with `fmt --check`, `lint` and `coverage` |
+| a dictionary under `dictionaries/`, `flow/xf/bindings.json` or `tools/bite2pack/` | `tools/bite2pack/refresh.sh`, which rewrites the packs in `flow/xf`, and `cargo test -p flow --features goat-transformers`; `make guards` fails while the packs are out of date |
+| `flow/src/xf.rs` or the pinned `goat-transformers` commit | `cargo clippy -p flow --all-targets --features goat-transformers -- -D warnings` and `cargo test -p flow --features goat-transformers` |
 | `docs/icd-to-dictionary/06-worked-example/` or `dictionaries/glasshouse/` | `docs/icd-to-dictionary/06-worked-example/retrace.sh` |
 | `Cargo.toml` or `Cargo.lock` | `make deny` and `make audit` |
 | `.github/workflows/` | `actionlint` and `yamllint .github` (both run by `make lint`) |

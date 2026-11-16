@@ -1,0 +1,10 @@
+{
+  "name": "rt-maintenance-data",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "07",
+  "expect": "07",
+  "model": {
+    "@kind": "maintenance_data"
+  }
+}

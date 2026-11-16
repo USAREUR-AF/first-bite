@@ -1,0 +1,23 @@
+{
+  "name": "dict-climate-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "020a0c12029331e8ff06cb6a76d0019f0dea01a9",
+  "expect": "020a0c12029331e8ff06cb6a76d0019f0dea01a9",
+  "model": {
+    "@kind": "climate_report",
+    "glasshouse.message_id": "2",
+    "glasshouse.message_length": "10",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "18",
+    "glasshouse.time_of_day": "43201000",
+    "glasshouse.air_temperature": "-2.5",
+    "glasshouse.relative_humidity": "81.3",
+    "glasshouse.leaf_wetness": "42",
+    "glasshouse.outside_temperature": "-7.3500000000000085",
+    "glasshouse.spare_108": "0",
+    "glasshouse.co2_concentration": "415",
+    "glasshouse.solar_irradiance": "356.2",
+    "glasshouse.wind_speed": "4.25"
+  }
+}

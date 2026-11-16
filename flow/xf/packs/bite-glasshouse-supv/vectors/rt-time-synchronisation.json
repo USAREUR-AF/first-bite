@@ -1,0 +1,21 @@
+{
+  "name": "rt-time-synchronisation",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "045ad169d2d2d2d24b54696925a5",
+  "expect": "045ad169d2d2d2d24b54696925a5",
+  "model": {
+    "@kind": "time_synchronisation",
+    "glasshouse.message_id": "4",
+    "glasshouse.message_length": "90",
+    "glasshouse.zone_number": "52",
+    "glasshouse.sequence_number": "361",
+    "glasshouse.time_of_day": "3537031890",
+    "glasshouse.year": "37",
+    "glasshouse.month": "10",
+    "glasshouse.day": "20",
+    "glasshouse.utc_offset": "26985",
+    "glasshouse.daylight_saving_active": "false",
+    "glasshouse.spare_97": "9637"
+  }
+}

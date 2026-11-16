@@ -1,0 +1,20 @@
+{
+  "name": "dict-setpoint-command",
+  "from": "bite-glasshouse-supv",
+  "to": "bite-glasshouse-supv",
+  "input": "01080c050149970008ca0640af000320",
+  "expect": "01080c050149970008ca0640af000320",
+  "model": {
+    "@kind": "setpoint_command",
+    "glasshouse.message_id": "1",
+    "glasshouse.message_length": "8",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "5",
+    "glasshouse.time_of_day": "21600000",
+    "glasshouse.day_temperature_setpoint": "22.5",
+    "glasshouse.night_temperature_setpoint": "16",
+    "glasshouse.humidity_setpoint": "70",
+    "glasshouse.spare_106": "0",
+    "glasshouse.co2_setpoint": "800"
+  }
+}

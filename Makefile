@@ -129,11 +129,12 @@ lint: ## what CI checks: rustfmt, clippy, workflow and shell lint, leak check
 
 # The files that are published: everything tracked except private/ and the
 # two internal documents, which exist only in the maintainers' repository.
-guards: ## leak check of the published files, pin check, and both self-tests
+guards: ## leak check of the published files, pin check, both self-tests, generated packs current
 	git ls-files -z -- . ':!private' ':!docs/plan.md' ':!docs/decisions.md' | xargs -0 tools/check-public-tree.sh
 	tools/check-public-tree.test.sh
 	python3 tools/check-pins.py
 	python3 tools/check-pins.py --self-test
+	tools/bite2pack/refresh.sh --check
 
 hooks: ## install the pre-commit hook that runs the leak check on staged files
 	git config core.hooksPath tools/git-hooks

@@ -44,9 +44,10 @@ deny = []
 skip = []
 skip-tree = []
 
-# crates.io only.
+# crates.io, and the one repository the optional `goat-transformers` feature of
+# flow takes its engine from, pinned to a commit in Cargo.toml.
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
+allow-git = ["https://github.com/USAREUR-AF/goat-transformers"]

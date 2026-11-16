@@ -1,0 +1,14 @@
+{
+  "name": "dict-observation-truncated",
+  "from": "bite-weather-station-wx",
+  "to": "bite-weather-station-wx",
+  "input": "0200174b583700fb2e",
+  "expect": "0200174b583700fb2e0000000000000000000000000000",
+  "model": {
+    "@kind": "observation",
+    "weather_station.observation_message_type": "Observation",
+    "weather_station.message_length": "23",
+    "weather_station.station_id": "KX7",
+    "weather_station.temperature": "-12.34"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "dict-vent-report",
+  "from": "bite-glasshouse-zone",
+  "to": "bite-glasshouse-zone",
+  "input": "04070c13029335d09f404b001352",
+  "expect": "04070c13029335d09f404b001352",
+  "model": {
+    "@kind": "vent_report",
+    "glasshouse.message_id": "4",
+    "glasshouse.message_length": "7",
+    "glasshouse.zone_number": "3",
+    "glasshouse.sequence_number": "19",
+    "glasshouse.time_of_day": "43202000",
+    "glasshouse.roof_vent_offset_sign": "Negative",
+    "glasshouse.roof_vent_offset_magnitude": "12.5",
+    "glasshouse.spare_74": "0",
+    "glasshouse.windward_vent_position": "37.5",
+    "glasshouse.leeward_vent_position": "0",
+    "glasshouse.vent_drive_state": "Opening",
+    "glasshouse.motor_current": "850"
+  }
+}
