@@ -234,17 +234,16 @@ every key.
 
 ## Other interfaces: SAPIENT, ASTERIX and vendor systems
 
-This transform writes Cursor-on-Target only. For a SAPIENT fusion node, an
-ASTERIX category 062 consumer or a vendor system, use
-[open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway). It
-reads first-bite's records from the `rest` sink, the ZeroMQ socket, a `local`
-file, or the fabric through the `zenoh` sink, and its mapping files take this
-page's `cot:` keys with the same meaning, so a subscriber's `cot:` block is a
-mapping file's core unchanged. A receiver that cannot join the mesh is reached
-through an [octo-pod](https://github.com/USAREUR-AF/octo-pod) egress
-destination; the gateway's
-[track-egress design](https://github.com/USAREUR-AF/open-entity-gateway/blob/main/docs/design/track-egress.md)
-says how the two fit (designed, not built).
+The `cot` transform writes Cursor-on-Target only, and the `xf` transform
+carries the `cot-xml` and `geojson` packs. For other receivers:
+
+| Receiver | Route | Status |
+|---|---|---|
+| A SAPIENT fusion node or an ASTERIX category 062 consumer | publish the records on the fabric with the `zenoh` sink; [goat-transformers](https://github.com/USAREUR-AF/goat-transformers)' `goat-xf-pipe-zenoh` converts them with the dictionary's pack (written by `tools/bite2pack`) and sends them | designed; not yet run end to end with first-bite's records |
+| A vendor system, through the vendor's software kit | a vendor bridge in [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | built for the vendors it lists |
+| A receiver that cannot join the mesh | an [octo-pod](https://github.com/USAREUR-AF/octo-pod)'s release gate and egress | built |
+
+goatcore ADR 1255 ([USAREUR-AF/goatcore#1084](https://github.com/USAREUR-AF/goatcore/pull/1084), proposed) sets these routes.
 
 ## Beside a transform on ZeroMQ
 
