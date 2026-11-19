@@ -232,6 +232,20 @@ the subscriber's `encoding`: one record per datagram, or on `tcp` one JSON
 record per line. [`flow/config/README.md`](../flow/config/README.md) lists
 every key.
 
+## Other interfaces: SAPIENT, ASTERIX and vendor systems
+
+This transform writes Cursor-on-Target only. For a SAPIENT fusion node, an
+ASTERIX category 062 consumer or a vendor system, use
+[open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway). It
+reads first-bite's records from the `rest` sink, the ZeroMQ socket, a `local`
+file, or the fabric through the `zenoh` sink, and its mapping files take this
+page's `cot:` keys with the same meaning, so a subscriber's `cot:` block is a
+mapping file's core unchanged. A receiver that cannot join the mesh is reached
+through an [octo-pod](https://github.com/USAREUR-AF/octo-pod) egress
+destination; the gateway's
+[track-egress design](https://github.com/USAREUR-AF/open-entity-gateway/blob/main/docs/design/track-egress.md)
+says how the two fit (designed, not built).
+
 ## Beside a transform on ZeroMQ
 
 A subpub with `subtype: cot` publishes the same event on a second ZeroMQ
