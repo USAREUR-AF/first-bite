@@ -243,7 +243,7 @@ carries the `cot-xml` and `geojson` packs. For other receivers:
 | A vendor system, through the vendor's software kit | a vendor bridge in [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | built for the vendors it lists |
 | A receiver that cannot join the mesh | an [octo-pod](https://github.com/USAREUR-AF/octo-pod)'s release gate and egress | built |
 
-goatcore ADR 1255 ([USAREUR-AF/goatcore#1084](https://github.com/USAREUR-AF/goatcore/pull/1084), proposed) sets these routes.
+goatcore [ADR 1255](https://github.com/USAREUR-AF/goatcore/blob/main/docs/adr/1255-vendor-systems-connect-through-one-vendor-bridges-repository-and-open-standards-go-through-goat-transformers.md) (accepted) sets these routes.
 
 ## Beside a transform on ZeroMQ
 
