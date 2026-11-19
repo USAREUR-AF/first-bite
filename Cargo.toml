@@ -49,7 +49,7 @@ etherparse = "0.21"
 # is not on crates.io: it is taken from its public repository at one commit,
 # which deny.toml allows as the only git source. It has no dependencies.
 # flow/xf/UPSTREAM names the same commit; tools/bite2pack/refresh.sh checks it.
-goat-transformers = { git = "https://github.com/USAREUR-AF/goat-transformers", rev = "2d4c784dea0e3ef4552b80d6bf79754e9e3f3311" }
+goat-transformers = { git = "https://github.com/USAREUR-AF/goat-transformers", rev = "0bece65fb4eaee84328709b6139ce3bbefd60e3e" }
 hex = "0.4"
 hmac = "0.13"
 libc = "0.2"
