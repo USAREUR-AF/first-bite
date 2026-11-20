@@ -1,8 +1,17 @@
 # Build the documentation site (site/, docs/*.md, docs/img) and publish it to
-# GitHub Pages. Deploys only while the repository is public.
+# GitHub Pages. Deploys only while the repository is public. A pull request that
+# touches the site builds it without the WebAssembly decoder, so a broken page
+# or document stops the pull request rather than the deploy.
 name: pages
 
 on:
+  pull_request:
+    paths:
+      - 'site/**'
+      - 'docs/**'
+      - 'tools/build-site.py'
+      - 'tools/bundle-dictionaries.py'
+      - '.github/workflows/pages.yml'
   push:
     branches: [main]
     paths:
@@ -19,12 +28,26 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: ${{ github.event_name == 'pull_request' && format('pages-{0}', github.ref) || 'pages' }}
   cancel-in-progress: false
 
 jobs:
+  check:
+    name: the site builds
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the site (no decoder module)
+        run: |
+          python3 tools/bundle-dictionaries.py
+          make site
+
   build:
-    if: ${{ !github.event.repository.private }}
+    if: ${{ github.event_name != 'pull_request' && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -54,7 +77,7 @@ jobs:
 
   deploy:
     needs: build
-    if: ${{ !github.event.repository.private }}
+    if: ${{ github.event_name != 'pull_request' && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

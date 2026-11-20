@@ -1,4 +1,5 @@
-/* first-bite site. One stylesheet, no scripts, no remote requests.
+/* first-bite site. One stylesheet and no remote requests; the only scripts are
+   the landing page's first screen (assets/landing.js) and the decoder page.
    The palette is the one the illustrations use: docs/img/README.md. */
 :root {
   --ink: #16191f; --quiet: #515a66; --rule: #dfe3e8; --line: #7d8899;
@@ -132,3 +133,70 @@ td code { white-space: nowrap; }
 blockquote { margin: 1rem 0; padding: 0.2rem 1rem; border-left: 3px solid var(--line); color: var(--quiet); }
 hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
 p code, li code { overflow-wrap: anywhere; }
+
+/* landing: the first screen. The hero fills the window below the header; the
+   strip of measured numbers sits at its bottom edge. The field hues are the
+   interactive decoder's. */
+:root { --c0: #2f7fd1; --c1: #d9772b; --c2: #2f9e6b; --c3: #b455c4; --c4: #c9a227; --c5: #d1495b; --c6: #1fa3a3; --c7: #7a6ff0; }
+.landing { position: relative; overflow: hidden; min-height: calc(100svh - 3.4rem); display: flex; flex-direction: column;
+  background-image: radial-gradient(var(--rule) 1px, transparent 1.2px); background-size: 22px 22px; }
+.landing .bgcode { position: absolute; top: 0; right: 0; width: 64%; margin: 0; padding: 2.4rem 0 0; background: none; border: 0; border-radius: 0;
+  color: var(--ink); opacity: 0.07; font: 0.95rem/1.7 var(--mono); white-space: pre; overflow: hidden; pointer-events: none; user-select: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%); mask-image: linear-gradient(90deg, transparent, #000 30%); }
+.landing-grid { position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.landing .prompt { font: 600 1rem var(--mono); color: var(--accent); margin: 0 0 0.3rem; }
+.landing .cur { display: inline-block; width: 0.6em; height: 1.05em; vertical-align: -0.15em; background: var(--accent); margin-left: 0.25em; }
+@media (prefers-reduced-motion: no-preference) { .landing .cur { animation: fb-blink 1.1s steps(1) infinite; } }
+@keyframes fb-blink { 50% { opacity: 0; } }
+.landing .name { font: 900 clamp(2.6rem, 5.8vw, 5.25rem)/1 var(--mono); letter-spacing: -0.045em; margin: 0; white-space: nowrap; max-width: none; }
+.landing .tagline { font-weight: 700; font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.3; color: var(--accent); margin: 0.9rem 0 0.6rem; max-width: 30ch; }
+.landing .lede { font-size: 1.05rem; margin: 0 0 1.4rem; max-width: 40rem; }
+.landing .actions { margin: 0 0 0.9rem; gap: 0.6rem; }
+.button.star { display: inline-flex; align-items: center; gap: 0.45rem; }
+.cmd { display: flex; align-items: stretch; border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; max-width: 40rem; overflow: hidden; }
+.cmd pre { flex: 1; margin: 0; padding: 0.7rem 0.9rem; border: 0; border-radius: 0; background: none; white-space: pre; overflow-x: auto; }
+.cmd pre code { font-size: 0.82rem; }
+.cmd .dollar { color: var(--good); user-select: none; font: 0.82rem var(--mono); }
+.copy { border: 0; border-left: 1px solid var(--rule); background: var(--paper); color: var(--accent); font: 700 0.85rem var(--mono); padding: 0 1rem; cursor: pointer; }
+
+.bite { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 0 var(--rule); }
+.bite-head { display: flex; justify-content: space-between; gap: 0.8rem; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--rule); font: 0.82rem var(--mono); color: var(--quiet); }
+.bite-head b { color: var(--ink); }
+.bytes { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; padding: 0.9rem; }
+.byte { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--panel); transition: opacity .25s; }
+.byte .hx { display: block; text-align: center; font: 600 0.9rem/1.9 var(--mono); }
+.byte .bits { display: grid; grid-template-columns: repeat(8, 1fr); height: 7px; }
+.byte .bits i { display: block; border-left: 1px solid var(--paper); background: var(--rule); transition: background .25s; }
+.byte .bits i:first-child { border-left: 0; }
+.bytes.focus .byte { opacity: 0.4; }
+.bytes.focus .byte.on { opacity: 1; }
+.bytes .hexline { grid-column: 1 / -1; background: none; border: 0; font-size: 0.9rem; }
+.record { border-top: 1px solid var(--rule); padding: 0.5rem 0.9rem; min-height: calc(9 * 1.75rem + 1rem); font: 0.86rem/1.75rem var(--mono); }
+.rrow { display: flex; justify-content: space-between; gap: 1rem; border-radius: 4px; padding: 0 0.4rem; }
+.rrow .k { color: var(--quiet); } .rrow .v { color: var(--ink); font-weight: 600; }
+.rrow.on { background: var(--accent-soft); }
+.bite-foot { padding: 0.55rem 0.9rem; border-top: 1px solid var(--rule); font-size: 0.85rem; color: var(--quiet); background: var(--panel); }
+
+.strip { display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; margin: 0 0 0.5rem; padding: 0; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: var(--panel); position: relative; }
+.strip li { padding: 0.9rem 1.1rem; border-left: 1px solid var(--rule); min-width: 0; }
+.strip li:first-child { border-left: 0; }
+.strip b { display: block; font: 800 clamp(1.5rem, 2.6vw, 2.05rem)/1.1 var(--mono); color: var(--accent); white-space: nowrap; letter-spacing: -0.02em; }
+.strip span { display: block; font-weight: 600; font-size: 0.95rem; margin-top: 0.2rem; }
+.strip > li > code { display: block; margin-top: 0.3rem; background: none; border: 0; padding: 0; font-size: 0.72rem; color: var(--quiet); overflow-wrap: anywhere; }
+.landing .source { position: relative; margin: 0 0 1rem; font-size: 0.85rem; }
+
+@media (max-width: 60rem) {
+  .landing-grid { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; }
+  .landing .bgcode { width: 100%; opacity: 0.045; }
+  .strip { grid-template-columns: repeat(2, 1fr); }
+  .strip li:nth-child(3) { border-left: 0; }
+  .strip li:nth-child(n+3) { border-top: 1px solid var(--rule); }
+}
+@media (max-width: 36rem) {
+  .landing-grid { padding-top: 0.6rem; }
+  .landing .prompt { font-size: 0.9rem; }
+  .landing .lede { font-size: 0.98rem; margin-bottom: 1rem; }
+  .landing .actions .button { padding: 0.55rem 0.8rem; font-size: 0.92rem; }
+  .bytes { gap: 4px; padding: 0.6rem; }
+  .byte .hx { font-size: 0.8rem; }
+}
