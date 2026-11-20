@@ -7,7 +7,7 @@ publish.workspace = true
 description = "first-bite process control: capture packets, decode them, publish the records"
 
 [features]
-default = ["azure", "aws", "pqc"]
+default = ["azure", "aws", "pqc", "goat-transformers"]
 # Sinks compiled into the binary; see flow/README.md.
 azure = ["flow/azure"]
 aws = ["flow/aws"]
@@ -18,7 +18,7 @@ fips = ["flow/fips"]
 pqc = ["flow/pqc"]
 # Joining a goat data fabric; implies zenoh. See docs/goat/joining.md.
 goat = ["zenoh", "flow/goat"]
-# The `xf` transform of a subpub; see flow/README.md.
+# The `xf` transform of a subpub, in the default build; see flow/README.md.
 goat-transformers = ["flow/goat-transformers"]
 
 [dependencies]
