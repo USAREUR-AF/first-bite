@@ -20,16 +20,10 @@ Every field is `optional`: a payload cut short decodes up to the cut, as in firs
 | kinds in `pack.def` | 4 (3 with fields, 0 named and not defined, 1 for an unnamed identifier) |
 | fields in the message files | 23 |
 | fields mapped | 23 |
-| of those, in the form first-bite writes | 22 |
+| of those, in the form first-bite writes | 23 |
 | fields not mapped | 0 |
 | shared keys mapped | 4 |
 | vectors | 9 (5 from the dictionary's own vectors, 3 of those byte-identical round trips; 0 the engine must refuse; 4 synthetic round trips) |
-
-### Fields whose value is equal and whose form differs
-
-| Message | Field | Form |
-|---|---|---|
-| Observation | `checksum` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
 
 ## Shared keys
 

@@ -1594,7 +1594,7 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 [[package]]
 name = "goat-transformers"
 version = "0.8.0"
-source = "git+https://github.com/USAREUR-AF/goat-transformers?rev=7597d8199bc37445fe572dde4286bdaf6571e72d#7597d8199bc37445fe572dde4286bdaf6571e72d"
+source = "git+https://github.com/USAREUR-AF/goat-transformers?rev=6d99371db6edef930e728b9608b7e30906757f52#6d99371db6edef930e728b9608b7e30906757f52"
 
 [[package]]
 name = "half"

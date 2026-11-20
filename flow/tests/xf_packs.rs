@@ -288,12 +288,12 @@ type Recorded = (&'static str, usize, &'static [(Outcome, usize)]);
 /// number with its cause, in this table and in `flow/README.md`.
 #[test]
 fn bite_and_the_engine_decode_the_fixtures_to_the_same_values() {
-    use Outcome::{BytesAsInteger, Equal, LastDigits};
+    use Outcome::{Equal, LastDigits};
     let recorded: [Recorded; 4] = [
         ("glasshouse", 10, &[(Equal, 115), (LastDigits, 1)]),
-        ("ntp", 20, &[(Equal, 256), (BytesAsInteger, 16)]),
+        ("ntp", 20, &[(Equal, 272)]),
         ("vehicle-can", 2, &[(Equal, 10)]),
-        ("weather-station", 10, &[(Equal, 62), (BytesAsInteger, 2)]),
+        ("weather-station", 10, &[(Equal, 64)]),
     ];
     let xf = xf();
     let (mut messages, mut fields, mut equal) = (0, 0, 0);
@@ -305,5 +305,5 @@ fn bite_and_the_engine_decode_the_fixtures_to_the_same_values() {
         fields += measured.values().sum::<usize>();
         equal += measured.get(&Equal).copied().unwrap_or(0);
     }
-    assert_eq!((messages, fields, equal), (42, 462, 443));
+    assert_eq!((messages, fields, equal), (42, 462, 461));
 }

@@ -78,7 +78,7 @@ CORE_KEYS = OrderedDict([
 BINDABLE = OrderedDict([("uid", ("string", None)), ("lat", ("float", "deg")), ("lon", ("float", "deg")),
                         ("hae", ("float", "m")), ("callsign", ("string", None))])
 YIELDS = {"uint": "int", "twos": "int", "uscale": "float", "sscale": "float",
-          "f32": "float", "f64": "float", "ascii": "string"}
+          "f32": "float", "f64": "float", "ascii": "string", "hex": "string"}
 OPTIONS = ("swap", "trim", "optional")
 TABLE_MAX_BITS = 8           # a value table lists every value of a field this wide or narrower
 MAX_DECIMALS = 15            # bite/src/dictionary.rs
@@ -404,8 +404,13 @@ def plan_field(f, iface):
             return out
         return done("ascii", "string")
     if f.kind == "bytes":
+        if msb0 and f.width <= 2040:
+            # goat-transformers spec 0.22: `hex` gives the field's bytes as the lowercase
+            # hex text bite writes. Its digits follow the pack's bit order, so it equals the
+            # wire's hex only under msb; an lsb interface keeps the forms below.
+            return done("hex", "string")
         if f.width > 64:
-            out["reason"] = "bytes field wider than 64 bits: the pack language has no opaque-bytes value"
+            out["reason"] = "bytes field wider than 64 bits in an lsb interface: hex digits would not be the wire's"
             return out
         if f.width == 8:
             # one byte: a table of every value gives the text bite writes
@@ -844,6 +849,9 @@ def parse_pack(text, modules):
         if name == "ascii":
             if ln % 8:
                 die("bad-directive: ascii length %d" % ln)
+        elif name == "hex":
+            if ln % 4 or ln > 2040:
+                die("bad-directive: hex length %d" % ln)
         elif ln > 64 or (name == "f32" and ln != 32) or (name == "f64" and ln != 64):
             die("bad-directive: %s length %d" % (name, ln))
         tr = OrderedDict(name=name)
@@ -991,6 +999,9 @@ def decode(p, data):
             if any(b < 0x20 or b > 0x7E for b in bs):
                 raise WireError("transform-decode", "%s: not printable ASCII" % f["key"])
             v = bs.decode("ascii")
+        elif name == "hex":
+            # spec 0.22: digit k is the 4-bit field at bit 4k, read in the pack's bit order
+            v = "".join("%x" % get_bits(data, f["start"] + 4 * i, 4, p["msb"]) for i in range(f["len"] // 4))
         else:
             raw = get_bits(data, f["start"], f["len"], p["msb"])
             if f["swap"]:
@@ -1031,6 +1042,12 @@ def encode(p, k, ent):
                 bs = bs[::-1]
             for i, b in enumerate(bs):
                 set_bits(buf, f["start"] + i * 8, 8, b, p["msb"])
+            continue
+        if name == "hex":
+            if len(v) != f["len"] // 4 or any(c not in "0123456789abcdefABCDEF" for c in v):
+                raise WireError("transform-encode", "%s: not %d hex digits" % (f["key"], f["len"] // 4))
+            for i, c in enumerate(v):
+                set_bits(buf, f["start"] + 4 * i, 4, int(c, 16), p["msb"])
             continue
         if name in ("uint", "twos"):
             raw = v & ((1 << f["len"]) - 1)
@@ -1082,6 +1099,8 @@ def synthetic_message(pack, k):
             raw = int.from_bytes(struct.pack(">f", 45.5), "big")
         elif name == "f64":
             raw = int.from_bytes(struct.pack(">d", 64.8378), "big")
+        elif name == "hex":
+            raw = int(("a5" * (ln // 8 + 1))[: ln // 4], 16)
         else:
             raw = (0xA5A5A5A5A5A5A5A5 >> (i % 5)) & ((1 << ln) - 1)
         if f["via"]:        # the first raw value of its text: what encode writes for that text
@@ -1376,6 +1395,12 @@ def check_dictionary_vectors(d, plan, pl, pack):
                 else:
                     diffs.append((v["_name"], fname, "codec %r, dictionary %r" % (got, want)))
             elif f.kind == "bytes" and p["table"]:
+                if got == want:
+                    equal += 1
+                else:
+                    diffs.append((v["_name"], fname, "codec %r, dictionary %r" % (got, want)))
+            elif f.kind == "bytes" and isinstance(got, str):
+                # spec 0.22 `hex`: the codec gives the hex text bite writes
                 if got == want:
                     equal += 1
                 else:
