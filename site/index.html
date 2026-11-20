@@ -27,32 +27,57 @@
 </header>
 <!-- /header -->
 
-<main id="content" class="wrap">
-  <section class="hero">
-    <picture><source media="(prefers-color-scheme: dark)" srcset="img/wordmark-dark.svg"><img class="wordmark" src="img/wordmark-light.svg" width="380" height="128" alt="first-bite: the first bite of every byte, before it reaches its addressee"></picture>
-    <p class="eyebrow">Open source, Apache-2.0</p>
-    <h1>Binary messages off the wire, decoded, for those you authorise</h1>
-    <p class="lede"><strong>first-bite listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a record of typed values for the consumers its owner allows.</strong> It never transmits on the capture interface, and one core handles 450,000 packets per second.</p>
-    <p class="actions">
-      <a class="button primary" href="decoder/">Interactive decoder</a>
-      <a class="button" href="architecture.html">Read the documentation</a>
-      <a class="button" href="first-bite-brief.pdf">Technical brief (PDF)</a>
-    </p>
-    <!-- figure: how-it-works -->
+<main id="content">
+  <section class="landing" aria-labelledby="name">
+<pre class="bgcode" aria-hidden="true">{
+    "description": "One set of readings.",
+    "fields": {
+        "message_type":   { "start": 0,   "stop": 8 },
+        "message_length": { "start": 8,   "stop": 24,  "unit": "bytes" },
+        "station_id":     { "start": 24,  "stop": 56,  "type": "ascii" },
+        "temperature":    { "start": 56,  "stop": 72,  "type": "int", "scale": 0.01 },
+        "pressure":       { "start": 72,  "stop": 92,  "unit": "Pa" },
+        "wind_direction": { "start": 92,  "stop": 104, "scale": 0.1 },
+        "humidity":       { "start": 104, "stop": 136, "type": "float" },
+        "sample_serial":  { "start": 136, "stop": 168, "byte_order": "little" },
+        "checksum":       { "start": 168, "stop": 184, "type": "bytes" }
+    }
+}</pre>
+    <div class="wrap landing-grid">
+      <div class="landing-text">
+        <p class="prompt">&gt;_ bite decode --port 40100<span class="cur" aria-hidden="true"></span></p>
+        <h1 class="name" id="name">first-bite</h1>
+        <p class="tagline">Binary messages off the wire, decoded, for those you authorise.</p>
+        <p class="lede">It listens on a tap or a mirror port, local or tunnelled (ERSPAN/GRE), decodes fixed-layout binary messages against a dictionary, and publishes each one as a record of typed values. It never transmits on the capture interface.</p>
+        <p class="actions">
+          <a class="button primary star" href="https://github.com/USAREUR-AF/first-bite"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/></svg>Star on GitHub</a>
+          <a class="button" href="decoder/">Interactive decoder</a>
+          <a class="button" href="architecture.html">Documentation</a>
+        </p>
+        <div class="cmd"><pre><span class="dollar">$ </span><code id="c-decode">cargo run -p bite -- decode dictionaries/weather-station --port 40100 0200174b583700fb2e18bcda9b4236000004030201beef</code></pre><button class="copy" type="button" data-copy="c-decode">Copy</button></div>
+      </div>
+
+      <div class="bite" role="img" aria-label="The weather-station Observation test vector, 23 bytes, decoded field by field: each field's bit range is marked in the bytes and its value is added to the record. station_id KX7, temperature -12.34 degrees C, pressure 101325 Pa in 20 bits that are not byte-aligned, wind_direction 271.5 degrees, humidity 45.5 percent, sample_serial 16909060 little-endian, checksum beef.">
+        <div class="bite-head"><span><b>WX</b> Observation</span><span id="bite-field">23 bytes</span></div>
+        <div class="bytes" id="bytes" aria-hidden="true"><code class="hexline">02 00 17 4b 58 37 00 fb 2e 18 bc da 9b 42 36 00 00 04 03 02 01 be ef</code></div>
+        <div class="record" id="record" aria-hidden="true"><div class="rrow"><span class="k">station_id</span><span class="v">KX7</span></div><div class="rrow"><span class="k">temperature</span><span class="v">-12.34 degC</span></div><div class="rrow"><span class="k">pressure</span><span class="v">101325 Pa</span></div><div class="rrow"><span class="k">wind_direction</span><span class="v">271.5 deg</span></div><div class="rrow"><span class="k">humidity</span><span class="v">45.5 %</span></div><div class="rrow"><span class="k">sample_serial</span><span class="v">16909060</span></div><div class="rrow"><span class="k">checksum</span><span class="v">beef</span></div></div>
+        <div class="bite-foot" id="bite-foot">The weather-station dictionary's <code>observation</code> test vector, which <code>bite check</code> runs.</div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <ul class="strip">
+        <li><b>0.47 µs</b><span>to decode one message</span><code>cargo run --release -p bite --example throughput -- dictionaries/weather-station</code></li>
+        <li><b>450,000 / s</b><span>packets through the whole pipeline</span><code>mind --pcap-file load.pcap --dictionary dictionaries/weather-station</code></li>
+        <li><b>10.9 MB</b><span>resident while replaying a 145 MB capture</span><code>/usr/bin/time -f %M</code></li>
+        <li><b>14.67 MB</b><span>the portable <code>mind</code>, needing only glibc</span><code>make portable</code></li>
+      </ul>
+      <p class="source">One core of an AMD Ryzen 7 8845HS, release build of the 1.1.0 code, 2026-11-15. <a href="performance.html">Every figure and the command behind it</a>.</p>
+    </div>
   </section>
 
-  <section aria-labelledby="numbers">
-    <h2 id="numbers" class="eyebrow">Measured on one core</h2>
-    <ul class="numbers">
-      <li><b>0.47 µs</b><span>to decode one message: identify it, extract every field, render the values</span></li>
-      <li><b>450,000 / s</b><span>packets through the whole pipeline, from frame read to record published</span></li>
-      <li><b>0.2%</b><span>of one core for a link carrying 1,000 messages per second</span></li>
-      <li><b>500 of 500</b><span>packets decoded in live capture on two interfaces at once, none dropped</span></li>
-      <li><b>10.9 MB</b><span>resident memory while replaying a 145 MB capture</span></li>
-      <li><b>14.67 MB</b><span>the portable build of <code>mind</code>: one file that needs only glibc</span></li>
-    </ul>
-    <p class="source">AMD Ryzen 7 8845HS, release build of the 1.1.0 code, 2026-11-15, the machine also running other work. <a href="performance.html">The command behind each figure</a>.</p>
-  </section>
+<div class="wrap">
+  <!-- figure: how-it-works -->
 
   <section class="section" id="how" aria-labelledby="how-h">
     <h2 id="how-h">It listens, and takes nothing from the link</h2>
@@ -110,6 +135,7 @@ cargo run -p mind -- --pcap-file examples/weather-station.pcap \
     <h2 id="docs-h">Documentation</h2>
     <div class="cards"><!-- docs-cards --></div>
   </section>
+</div>
 </main>
 
 <!-- footer -->
@@ -122,5 +148,6 @@ cargo run -p mind -- --pcap-file examples/weather-station.pcap \
   </div>
 </footer>
 <!-- /footer -->
+<script src="assets/landing.js" defer></script>
 </body>
 </html>
