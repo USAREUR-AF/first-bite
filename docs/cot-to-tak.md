@@ -239,6 +239,7 @@ carries the `cot-xml` and `geojson` packs. For other receivers:
 
 | Receiver | Route | Status |
 |---|---|---|
+| Cursor-on-Target, SAPIENT or ASTERIX category 062 consumers of one sensor's tracks, where the sensor sends to a node | the dictionary as the decoder of an [Open Billie](https://github.com/USAREUR-AF/open-billie) kid: the kid decodes with the `bite` library and maps to Billie's canonical track, and Billie's translator publishes the formats the kid declares (`kids/examples/weather-station-bite` in Open Billie; [related-projects.md](related-projects.md#a-dictionary-as-the-decoder-of-a-kid)) | built; measured in containers, not on a provisioned node |
 | A SAPIENT fusion node or an ASTERIX category 062 consumer | publish the records on the fabric with the `zenoh` sink; [goat-transformers](https://github.com/USAREUR-AF/goat-transformers)' `goat-xf-pipe-zenoh` converts them with the dictionary's pack (written by `tools/bite2pack`) and sends them | designed; not yet run end to end with first-bite's records |
 | A vendor system, through the vendor's software kit | a vendor bridge in [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | built for the vendors it lists |
 | A receiver that cannot join the mesh | an [octo-pod](https://github.com/USAREUR-AF/octo-pod)'s release gate and egress | built |
