@@ -63,7 +63,7 @@ A Linux archive unpacks to:
 | Path in the archive | What |
 |---|---|
 | `deployment/install.sh` | the installer |
-| `deployment/mind`, `deployment/bite` | the capture binary and the dictionary tool |
+| `deployment/mind`, `deployment/bite` | the capture binary and the dictionary tool. From 1.2.0, `mind` in the Linux glibc, FIPS and macOS archives carries the Zenoh sink (`subscriber_type: zenoh`); the musl archives do not |
 | `deployment/first-bite.service` | systemd unit |
 | `deployment/first-bite.env.example` | settings file, installed as `/etc/first-bite/first-bite.env` |
 | `deployment/first-bite.logrotate` | logrotate rule |
