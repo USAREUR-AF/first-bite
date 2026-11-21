@@ -296,7 +296,7 @@ fn type_ids(interface: &InterfaceTree) -> BTreeMap<i128, (&str, &str)> {
 fn interfaces(old: &InterfaceTree, new: &InterfaceTree, c: &mut Collector) {
     let at = old.name.as_str();
     // Keys that decide how every message of the interface is read.
-    for key in ["bit_order", "byte_order", "message_length"] {
+    for key in ["bit_order", "byte_order", "message_length", "framing"] {
         let (a, b) = (old.metadata.get(key), new.metadata.get(key));
         if !same(a, b) {
             c.push(

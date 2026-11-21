@@ -88,6 +88,19 @@ pub struct BitRange {
     pub stop: usize,
 }
 
+/// How messages sit in one payload.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Framing {
+    /// One payload is one message.
+    #[default]
+    Single,
+    /// One payload holds one or more messages back to back. Each states its
+    /// own length in bytes, header included, in the interface's
+    /// `message_length` bits; zero bytes after the last message are padding.
+    Concatenated,
+}
+
 /// Where the number that identifies a message comes from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -135,6 +148,9 @@ pub struct InterfaceSpec {
     /// Where a message states its own length, if it does.
     #[serde(default)]
     pub message_length: Option<BitRange>,
+    /// Whether a payload holds one message or several back to back.
+    #[serde(default)]
+    pub framing: Framing,
     #[serde(default)]
     pub bit_order: BitOrder,
     #[serde(default)]

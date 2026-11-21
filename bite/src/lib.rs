@@ -31,7 +31,7 @@ pub use decode::{DecodeError, Decoded, DecodedField, Value};
 pub use dictionary::{
     Dictionary, Field, Interface, Issue, LoadError, Message, Severity, VectorFile,
 };
-pub use schema::{BitOrder, ByteOrder, FieldKind};
+pub use schema::{BitOrder, ByteOrder, FieldKind, Framing};
 
 /// Environment variable naming the dictionary directory.
 pub const DICT_PATH_ENV: &str = "BITE_DICT_PATH";

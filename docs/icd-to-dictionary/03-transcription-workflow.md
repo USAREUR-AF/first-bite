@@ -75,6 +75,7 @@ there are none.
 | `type_start`, `type_stop` | the bits of the message identifier, as `[start, stop)` |
 | `type_mask` | for `frame_id`: the mask |
 | `length_start`, `length_stop` | where a message states its own length |
+| `framing` | `single` or `concatenated`, see [Framing](../dictionary-format.md#framing); `single` when empty |
 | `icd_version`, `icd_date` | the older `icd` key; prefer the `source_` columns |
 | `word_bits`, `bit0`, `first_word`, `first_bit`, `word_order` | the document's numbering, [`icd_numbering`](../dictionary-format.md#icd_numbering); needed for the `word` and `bits` columns of `fields.csv` |
 | `source_document`, `source_revision`, `source_section`, `source_table`, `source_page` | the interface's `source` |
