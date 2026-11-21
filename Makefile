@@ -29,7 +29,7 @@ DECODER_TARGETS ?= aarch64-apple-ios aarch64-linux-android x86_64-pc-windows-msv
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build release portable portable-check portable-dir portable-fips portable-fips-check portable-fips-dir security-selftest static-fips static-fips-check static static-check static-dir image image-check decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
+.PHONY: help build release portable portable-check portable-dir release-features portable-fips portable-fips-check portable-fips-dir security-selftest static-fips static-fips-check static static-check static-dir image image-check decoder-targets test wasm fmt lint guards hooks deny audit vendor run mock replay mockplay echo blob bucket ports figures site brief clean
 
 help: ## list the targets
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -37,20 +37,27 @@ help: ## list the targets
 build: ## debug build of every crate
 	cargo build --workspace --locked
 
-release: ## optimised mind and bite in target/release/
-	cargo build --release --locked -p mind -p bite
+# Cargo features every released Linux and macOS mind carries beyond its
+# defaults: the Zenoh sink, so a released binary can publish on a Zenoh fabric.
+RELEASE_FEATURES ?= mind/zenoh
+
+release: ## optimised mind and bite in target/release/, with the features the released archives carry
+	cargo build --release --locked -p mind -p bite --features $(RELEASE_FEATURES)
 
 portable: ## release binaries that need only glibc 2.31, built in Ubuntu 20.04 (needs docker)
-	tools/build-in-container.sh $(PORTABLE_IMAGE) tools/build-portable.sh
+	tools/build-in-container.sh $(PORTABLE_IMAGE) tools/build-portable.sh --features $(RELEASE_FEATURES)
 
 portable-check: ## run the `portable` binaries in bare Ubuntu 20.04 to 26.04 containers
 	tools/smoke-test.sh $(PORTABLE_DIR) $(PORTABLE_RUNS_IN)
+
+release-features: # the cargo features of a released mind, for the release workflow
+	@echo $(RELEASE_FEATURES)
 
 portable-dir: # where `portable` leaves mind and bite
 	@echo $(PORTABLE_DIR)
 
 portable-fips: ## the `portable` binaries with the upstream FIPS module build of AWS-LC as crypto provider (needs docker)
-	BUILD_VARIANT=fips tools/build-in-container.sh $(PORTABLE_IMAGE) tools/build-portable.sh --features mind/fips
+	BUILD_VARIANT=fips tools/build-in-container.sh $(PORTABLE_IMAGE) tools/build-portable.sh --features mind/fips,$(RELEASE_FEATURES)
 
 portable-fips-check: ## run the `portable-fips` binaries in bare Ubuntu containers; mind must report the FIPS module active
 	SMOKE_EXPECT_FIPS=yes tools/smoke-test.sh $(FIPS_DIR) $(PORTABLE_RUNS_IN)
