@@ -137,6 +137,41 @@ pub struct Opt {
 pub enum Command {
     /// Report or check transport security, without capturing or connecting.
     Security(SecurityOpt),
+    /// Survey an unknown sensor's traffic from a capture file or, for a set
+    /// time, an interface: talkers, ARP, flows, payload shapes. Sends nothing.
+    Discover(DiscoverOpt),
+}
+
+#[derive(Args, Debug)]
+pub struct DiscoverOpt {
+    /// A pcap or pcapng file to survey.
+    #[arg(
+        value_name = "FILE",
+        required_unless_present = "iface",
+        conflicts_with = "iface"
+    )]
+    pub pcap: Option<PathBuf>,
+
+    /// Capture on this interface instead (needs capture privileges).
+    #[arg(long, value_name = "NAME")]
+    pub iface: Option<String>,
+
+    /// How long to capture on --iface.
+    #[arg(long, value_name = "SECONDS", default_value_t = 30)]
+    pub seconds: u64,
+
+    /// BPF filter, for example "not port 22".
+    #[arg(long, value_name = "EXPR")]
+    pub filter: Option<String>,
+
+    /// Also decode flows on a port a dictionary interface claims, and count
+    /// their message types.
+    #[arg(long, value_name = "DIR")]
+    pub dictionary: Option<PathBuf>,
+
+    /// Print the survey as JSON.
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]
