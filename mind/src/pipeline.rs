@@ -193,6 +193,19 @@ impl Pipeline {
     /// record describes the mirrored packet; `data_encoded_full` keeps the
     /// frame as captured, tunnel included.
     pub fn process(&self, frame: &Frame<'_>) -> Result<PacketInfoWithParsedMessage, Skip> {
+        let mut records = self.process_all(frame)?;
+        // process_all always yields at least one record.
+        Ok(records.swap_remove(0))
+    }
+
+    /// Build the records for one frame: one per message the packet holds.
+    ///
+    /// A packet on an interface whose framing is `concatenated` can hold
+    /// several messages back to back; each becomes its own record, with
+    /// `data_encoded_inner` holding that message's bytes and
+    /// `data_encoded_full` the whole frame. Every other packet yields exactly
+    /// the one record [`Pipeline::process`] describes.
+    pub fn process_all(&self, frame: &Frame<'_>) -> Result<Vec<PacketInfoWithParsedMessage>, Skip> {
         let Located {
             source_ip,
             destination_ip,
@@ -206,47 +219,59 @@ impl Pipeline {
             .dictionary
             .as_deref()
             .and_then(|dictionary| dictionary.interface_for_ports(source_port, destination_port));
-        let decoded = interface.and_then(|interface| interface.decode(payload).ok());
+        let messages = match interface {
+            Some(interface) => interface.split(payload),
+            None => vec![payload],
+        };
         let typed = self.version == RecordVersion::Typed;
-        let message = decoded.as_ref().and_then(|decoded| {
-            if typed {
-                serde_json::to_value(decoded).ok()
-            } else {
-                serde_json::to_value(decoded.rendered()).ok()
-            }
-        });
-        // The dictionary is named on the records it decoded.
-        let spec = self
-            .dictionary
-            .as_deref()
-            .filter(|_| typed && decoded.is_some())
-            .map(|dictionary| &dictionary.spec);
+        let full = STANDARD.encode(frame.data);
 
-        Ok(PacketInfoWithParsedMessage {
-            timestamp: frame.timestamp,
-            src_port: Port::new(source_port, self.version),
-            dst_port: Port::new(destination_port, self.version),
-            src_ip: source_ip,
-            dst_ip: destination_ip,
-            data_encoded_inner: STANDARD.encode(payload),
-            subsystem: interface.map(|interface| interface.name.clone()),
-            message_type: decoded.as_ref().map(|decoded| decoded.message_type()),
-            message,
-            data_encoded_full: STANDARD.encode(frame.data),
-            data_source_geo_location: self.metadata.data_source_geo_location.clone(),
-            data_source_network_name: self.metadata.data_source_network_name.clone(),
-            data_source_system_type: self.metadata.data_source_system_type.clone(),
-            data_source_owner: self.metadata.data_source_owner.clone(),
-            data_packet_classification: self.metadata.data_packet_classification.clone(),
-            data_packet_accm: self.metadata.data_packet_accm.clone(),
-            data_model_version: self.metadata.data_model_version.clone(),
-            application_version: self.metadata.application_version.clone(),
-            capture_interface: frame.interface.filter(|_| typed).map(ToString::to_string),
-            tunnel: tunnel
-                .filter(|_| typed)
-                .map(|tunnel| tunnel_name(tunnel).to_string()),
-            dictionary: spec.and_then(|spec| spec.name.clone()),
-            dictionary_version: spec.and_then(|spec| spec.version.clone()),
-        })
+        let records = messages
+            .into_iter()
+            .map(|message_bytes| {
+                let decoded = interface.and_then(|interface| interface.decode(message_bytes).ok());
+                let message = decoded.as_ref().and_then(|decoded| {
+                    if typed {
+                        serde_json::to_value(decoded).ok()
+                    } else {
+                        serde_json::to_value(decoded.rendered()).ok()
+                    }
+                });
+                // The dictionary is named on the records it decoded.
+                let spec = self
+                    .dictionary
+                    .as_deref()
+                    .filter(|_| typed && decoded.is_some())
+                    .map(|dictionary| &dictionary.spec);
+
+                PacketInfoWithParsedMessage {
+                    timestamp: frame.timestamp,
+                    src_port: Port::new(source_port, self.version),
+                    dst_port: Port::new(destination_port, self.version),
+                    src_ip: source_ip.clone(),
+                    dst_ip: destination_ip.clone(),
+                    data_encoded_inner: STANDARD.encode(message_bytes),
+                    subsystem: interface.map(|interface| interface.name.clone()),
+                    message_type: decoded.as_ref().map(|decoded| decoded.message_type()),
+                    message,
+                    data_encoded_full: full.clone(),
+                    data_source_geo_location: self.metadata.data_source_geo_location.clone(),
+                    data_source_network_name: self.metadata.data_source_network_name.clone(),
+                    data_source_system_type: self.metadata.data_source_system_type.clone(),
+                    data_source_owner: self.metadata.data_source_owner.clone(),
+                    data_packet_classification: self.metadata.data_packet_classification.clone(),
+                    data_packet_accm: self.metadata.data_packet_accm.clone(),
+                    data_model_version: self.metadata.data_model_version.clone(),
+                    application_version: self.metadata.application_version.clone(),
+                    capture_interface: frame.interface.filter(|_| typed).map(ToString::to_string),
+                    tunnel: tunnel
+                        .filter(|_| typed)
+                        .map(|tunnel| tunnel_name(tunnel).to_string()),
+                    dictionary: spec.and_then(|spec| spec.name.clone()),
+                    dictionary_version: spec.and_then(|spec| spec.version.clone()),
+                }
+            })
+            .collect();
+        Ok(records)
     }
 }

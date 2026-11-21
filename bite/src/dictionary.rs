@@ -7,7 +7,7 @@ use crate::limits::{
 };
 use crate::schema::{
     parse_int, BitOrder, BitRange, ByteOrder, DictionarySpec, DiscriminatorSource, FieldKind,
-    FieldSpec, Icd, InterfaceSpec, MessageSpec, Protocol,
+    FieldSpec, Framing, Icd, InterfaceSpec, MessageSpec, Protocol,
 };
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
@@ -263,6 +263,9 @@ pub struct Interface {
     pub byte_order: ByteOrder,
     pub discriminator: Discriminator,
     pub message_length: Option<BitRange>,
+    /// [`Framing::Concatenated`] only when `message_length` is usable; see
+    /// [`Interface::split`].
+    pub framing: Framing,
     messages: Vec<Message>,
     by_name: HashMap<String, usize>,
 }
@@ -624,6 +627,41 @@ fn build_interface(
             );
         }
     }
+    let framing = match spec.framing {
+        Framing::Single => Framing::Single,
+        Framing::Concatenated => {
+            let problem = match spec.message_length {
+                _ if disc.source != DiscriminatorSource::Payload => {
+                    Some("needs message_type source payload".to_string())
+                }
+                None => Some("needs message_length".to_string()),
+                Some(range)
+                    if range.stop <= range.start
+                        || range.stop - range.start > 64
+                        || range.stop > MAX_PAYLOAD_BITS =>
+                {
+                    Some(format!(
+                        "message_length bits [{}, {}) must span 1 to 64 bits within a payload",
+                        range.start, range.stop
+                    ))
+                }
+                Some(_) => None,
+            };
+            match problem {
+                Some(problem) => {
+                    report(
+                        Severity::Error,
+                        name.clone(),
+                        format!(
+                            "framing concatenated {problem}; every payload is read as one message"
+                        ),
+                    );
+                    Framing::Single
+                }
+                None => Framing::Concatenated,
+            }
+        }
+    };
     let mask = match disc.mask.as_deref() {
         None => None,
         Some(text) => match parse_int(text).and_then(|value| u64::try_from(value).ok()) {
@@ -747,6 +785,7 @@ fn build_interface(
             names,
         },
         message_length: spec.message_length,
+        framing,
         messages,
         by_name,
         name,

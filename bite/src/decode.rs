@@ -2,7 +2,7 @@
 
 use crate::bits::{extract, sign_extend, swap_bytes};
 use crate::dictionary::{Field, Interface, Message};
-use crate::schema::{BitOrder, ByteOrder, DiscriminatorSource, FieldKind};
+use crate::schema::{BitOrder, ByteOrder, DiscriminatorSource, FieldKind, Framing};
 use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -149,6 +149,64 @@ impl Interface {
     /// Decode a payload whose message type is carried in the payload.
     pub fn decode<'d>(&'d self, payload: &[u8]) -> Result<Decoded<'d>, DecodeError> {
         self.decode_frame(payload, None)
+    }
+
+    /// The messages a payload holds, in order.
+    ///
+    /// Under [`Framing::Single`] that is the payload itself. Under
+    /// [`Framing::Concatenated`] each message states its length in bytes,
+    /// header included, in the interface's `message_length` bits, and the next
+    /// message starts where it ends. Zero bytes after the last message are
+    /// padding and are left out. When a stated length cannot be followed (it
+    /// is shorter than the header, longer than what is left, or the rest is too
+    /// short to hold a header) the rest of the payload is returned as one
+    /// message, so nothing is dropped. An empty payload, or one of zero bytes
+    /// only, is returned as one message.
+    pub fn split<'p>(&self, payload: &'p [u8]) -> Vec<&'p [u8]> {
+        let range = match (self.framing, self.message_length) {
+            (Framing::Concatenated, Some(range)) => range,
+            _ => return vec![payload],
+        };
+        let header_bytes = range.stop.max(self.discriminator.stop).div_ceil(8);
+        let mut messages: Vec<&'p [u8]> = Vec::new();
+        let mut rest = payload;
+        loop {
+            if rest.is_empty() {
+                break;
+            }
+            if !messages.is_empty() && rest.iter().all(|byte| *byte == 0) {
+                break;
+            }
+            let stated = extract(rest, range.start, range.stop, self.bit_order)
+                .and_then(|length| usize::try_from(length).ok());
+            match stated {
+                Some(length)
+                    if rest.len() >= header_bytes
+                        && length >= header_bytes.max(1)
+                        && length <= rest.len() =>
+                {
+                    let (message, tail) = rest.split_at(length);
+                    messages.push(message);
+                    rest = tail;
+                }
+                _ => {
+                    messages.push(rest);
+                    break;
+                }
+            }
+        }
+        if messages.is_empty() {
+            messages.push(payload);
+        }
+        messages
+    }
+
+    /// Decode every message a payload holds; see [`Interface::split`].
+    pub fn decode_all<'d>(&'d self, payload: &[u8]) -> Vec<Result<Decoded<'d>, DecodeError>> {
+        self.split(payload)
+            .into_iter()
+            .map(|message| self.decode(message))
+            .collect()
     }
 
     /// Decode a payload that arrived with a frame identifier.

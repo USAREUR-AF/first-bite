@@ -123,8 +123,8 @@ pub fn run(
             continue;
         };
         stats.frames += 1;
-        let record = match pipeline.process(&frame) {
-            Ok(record) => record,
+        let records = match pipeline.process_all(&frame) {
+            Ok(records) => records,
             Err(Skip::NotTransport) => {
                 stats.skipped += 1;
                 continue;
@@ -135,19 +135,22 @@ pub fn run(
                 continue;
             }
         };
-        stats.records += 1;
-        if record.message.is_some() {
-            stats.decoded += 1;
-        }
+        // A packet of several concatenated messages yields one record each.
+        for record in records {
+            stats.records += 1;
+            if record.message.is_some() {
+                stats.decoded += 1;
+            }
 
-        let json = serde_json::to_string(&record)?;
-        if log_enabled!(Level::Info) {
-            // The record is embedded as raw JSON rather than serialised twice.
-            info!(r#"{{"message_type":"Packet","message":{json}}}"#);
-        }
-        sink.publish(&record, &json);
-        if let Some(output) = output.as_deref_mut() {
-            output.write(&record)?;
+            let json = serde_json::to_string(&record)?;
+            if log_enabled!(Level::Info) {
+                // The record is embedded as raw JSON rather than serialised twice.
+                info!(r#"{{"message_type":"Packet","message":{json}}}"#);
+            }
+            sink.publish(&record, &json);
+            if let Some(output) = output.as_deref_mut() {
+                output.write(&record)?;
+            }
         }
     }
     if let Some(output) = output {

@@ -9,7 +9,7 @@ use super::model::{fields, FileSet, InterfaceTree, Tree, SOURCE_KEYS};
 use crate::schema::parse_int;
 
 const DICTIONARY_KEYS: [&str; 5] = ["name", "version", "description", "source", "lint"];
-const METADATA_KEYS: [&str; 11] = [
+const METADATA_KEYS: [&str; 12] = [
     "description",
     "icd",
     "source",
@@ -21,6 +21,7 @@ const METADATA_KEYS: [&str; 11] = [
     "icd_numbering",
     "message_type",
     "message_length",
+    "framing",
 ];
 const MESSAGE_KEYS: [&str; 5] = ["description", "source", "note", "declared_bits", "fields"];
 pub const FIELD_KEYS: [&str; 12] = [
