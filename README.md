@@ -220,6 +220,9 @@ sudo BITE_DICT_PATH=/path/to/dictionary ./target/release/mind eth0
 | `--env-file <file>` | load `KEY=VALUE` lines into the environment first |
 | `--output` | also write every record to `completelog_<time>.log` |
 | `--activate-subpubs` | run the transforms in the subpub configuration |
+| `--pcap-dir <dir>` | also write every captured frame to rotating pcap slices (`--pcap-slice-seconds`, default 60; `--pcap-slice-mb`; `--pcap-keep`, default 60; `--pcap-prefix`) |
+| `--pcap-publish <url> --pcap-key <key>` | `PUT` each finished slice to a Zenoh REST port, content type `application/vnd.tcpdump.pcap`, retried (`--pcap-publish-retries`, default 5); `{host}` in the key is the host name |
+| `--tap-only` | only write and publish pcap slices: no decoding, no records. [deployment/tap](deployment/tap/README.md) |
 | `--drain-seconds <n>` | when input ends or the process is told to stop, give the sinks this long to deliver what was already published; default 30. [docs/deployment.md](docs/deployment.md#when-a-run-ends) |
 
 Configuration read from the environment:

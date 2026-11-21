@@ -10,6 +10,7 @@ carries a copy as `INSTALL.md`.
 | [`first-bite.service`](first-bite.service) | systemd unit: runs `mind` as user `firstbite` with capture capabilities only |
 | [`first-bite.env.example`](first-bite.env.example) | becomes `/etc/first-bite/first-bite.env`: interface, dictionary, configuration paths, record metadata |
 | [`first-bite.logrotate`](first-bite.logrotate) | daily rotation of `/var/log/first-bite/*.log`, seven kept |
+| [`tap/`](tap) | `mind --tap-only` as a systemd template unit: capture matching frames to rotating pcap slices and publish each finished slice to a Zenoh key |
 | [`capture-node/`](capture-node) | a separate kit for a site that allows no live decoder: capture to a bounded ring of files, mirror them to a bucket, decode later with `mind --pcap-file` |
 | [`filebeat/`](filebeat) | optional example: ship the log file to Elasticsearch |
 | [`telegraf/`](telegraf) | optional example: report host and service metrics to InfluxDB |

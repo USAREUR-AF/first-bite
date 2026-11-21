@@ -6,6 +6,9 @@ use flow::{Publishers, SubPubs, Subscribers};
 use log::{error, info, warn};
 use logger::loggers::setup_logger;
 use mind::cli::{Command, Opt};
+use mind::slices::{
+    expand_key, PublishOptions, SliceOptions, SlicePublisher, SliceWriter, TeeSource,
+};
 use mind::splash::print_splash_screen;
 use mind::{
     CaptureOptions, Decapsulation, Error, FileCapture, FrameSource, LiveCapture, MultiCapture,
@@ -79,6 +82,9 @@ fn start(opt: Opt) -> Result<bool, StartError> {
     // The security block is read and the crypto provider installed before
     // anything can open a connection.
     flow::security::activate().map_err(flow::Error::from)?;
+    if opt.tap_only {
+        return Ok(tap(&opt)?);
+    }
     let dictionary = mind::dictionary::load(opt.dictionary.clone()).map_err(Error::from)?;
     let version = RecordVersion::from_env().map_err(Error::RecordVersion)?;
     mind::goat::register(dictionary.as_deref(), version);
@@ -102,6 +108,10 @@ fn start(opt: Opt) -> Result<bool, StartError> {
 
     let replaying_file = opt.pcap_file.is_some();
     let mut source = open_source(&opt)?;
+    let (writer, slice_publisher) = slices(&opt)?;
+    if let Some(writer) = writer {
+        source = Box::new(TeeSource::new(source, writer));
+    }
 
     // Publishers, subscribers and subpubs are built in full here, so a
     // configuration mistake in any of them stops the process before capture.
@@ -174,6 +184,10 @@ fn start(opt: Opt) -> Result<bool, StartError> {
         &stop,
     );
     let elapsed = started.elapsed();
+    // Dropping the source closes the last pcap slice and queues it before
+    // the publisher drains.
+    drop(source);
+    finish_publisher(slice_publisher, Duration::from_secs(opt.drain_seconds));
 
     // Input has ended, or the process was told to stop. The sinks deliver
     // what was already published, then the record socket is closed with time
@@ -212,6 +226,90 @@ fn start(opt: Opt) -> Result<bool, StartError> {
         );
     }
     Ok(complete)
+}
+
+/// The pcap slice writer and its publisher, when --pcap-dir is given.
+fn slices(opt: &Opt) -> Result<(Option<SliceWriter>, Option<SlicePublisher>), Error> {
+    let Some(dir) = &opt.pcap_dir else {
+        return Ok((None, None));
+    };
+    if opt.pcap_keep == 0 {
+        return Err(Error::Slices("--pcap-keep must be at least 1".to_string()));
+    }
+    let publisher = match (&opt.pcap_publish, &opt.pcap_key) {
+        (Some(url), Some(key)) => {
+            let key = expand_key(key);
+            let publisher = SlicePublisher::spawn(PublishOptions {
+                url: url.clone(),
+                key: key.clone(),
+                retries: opt.pcap_publish_retries,
+                first_wait: Duration::from_secs(2),
+            })
+            .map_err(Error::Slices)?;
+            info!("publishing each finished pcap slice to key {key} through {url}");
+            Some(publisher)
+        }
+        _ => None,
+    };
+    let writer = SliceWriter::new(
+        SliceOptions {
+            dir: dir.clone(),
+            prefix: opt.pcap_prefix.clone(),
+            seconds: (opt.pcap_slice_seconds > 0).then_some(opt.pcap_slice_seconds),
+            max_bytes: opt.pcap_slice_mb.map(|mb| mb.saturating_mul(1024 * 1024)),
+            keep: opt.pcap_keep,
+        },
+        publisher.as_ref().map(SlicePublisher::sender),
+    )
+    .map_err(|e| Error::Slices(format!("{}: {e}", dir.display())))?;
+    Ok((Some(writer), publisher))
+}
+
+fn finish_publisher(publisher: Option<SlicePublisher>, drain: Duration) {
+    let Some(publisher) = publisher else {
+        return;
+    };
+    match publisher.finish(drain) {
+        Some(counts) => info!(
+            "pcap slices: {} published, {} not published",
+            counts.published, counts.failed
+        ),
+        None => {
+            warn!("pcap slices still queued after {drain:?} were not published; they stay on disk")
+        }
+    }
+}
+
+/// `--tap-only`: write and publish pcap slices, nothing else.
+fn tap(opt: &Opt) -> Result<bool, Error> {
+    let source = open_source(opt)?;
+    let (writer, publisher) = slices(opt)?;
+    let writer = writer.ok_or_else(|| Error::Slices("--tap-only needs --pcap-dir".to_string()))?;
+    let stop = Arc::new(AtomicBool::new(false));
+    let handler_stop = Arc::clone(&stop);
+    if let Err(e) = ctrlc::set_handler(move || handler_stop.store(true, Ordering::Relaxed)) {
+        error!(
+            "cannot install the signal handler; a stop signal will end the process at once: {e}"
+        );
+    }
+    let mut frames: u64 = 0;
+    {
+        let mut tee = TeeSource::new(source, writer);
+        info!("tap only: reading from {}", tee.describe());
+        while !stop.load(Ordering::Relaxed) {
+            if tee.next_frame()?.is_some() {
+                frames += 1;
+            } else if tee.finished() {
+                break;
+            }
+        }
+        if let Err(e) = tee.finish() {
+            error!("cannot close the last pcap slice: {e}");
+        }
+    }
+    info!("tap only: {frames} frames written to pcap slices");
+    finish_publisher(publisher, Duration::from_secs(opt.drain_seconds));
+    Ok(true)
 }
 
 fn open_source(opt: &Opt) -> Result<Box<dyn FrameSource>, Error> {
