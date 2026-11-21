@@ -1,0 +1,55 @@
+# systemd template unit: one first-bite tap per instance name.
+#   /etc/first-bite/tap-<name>.env   settings (tap.env.example)
+#   /var/lib/first-bite-tap/<name>/  the pcap slices
+# install.sh copies it to /etc/systemd/system/first-bite-tap@.service.
+#   sudo systemctl enable --now first-bite-tap@<name>
+[Unit]
+Description=first-bite tap %i: capture to rotating pcap slices, publish each finished slice
+Documentation=https://github.com/USAREUR-AF/first-bite/blob/main/deployment/tap/README.md
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=firstbite
+Group=firstbite
+EnvironmentFile=/etc/first-bite/tap-%i.env
+# "${TAP_FILTER}" is passed as one argument, spaces included; $TAP_ARGS is
+# split on spaces.
+ExecStart=/usr/local/bin/mind ${TAP_INTERFACE} --tap-only --filter "${TAP_FILTER}" --pcap-dir /var/lib/first-bite-tap/%i --pcap-prefix %i --pcap-slice-seconds ${TAP_SLICE_SECONDS} --pcap-keep ${TAP_KEEP} $TAP_ARGS
+Restart=on-failure
+RestartSec=5
+
+StateDirectory=first-bite-tap/%i
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/first-bite-tap/%i
+
+# Packet capture as a non-root user.
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_PACKET AF_NETLINK AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+RemoveIPC=yes
+SystemCallArchitectures=native
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -9,6 +9,7 @@ pub mod goat;
 pub mod pipeline;
 pub mod run;
 pub mod security;
+pub mod slices;
 pub mod source;
 pub mod splash;
 pub mod topics;
