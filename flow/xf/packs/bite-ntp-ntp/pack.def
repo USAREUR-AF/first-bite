@@ -300,7 +300,7 @@ field     ntp.poll                           0:16:8       twos optional
 field     ntp.precision                      0:24:8       twos optional
 field     ntp.root_delay                     0:32:32      uscale:1/65536 optional
 field     ntp.root_dispersion                0:64:32      uscale:1/65536 optional
-field     ntp.reference_id                   0:96:32      uint optional
+field     ntp.reference_id                   0:96:32      hex optional
 field     ntp.reference_timestamp_seconds    0:128:32     uint optional
 field     ntp.reference_timestamp_fraction   0:160:32     uscale:1/4294967296 optional
 field     ntp.origin_timestamp_seconds       0:192:32     uint optional
@@ -322,7 +322,7 @@ field     ntp.poll                           0:16:8       twos optional
 field     ntp.precision                      0:24:8       twos optional
 field     ntp.root_delay                     0:32:32      uscale:1/65536 optional
 field     ntp.root_dispersion                0:64:32      uscale:1/65536 optional
-field     ntp.reference_id                   0:96:32      uint optional
+field     ntp.reference_id                   0:96:32      hex optional
 field     ntp.reference_timestamp_seconds    0:128:32     uint optional
 field     ntp.reference_timestamp_fraction   0:160:32     uscale:1/4294967296 optional
 field     ntp.origin_timestamp_seconds       0:192:32     uint optional
@@ -344,7 +344,7 @@ field     ntp.poll                           0:16:8       twos optional
 field     ntp.precision                      0:24:8       twos optional
 field     ntp.root_delay                     0:32:32      uscale:1/65536 optional
 field     ntp.root_dispersion                0:64:32      uscale:1/65536 optional
-field     ntp.reference_id                   0:96:32      uint optional
+field     ntp.reference_id                   0:96:32      hex optional
 field     ntp.reference_timestamp_seconds    0:128:32     uint optional
 field     ntp.reference_timestamp_fraction   0:160:32     uscale:1/4294967296 optional
 field     ntp.origin_timestamp_seconds       0:192:32     uint optional
@@ -366,7 +366,7 @@ field     ntp.poll                           0:16:8       twos optional
 field     ntp.precision                      0:24:8       twos optional
 field     ntp.root_delay                     0:32:32      uscale:1/65536 optional
 field     ntp.root_dispersion                0:64:32      uscale:1/65536 optional
-field     ntp.reference_id                   0:96:32      uint optional
+field     ntp.reference_id                   0:96:32      hex optional
 field     ntp.reference_timestamp_seconds    0:128:32     uint optional
 field     ntp.reference_timestamp_fraction   0:160:32     uscale:1/4294967296 optional
 field     ntp.origin_timestamp_seconds       0:192:32     uint optional
@@ -388,7 +388,7 @@ field     ntp.poll                           0:16:8       twos optional
 field     ntp.precision                      0:24:8       twos optional
 field     ntp.root_delay                     0:32:32      uscale:1/65536 optional
 field     ntp.root_dispersion                0:64:32      uscale:1/65536 optional
-field     ntp.reference_id                   0:96:32      uint optional
+field     ntp.reference_id                   0:96:32      hex optional
 field     ntp.reference_timestamp_seconds    0:128:32     uint optional
 field     ntp.reference_timestamp_fraction   0:160:32     uscale:1/4294967296 optional
 field     ntp.origin_timestamp_seconds       0:192:32     uint optional

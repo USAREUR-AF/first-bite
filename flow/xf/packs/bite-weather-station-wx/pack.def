@@ -822,7 +822,7 @@ field     weather_station.pressure                   0:72:20      uint optional
 field     weather_station.wind_direction             0:92:12      uscale:1/10 optional
 field     weather_station.humidity                   0:104:32     f32 optional
 field     weather_station.sample_serial              0:136:32     uint swap optional
-field     weather_station.checksum                   0:168:16     uint optional
+field     weather_station.checksum                   0:168:16     hex optional
 
 # WX/Position: Where the station is. Sent at power-on and whenever the station is moved.
 kind      position

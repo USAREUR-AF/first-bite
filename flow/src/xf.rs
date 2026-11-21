@@ -456,7 +456,7 @@ mod engine {
             assert_eq!(event["cot_datetime"], "2026-03-04T12:00:00.000Z");
             assert_eq!(
                 event["cot_xml_string"],
-                r#"<event version="2.0" uid="KX7" type="a-f-G" time="2026-03-04T12:00:00.000Z" start="2026-03-04T12:00:00.000Z" stale="2026-03-04T12:10:00.000Z" how="m-g"><point lat="64.8378" lon="-147.7164" hae="136.5" ce="9999999" le="9999999"/></event>"#
+                r#"<event version="2.0" uid="KX7" type="a-f-G" time="2026-03-04T12:00:00.000Z" start="2026-03-04T12:00:00.000Z" stale="2026-03-04T12:10:00.000Z" how="m-g"><point lat="64.8378" lon="-147.7164" hae="136.5" ce="9999999" le="9999999"/><detail/></event>"#
             );
         }
 

@@ -2,7 +2,7 @@ The files below are copied unchanged from
 https://github.com/USAREUR-AF/goat-transformers (Apache License 2.0)
 at the commit Cargo.toml pins. tools/bite2pack/refresh.sh --upstream rewrites them.
 
-commit: 0be9fc9cf926139d7c188465e56f0320f348657a
+commit: 6d99371db6edef930e728b9608b7e30906757f52
 file: model/core.def
 file: model/track.def
 file: packs/cot-xml/pack.def

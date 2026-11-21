@@ -20,20 +20,10 @@ Every field is `optional`: a payload cut short decodes up to the cut, as in firs
 | kinds in `pack.def` | 7 (5 with fields, 1 named and not defined, 1 for an unnamed identifier) |
 | fields in the message files | 85 |
 | fields mapped | 85 |
-| of those, in the form first-bite writes | 80 |
+| of those, in the form first-bite writes | 85 |
 | fields not mapped | 0 |
 | shared keys mapped | 0 |
 | vectors | 17 (10 from the dictionary's own vectors, 7 of those byte-identical round trips; 0 the engine must refuse; 7 synthetic round trips) |
-
-### Fields whose value is equal and whose form differs
-
-| Message | Field | Form |
-|---|---|---|
-| symmetric active | `reference_id` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
-| symmetric passive | `reference_id` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
-| client | `reference_id` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
-| server | `reference_id` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
-| broadcast | `reference_id` | a `bytes` field wider than one byte is the integer its bytes spell; first-bite writes hexadecimal text |
 
 ### Messages
 

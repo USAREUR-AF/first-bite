@@ -14,7 +14,7 @@
     "ntp.precision": "-20",
     "ntp.root_delay": "0",
     "ntp.root_dispersion": "0.000244140625",
-    "ntp.reference_id": "1196446464",
+    "ntp.reference_id": "47505300",
     "ntp.reference_timestamp_seconds": "3977467199",
     "ntp.reference_timestamp_fraction": "0.5",
     "ntp.origin_timestamp_seconds": "3977467200",

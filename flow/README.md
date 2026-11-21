@@ -77,12 +77,13 @@ be compiled in; [`src/security/`](src/security) holds every sink to the
 
 ## The xf transform
 
-Status: built, behind the cargo feature `goat-transformers`, off by default.
-The numbers below are measured by `cargo test -p flow --features
-goat-transformers`, which fails when one of them moves.
+Status: built, in the default build of `mind` (cargo feature
+`goat-transformers`, which `mind` turns on by default). The numbers below are
+measured by `cargo test -p flow --features goat-transformers`, which fails when
+one of them moves. A build without it:
 
 ```sh
-cargo build --release -p mind --features goat-transformers
+cargo build --release -p mind --no-default-features --features azure,aws,pqc
 ```
 
 The `cot` transform reads the decoded `message` of a record and writes one
@@ -173,11 +174,14 @@ packets of the NTP capture.
 
 | Fields of 42 messages | 462 |
 |---|---|
-| the same value in the form `bite` writes it (a number, a label, `true` or `false`, text; a field beyond the end of a truncated payload absent in both) | 443 |
-| the same bytes, in another form: a `bytes` field of two to eight bytes is hexadecimal text in the record and an integer in the engine (a one-byte field is the same two digits in both; the fixtures hold none) | 18 |
+| the same value in the form `bite` writes it (a number, a label, `true` or `false`, text, a `bytes` field as hexadecimal text; a field beyond the end of a truncated payload absent in both) | 461 |
 | a scaled value that differs in the last digits of the double (`outside_temperature` of the glasshouse Climate Report: `bite` gives -7.35, the engine -7.3500000000000085) | 1 |
 
-Both decoders pick the same message type for all 42. One difference does not
+A `bytes` field is read with the `hex` transform of goat-transformers (spec
+0.22), which gives the hexadecimal text `bite` writes, in every interface with
+`msb0` bit order; an interface with `lsb0` keeps an integer (its hex digits would
+not be the wire's), and its fixtures hold no `bytes` field. Both decoders pick
+the same message type for all 42. One difference does not
 show in the fixtures: `bite` passes a text byte outside 0x20 to 0x7E, and the
 engine refuses the message that holds one.
 
