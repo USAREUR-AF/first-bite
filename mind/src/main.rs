@@ -34,6 +34,9 @@ fn main() -> ExitCode {
     if let Some(Command::Security(security)) = &opt.command {
         return mind::security::run(security, load_environment_file);
     }
+    if let Some(Command::Discover(discover)) = &opt.command {
+        return mind::discover::run(discover);
+    }
     // The env file may set values the logger reads, so it is loaded first and
     // its outcome reported once the logger exists.
     let env_file = opt.env_file.as_deref().map(load_environment_file);

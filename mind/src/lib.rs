@@ -4,6 +4,7 @@
 pub mod cli;
 pub mod decap;
 pub mod dictionary;
+pub mod discover;
 pub mod error;
 pub mod goat;
 pub mod pipeline;

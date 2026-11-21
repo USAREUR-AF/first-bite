@@ -248,6 +248,33 @@ loss counters; [docs/deployment.md](docs/deployment.md) covers the release
 archives, the systemd service, the container and building without internet
 access.
 
+## Discovering an unknown sensor
+
+Before there is a dictionary, `mind discover` shows what a sensor sends. It
+reads a capture file, or listens on an interface for a set time, and sends
+nothing.
+
+```bash
+mind discover capture.pcap                       # a file: pcap or pcapng
+sudo mind discover --iface eth0 --seconds 60     # live, then report
+mind discover capture.pcap --filter "not port 22" --json
+mind discover capture.pcap --dictionary dictionaries/weather-station
+```
+
+| It reports | Detail |
+|---|---|
+| talkers | each IPv4 source with its MAC addresses, packets and bytes |
+| ARP | who asks for whom, with the asker's MAC: addresses a sensor expects to find |
+| flows | every UDP and TCP flow: packets, packets per second, payload size range, multicast or broadcast destination, the first payload's leading bytes |
+| payload shape, per flow | ASTERIX (category, and blocks per datagram), Cursor-on-Target XML or protobuf (TAK protocol), NVG and other XML, JSON, NMEA 0183, MAVLink 2, DDS/RTPS, text, or the leading bytes of binary |
+| a goat-transformers pack | named when a shape matches one: `asterix-cat062`, `cot-xml`, `cot-protobuf`, `nvg`, `mavlink2` |
+| other traffic | EtherTypes that are not IPv4 or ARP (LLDP, IPv6, ...) and IP protocols that are not UDP or TCP |
+| with `--dictionary` | flows on a port an interface claims, decoded, with their message types counted |
+
+The usual next step is a dictionary for the flow that carries the sensor's
+messages ([Write a dictionary](#write-a-dictionary)), or the pack it names. To keep recording while you work, run a tap
+([`deployment/tap`](deployment/tap/README.md)).
+
 ## Write a dictionary
 
 Start from [`dictionaries/weather-station`](dictionaries/weather-station) and

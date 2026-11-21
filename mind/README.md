@@ -55,6 +55,15 @@ mind eth0 --tap-only --filter "udp port 40100" --pcap-dir /var/lib/tap \
     --pcap-publish http://127.0.0.1:8000 --pcap-key sensor/pcap/{host}
 ```
 
+## Discover
+
+`mind discover <file>` or `mind discover --iface <name> --seconds <n>`
+surveys traffic without sending anything: talkers, ARP, flows, payload shapes
+and the goat-transformers pack a shape matches; `--json` for the report as
+JSON, `--dictionary` to decode flows on a dictionary's ports. The root
+[README](../README.md#discovering-an-unknown-sensor) lists what it reports;
+the code is [`src/discover.rs`](src/discover.rs).
+
 ## Frame sources
 
 | Source | Selected by | Reads |
