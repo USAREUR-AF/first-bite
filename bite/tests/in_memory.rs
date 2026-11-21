@@ -31,7 +31,7 @@ fn structure(interface: &Interface) -> String {
     let mut codes: Vec<_> = interface.discriminator.names.iter().collect();
     codes.sort();
     let mut text = format!(
-        "{} port={:?} {:?} {:?} description={:?} icd={:?} protocol={:?} length={:?}\n\
+        "{} port={:?} {:?} {:?} description={:?} icd={:?} protocol={:?} length={:?} framing={:?}\n\
          discriminator {:?} [{}, {}) mask={:?} {codes:?}\n",
         interface.name,
         interface.port,
@@ -41,6 +41,7 @@ fn structure(interface: &Interface) -> String {
         interface.icd,
         interface.protocol,
         interface.message_length,
+        interface.framing,
         interface.discriminator.source,
         interface.discriminator.start,
         interface.discriminator.stop,

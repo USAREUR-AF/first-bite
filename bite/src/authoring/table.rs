@@ -34,6 +34,7 @@ pub const INTERFACE_COLUMNS: &[&str] = &[
     "type_mask",
     "length_start",
     "length_stop",
+    "framing",
     "icd_version",
     "icd_date",
     "word_bits",
@@ -285,6 +286,7 @@ pub fn export(tree: &Tree) -> Result<Tables, Vec<String>> {
         row.push(length.number("start", errors));
         row.push(length.number("stop", errors));
         length.finish(errors);
+        row.push(meta.text("framing", errors));
         let mut icd = meta.object("icd", errors);
         row.push(icd.text("version", errors));
         row.push(icd.text("date", errors));
@@ -634,6 +636,8 @@ pub fn import(tables: &Tables, options: ImportOptions) -> Result<Vec<InterfaceTr
                 "{at}: give both length_start and length_stop, or neither"
             ));
         }
+        w.one_of("framing", "framing", &["single", "concatenated"], errors);
+        let framing = w.take();
 
         w.text("icd_version", "version");
         w.text("icd_date", "date");
@@ -683,6 +687,7 @@ pub fn import(tables: &Tables, options: ImportOptions) -> Result<Vec<InterfaceTr
         if !length.is_empty() {
             metadata.push(("message_length".to_string(), Node::Object(length)));
         }
+        metadata.extend(framing);
         drafts.push((
             name.to_string(),
             InterfaceDraft {
