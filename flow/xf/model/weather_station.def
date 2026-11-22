@@ -27,7 +27,7 @@ key  pressure                   int     Pa        "20 bits, not byte-aligned; di
 key  wind_direction             float   deg       "dictionary type uint; in WX/Observation"
 key  humidity                   float   %         "dictionary type float; in WX/Observation"
 key  sample_serial              int     -         "dictionary type uint; in WX/Observation"
-key  checksum                   int     -         "dictionary type bytes; in WX/Observation"
+key  checksum                   string  -         "dictionary type bytes; in WX/Observation"
 key  latitude                   float   deg       "WGS 84, positive north; dictionary type float; in WX/Position"
 key  longitude                  float   deg       "WGS 84, positive east; dictionary type float; in WX/Position"
 key  altitude                   float   m         "Height above the WGS 84 ellipsoid; dictionary type float; in WX/Position"

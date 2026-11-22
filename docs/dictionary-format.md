@@ -54,7 +54,8 @@ telling the messages apart: one ICD, one CAN bus, one serial link.
 | `port` | integer | none | UDP or TCP port. A packet whose source or destination port equals it belongs to this interface; the source port is tried first. Two interfaces may not claim one port. |
 | `bit_order` | `"msb0"` or `"lsb0"` | `"msb0"` | how bit positions are numbered, see [Bit numbering](#bit-numbering) |
 | `byte_order` | `"big"` or `"little"` | `"big"` | byte order of byte-aligned fields under `msb0` |
-| `message_length` | `{start, stop}` | none | where a message states its own length |
+| `message_length` | `{start, stop}` | none | where a message states its own length, in bytes |
+| `framing` | `"single"` or `"concatenated"` | `"single"` | whether one payload holds one message or several back to back, see [Framing](#framing) |
 | `description` (or `mission`) | string | none | free text |
 | `icd` | `{version, date}` | none | the document the interface was transcribed from |
 | `protocol` | `{network, transport}` | none | informational |
@@ -74,6 +75,33 @@ telling the messages apart: one ICD, one CAN bus, one serial link.
 An identifier with no entry in `values` decodes to a record whose message type
 is the identifier in decimal and which has no fields. A name in `values` with no
 file in `messages/` is identified but not decoded; `bite check` warns about it.
+
+### Framing
+
+With `"framing": "single"`, the default, one payload is one message.
+
+With `"framing": "concatenated"`, one payload holds one or more messages back
+to back, as some interfaces send them in one UDP datagram. Each message states
+its own length in bytes, header included, in the interface's `message_length`
+bits, read relative to the start of that message. The next message starts
+where the stated length ends. `framing: concatenated` needs `message_length`
+and a `message_type` read from the payload; without them `bite check` reports
+an error and every payload is read as one message.
+
+Splitting a payload:
+
+| What is left of the payload | What happens |
+|---|---|
+| nothing | done |
+| only zero bytes, after at least one message | padding: left out, done |
+| a message whose stated length is at least its header and at most what is left | that many bytes are one message; carry on after them |
+| a stated length of zero, shorter than the header, longer than what is left, or too few bytes for a header | the rest is one message, decoded as far as it goes; done |
+
+An empty payload, or one of zero bytes only, is one message. `mind` publishes
+one record per message, each with `data_encoded_inner` holding that message's
+bytes and `data_encoded_full` the whole frame. `bite decode` prints one object
+per message. Test vectors and the decoder page in `site/decoder/` decode the
+start of the payload as one message.
 
 ## `messages/<Message Name>.json`
 

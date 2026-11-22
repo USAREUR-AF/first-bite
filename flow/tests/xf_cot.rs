@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 
 /// What the two transforms write differently, and on how many of the 502
 /// records.
-const KNOWN: [(&str, usize, &str); 7] = [
+const KNOWN: [(&str, usize, &str); 6] = [
     (
         "event/@time",
         502,
@@ -30,11 +30,6 @@ const KNOWN: [(&str, usize, &str); 7] = [
     ),
     ("event/@start", 502, "as event/@time"),
     ("event/@stale", 502, "as event/@time"),
-    (
-        "detail",
-        502,
-        "`cot` writes an empty <detail/>; the cot-xml pack writes none without a value in it",
-    ),
     // `cot` reads the number from the record's JSON, and serde_json reads a
     // 17-digit decimal to within one unit in the last place; `xf` reads the
     // payload. Where the two differ they are neighbouring doubles.
@@ -213,12 +208,13 @@ fn xf_writes_the_event_cot_writes_but_for_the_recorded_differences() {
                 (false, Some(left), Some(right)) => {
                     assert_eq!(instant(left), instant(right), "{name}")
                 }
-                _ => assert_eq!(name, "detail"),
+                _ => panic!("{name}: written by one transform only"),
             }
             *differing.entry(name.clone()).or_insert(0) += 1;
         }
-        // 12 attributes and <point> in both; <detail> in `cot` only.
-        assert_eq!((cot_parts.len(), xf_parts.len()), (14, 13), "{record}");
+        // 12 attributes, <point> and <detail> in both: the cot-xml pack writes an
+        // empty <detail/> as `cot` does (goat-transformers spec 0.18, `element detail`).
+        assert_eq!((cot_parts.len(), xf_parts.len()), (14, 14), "{record}");
     }
     let recorded: BTreeMap<String, usize> = KNOWN
         .iter()

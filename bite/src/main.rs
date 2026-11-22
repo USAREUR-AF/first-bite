@@ -213,17 +213,25 @@ fn decode(
     };
     let compact: String = payload_hex.chars().filter(|c| !c.is_whitespace()).collect();
     let payload = hex::decode(compact).map_err(|e| format!("payload: {e}"))?;
-    let decoded = interface
-        .decode_frame(&payload, frame_id)
-        .map_err(|e| e.to_string())?;
-    let output = serde_json::json!({
-        "interface": interface.name,
-        "message_type": decoded.message_type(),
-        "fields": decoded,
-    });
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&output).map_err(|e| e.to_string())?
-    );
+    // A payload of several messages (framing concatenated) prints one object
+    // per message, in order.
+    let messages = match frame_id {
+        Some(_) => vec![&payload[..]],
+        None => interface.split(&payload),
+    };
+    for message in messages {
+        let decoded = interface
+            .decode_frame(message, frame_id)
+            .map_err(|e| e.to_string())?;
+        let output = serde_json::json!({
+            "interface": interface.name,
+            "message_type": decoded.message_type(),
+            "fields": decoded,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&output).map_err(|e| e.to_string())?
+        );
+    }
     Ok(ExitCode::SUCCESS)
 }

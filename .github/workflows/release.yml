@@ -5,7 +5,8 @@
 #   first-bite-<version>-x86_64-linux-gnu.tar.gz
 #   first-bite-<version>-aarch64-linux-gnu.tar.gz
 #       the standard Linux build: needs glibc 2.31 (Ubuntu 20.04) or later
-#       and nothing else
+#       and nothing else. mind carries the Zenoh sink (RELEASE_FEATURES in
+#       the Makefile), as do the fips and macOS builds; the musl build does not
 #   first-bite-<version>-x86_64-linux-musl.tar.gz
 #   first-bite-<version>-aarch64-linux-musl.tar.gz
 #       the self-contained Linux build: fully static. Built only for a
@@ -203,7 +204,7 @@ jobs:
           persist-credentials: false
       - name: Rust toolchain (as rust-toolchain.toml)
         run: rustup toolchain install stable --no-self-update --profile minimal --target "$TARGET"
-      - run: cargo build --release --locked --target "$TARGET" -p mind -p bite
+      - run: cargo build --release --locked --target "$TARGET" -p mind -p bite --features "$(make -s release-features)"
       - name: Shared libraries mind needs
         run: otool -L "target/$TARGET/release/mind"
       - run: tools/smoke-test.sh "target/$TARGET/release"

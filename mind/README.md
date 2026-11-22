@@ -36,6 +36,34 @@ line per record, and the last line of a capture-file run is a count:
 [mind] --- done: 4 frames, 4 records, 4 decoded, 0 not UDP or TCP, 0 malformed
 ```
 
+## Pcap slices and the tap
+
+`--pcap-dir <dir>` also writes every captured frame, after `--filter`, to
+rotating pcap files: `<prefix>-<UTC time>-<n>.pcap`, one per
+`--pcap-slice-seconds` (default 60), optionally cut by `--pcap-slice-mb`, the
+newest `--pcap-keep` (default 60) kept. A slice being written ends in `.part`.
+`--pcap-publish <url> --pcap-key <key>` sends each finished slice with an HTTP
+`PUT` to `<url>/<key>`, the REST port of a Zenoh router such as the local
+island, content type `application/vnd.tcpdump.pcap`, retried on failure;
+`{host}` in the key is the host name. `--tap-only` does only that: no decoding,
+no records, no record socket. [`deployment/tap`](../deployment/tap/README.md)
+runs it as a systemd service and says where the data goes; the code is
+[`src/slices.rs`](src/slices.rs).
+
+```bash
+mind eth0 --tap-only --filter "udp port 40100" --pcap-dir /var/lib/tap \
+    --pcap-publish http://127.0.0.1:8000 --pcap-key sensor/pcap/{host}
+```
+
+## Discover
+
+`mind discover <file>` or `mind discover --iface <name> --seconds <n>`
+surveys traffic without sending anything: talkers, ARP, flows, payload shapes
+and the goat-transformers pack a shape matches; `--json` for the report as
+JSON, `--dictionary` to decode flows on a dictionary's ports. The root
+[README](../README.md#discovering-an-unknown-sensor) lists what it reports;
+the code is [`src/discover.rs`](src/discover.rs).
+
 ## Frame sources
 
 | Source | Selected by | Reads |

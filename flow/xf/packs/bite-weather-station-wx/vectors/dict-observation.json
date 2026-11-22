@@ -14,6 +14,6 @@
     "weather_station.wind_direction": "271.5",
     "weather_station.humidity": "45.5",
     "weather_station.sample_serial": "16909060",
-    "weather_station.checksum": "48879"
+    "weather_station.checksum": "beef"
   }
 }

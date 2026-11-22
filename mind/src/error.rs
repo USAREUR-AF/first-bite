@@ -23,4 +23,6 @@ pub enum Error {
     Source(#[from] SourceError),
     #[error("cannot serialise record: {0}")]
     Serialise(#[from] serde_json::Error),
+    #[error("pcap slices: {0}")]
+    Slices(String),
 }

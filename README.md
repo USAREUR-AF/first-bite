@@ -220,6 +220,9 @@ sudo BITE_DICT_PATH=/path/to/dictionary ./target/release/mind eth0
 | `--env-file <file>` | load `KEY=VALUE` lines into the environment first |
 | `--output` | also write every record to `completelog_<time>.log` |
 | `--activate-subpubs` | run the transforms in the subpub configuration |
+| `--pcap-dir <dir>` | also write every captured frame to rotating pcap slices (`--pcap-slice-seconds`, default 60; `--pcap-slice-mb`; `--pcap-keep`, default 60; `--pcap-prefix`) |
+| `--pcap-publish <url> --pcap-key <key>` | `PUT` each finished slice to a Zenoh REST port, content type `application/vnd.tcpdump.pcap`, retried (`--pcap-publish-retries`, default 5); `{host}` in the key is the host name |
+| `--tap-only` | only write and publish pcap slices: no decoding, no records. [deployment/tap](deployment/tap/README.md) |
 | `--drain-seconds <n>` | when input ends or the process is told to stop, give the sinks this long to deliver what was already published; default 30. [docs/deployment.md](docs/deployment.md#when-a-run-ends) |
 
 Configuration read from the environment:
@@ -244,6 +247,33 @@ the kernel, the interface and its own queue dropped, per interface.
 loss counters; [docs/deployment.md](docs/deployment.md) covers the release
 archives, the systemd service, the container and building without internet
 access.
+
+## Discovering an unknown sensor
+
+Before there is a dictionary, `mind discover` shows what a sensor sends. It
+reads a capture file, or listens on an interface for a set time, and sends
+nothing.
+
+```bash
+mind discover capture.pcap                       # a file: pcap or pcapng
+sudo mind discover --iface eth0 --seconds 60     # live, then report
+mind discover capture.pcap --filter "not port 22" --json
+mind discover capture.pcap --dictionary dictionaries/weather-station
+```
+
+| It reports | Detail |
+|---|---|
+| talkers | each IPv4 source with its MAC addresses, packets and bytes |
+| ARP | who asks for whom, with the asker's MAC: addresses a sensor expects to find |
+| flows | every UDP and TCP flow: packets, packets per second, payload size range, multicast or broadcast destination, the first payload's leading bytes |
+| payload shape, per flow | ASTERIX (category, and blocks per datagram), Cursor-on-Target XML or protobuf (TAK protocol), NVG and other XML, JSON, NMEA 0183, MAVLink 2, DDS/RTPS, text, or the leading bytes of binary |
+| a goat-transformers pack | named when a shape matches one: `asterix-cat062`, `cot-xml`, `cot-protobuf`, `nvg`, `mavlink2` |
+| other traffic | EtherTypes that are not IPv4 or ARP (LLDP, IPv6, ...) and IP protocols that are not UDP or TCP |
+| with `--dictionary` | flows on a port an interface claims, decoded, with their message types counted |
+
+The usual next step is a dictionary for the flow that carries the sensor's
+messages ([Write a dictionary](#write-a-dictionary)), or the pack it names. To keep recording while you work, run a tap
+([`deployment/tap`](deployment/tap/README.md)).
 
 ## Write a dictionary
 
@@ -333,7 +363,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [hello-galaxy-first-bite](https://github.com/USAREUR-AF/hello-galaxy-first-bite) | five runnable steps: decode a capture, tap a link, write a dictionary from an interface document, publish onto a goat fabric, make Cursor-on-Target |
 | [hello-galaxy-record-consumers](https://github.com/USAREUR-AF/hello-galaxy-record-consumers) | consumers of first-bite's records on Kubernetes: a receiver that makes its tables from a dictionary, a latest-status board, who may post and who may read |
 | [first-bite-env](https://github.com/USAREUR-AF/first-bite-env) | a template for the private overlay a deployment keeps its dictionaries and configuration in |
-| [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | publishes first-bite's records as tracks over Cursor-on-Target, SAPIENT and ASTERIX, with optional vendor adapters |
+| [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | bridges between the goat fabric and vendor systems, one package per vendor; for SAPIENT and ASTERIX see [docs/cot-to-tak.md](docs/cot-to-tak.md#other-interfaces-sapient-asterix-and-vendor-systems) |
 
 Every public goat repository is listed in the [goat documentation](https://usareur-af.github.io/goatdocs/reference/repositories/).
 

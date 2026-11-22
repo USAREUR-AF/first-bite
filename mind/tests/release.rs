@@ -4,7 +4,7 @@
 use std::process::Command;
 
 /// The release this tree is. Change it with `version` in `mind/Cargo.toml`.
-const RELEASE: &str = "1.1.0";
+const RELEASE: &str = "1.2.0";
 
 fn mind() -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_mind"));

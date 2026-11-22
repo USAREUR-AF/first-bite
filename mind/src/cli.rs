@@ -74,6 +74,57 @@ pub struct Opt {
     #[arg(long)]
     pub activate_subpubs: bool,
 
+    /// Also write every captured frame (after --filter) to rotating pcap files
+    /// in this directory: `<prefix>-<UTC time>-<n>.pcap`. A file being
+    /// written ends in `.pcap.part`.
+    #[arg(long, value_name = "DIR")]
+    pub pcap_dir: Option<PathBuf>,
+
+    /// Close a pcap slice once it covers this many seconds.
+    #[arg(
+        long,
+        value_name = "SECONDS",
+        default_value_t = 60,
+        requires = "pcap_dir"
+    )]
+    pub pcap_slice_seconds: u64,
+
+    /// Also close a pcap slice before it would pass this many MiB.
+    #[arg(long, value_name = "MIB", requires = "pcap_dir")]
+    pub pcap_slice_mb: Option<u64>,
+
+    /// Finished pcap slices kept on disk; the oldest beyond this are deleted.
+    #[arg(long, value_name = "N", default_value_t = 60, requires = "pcap_dir")]
+    pub pcap_keep: usize,
+
+    /// File name prefix of the pcap slices.
+    #[arg(
+        long,
+        value_name = "NAME",
+        default_value = "capture",
+        requires = "pcap_dir"
+    )]
+    pub pcap_prefix: String,
+
+    /// Publish each finished pcap slice with an HTTP PUT to the REST port of
+    /// a Zenoh router, for example the local island: http://127.0.0.1:8000.
+    #[arg(long, value_name = "URL", requires_all = ["pcap_dir", "pcap_key"])]
+    pub pcap_publish: Option<String>,
+
+    /// Zenoh key a published slice is put on. `{host}` is replaced by the
+    /// host name, for example sensor/pcap/{host}.
+    #[arg(long, value_name = "KEY", requires = "pcap_publish")]
+    pub pcap_key: Option<String>,
+
+    /// Retries of a failed pcap PUT, 2 s apart and doubling.
+    #[arg(long, value_name = "N", default_value_t = 5, requires = "pcap_publish")]
+    pub pcap_publish_retries: u32,
+
+    /// Only write (and publish) pcap slices: decode nothing, publish no
+    /// records, bind no record socket.
+    #[arg(long, requires = "pcap_dir")]
+    pub tap_only: bool,
+
     /// Seconds the sinks are given, once input has ended or the process is
     /// told to stop, to deliver the records already published. What is not
     /// delivered by then is counted as abandoned and the exit status is 3.
@@ -86,6 +137,41 @@ pub struct Opt {
 pub enum Command {
     /// Report or check transport security, without capturing or connecting.
     Security(SecurityOpt),
+    /// Survey an unknown sensor's traffic from a capture file or, for a set
+    /// time, an interface: talkers, ARP, flows, payload shapes. Sends nothing.
+    Discover(DiscoverOpt),
+}
+
+#[derive(Args, Debug)]
+pub struct DiscoverOpt {
+    /// A pcap or pcapng file to survey.
+    #[arg(
+        value_name = "FILE",
+        required_unless_present = "iface",
+        conflicts_with = "iface"
+    )]
+    pub pcap: Option<PathBuf>,
+
+    /// Capture on this interface instead (needs capture privileges).
+    #[arg(long, value_name = "NAME")]
+    pub iface: Option<String>,
+
+    /// How long to capture on --iface.
+    #[arg(long, value_name = "SECONDS", default_value_t = 30)]
+    pub seconds: u64,
+
+    /// BPF filter, for example "not port 22".
+    #[arg(long, value_name = "EXPR")]
+    pub filter: Option<String>,
+
+    /// Also decode flows on a port a dictionary interface claims, and count
+    /// their message types.
+    #[arg(long, value_name = "DIR")]
+    pub dictionary: Option<PathBuf>,
+
+    /// Print the survey as JSON.
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]

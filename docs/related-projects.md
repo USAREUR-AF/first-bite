@@ -241,8 +241,11 @@ decodes today with `bite decode <dictionary> --port <port> <hex>`.
 
 ## A dictionary as the decoder of a kid
 
-Status: built as an example kid and measured in containers; not part of the
-Open Billie repository, and not measured on a provisioned node.
+Status: built as an example kid in the Open Billie repository,
+`kids/examples/weather-station-bite`, and measured in containers; not measured
+on a provisioned node. A kid for another fixed-layout message set copies it
+and replaces the dictionary under `schemas/`, the mapping and the declared
+outputs (`cot`, `sapient`, `asterix-cat062`); its README has the steps.
 
 A kid may be written in Rust and must supply a decoder
 (`schemas/kid-manifest.schema.json`, `decoderImplementations`). The
