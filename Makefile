@@ -199,6 +199,7 @@ figures: ## write the illustrations in docs/img (light and dark SVG)
 site: ## build the documentation site into site/_build
 	python3 docs/img/build.py --check
 	python3 tools/build-site.py
+	python3 tools/fitcheck.py site/_build index.html
 
 brief: ## print docs/brief/brief.html to docs/brief/first-bite-brief.pdf (needs Chrome or Chromium)
 	python3 docs/brief/build.py
