@@ -157,6 +157,11 @@ p code, li code { overflow-wrap: anywhere; }
 .cmd pre { flex: 1; margin: 0; padding: 0.7rem 0.9rem; border: 0; border-radius: 0; background: none; white-space: pre; overflow-x: auto; }
 .cmd pre code { font-size: 0.82rem; }
 .cmd .dollar { color: var(--good); user-select: none; font: 0.82rem var(--mono); }
+/* A command shows whole at every width: it wraps at spaces, each line hangs two characters in,
+   and a word holding a hyphen or slash moves to the next line whole unless it alone is wider than the box. */
+pre[data-box="command"] { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre[data-box="command"] .ln { display: block; padding-left: 2ch; text-indent: -2ch; }
+pre .ln .w { display: inline-block; max-width: 100%; text-indent: 0; word-break: break-all; }
 .copy { border: 0; border-left: 1px solid var(--rule); background: var(--paper); color: var(--accent); font: 700 0.85rem var(--mono); padding: 0 1rem; cursor: pointer; }
 
 .bite { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 0 var(--rule); }

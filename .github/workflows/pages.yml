@@ -10,6 +10,7 @@ on:
       - 'site/**'
       - 'docs/**'
       - 'tools/build-site.py'
+      - 'tools/fitcheck.py'
       - 'tools/bundle-dictionaries.py'
       - '.github/workflows/pages.yml'
   push:
@@ -19,6 +20,7 @@ on:
       - 'docs/**'
       - 'icon/**'
       - 'tools/build-site.py'
+      - 'tools/fitcheck.py'
       - 'bite/**'
       - 'Makefile'
       - '.github/workflows/pages.yml'

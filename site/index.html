@@ -54,7 +54,7 @@
           <a class="button" href="decoder/">Interactive decoder</a>
           <a class="button" href="architecture.html">Documentation</a>
         </p>
-        <div class="cmd"><pre><span class="dollar">$ </span><code id="c-decode">cargo run -p bite -- decode dictionaries/weather-station --port 40100 0200174b583700fb2e18bcda9b4236000004030201beef</code></pre><button class="copy" type="button" data-copy="c-decode">Copy</button></div>
+        <div class="cmd"><pre data-box="command"><span class="ln"><span class="dollar">$ </span><code id="c-decode">cargo run <span class="w">-p</span> bite <span class="w">--</span> decode <span class="w">dictionaries/weather-station</span> <span class="w">--port</span> 40100 0200174b583700fb2e18bcda9b4236000004030201beef</code></span></pre><button class="copy" type="button" data-copy="c-decode">Copy</button></div>
       </div>
 
       <div class="bite" role="img" aria-label="The weather-station Observation test vector, 23 bytes, decoded field by field: each field's bit range is marked in the bytes and its value is added to the record. station_id KX7, temperature -12.34 degrees C, pressure 101325 Pa in 20 bits that are not byte-aligned, wind_direction 271.5 degrees, humidity 45.5 percent, sample_serial 16909060 little-endian, checksum beef.">
@@ -115,19 +115,19 @@
   <section class="section" aria-labelledby="try-h">
     <h2 id="try-h">Try it in five minutes</h2>
     <p>Needs a Rust toolchain, a C/C++ compiler, CMake and the libpcap headers.</p>
-<pre tabindex="0"><code>git clone https://github.com/USAREUR-AF/first-bite &amp;&amp; cd first-bite
-make build
-
-# Validate a dictionary and run its test vectors.
-cargo run -p bite -- check dictionaries/weather-station
-
-# Decode one payload by hand.
-cargo run -p bite -- decode dictionaries/weather-station --port 40100 \
-    0200174b583700fb2e18bcda9b4236000004030201beef
-
-# Replay a capture file through the whole pipeline.
-cargo run -p mind -- --pcap-file examples/weather-station.pcap \
-    --dictionary dictionaries/weather-station --output</code></pre>
+<pre tabindex="0" data-box="command"><code><span class="ln">git clone <span class="w">https://github.com/USAREUR-AF/first-bite</span> &amp;&amp; cd <span class="w">first-bite</span>
+</span><span class="ln">make build
+</span><span class="ln">
+</span><span class="ln"># Validate a dictionary and run its test vectors.
+</span><span class="ln">cargo run <span class="w">-p</span> bite <span class="w">--</span> check <span class="w">dictionaries/weather-station</span>
+</span><span class="ln">
+</span><span class="ln"># Decode one payload by hand.
+</span><span class="ln">cargo run <span class="w">-p</span> bite <span class="w">--</span> decode <span class="w">dictionaries/weather-station</span> <span class="w">--port</span> 40100 \
+</span><span class="ln"><span class="w">    0200174b583700fb2e18bcda9b4236000004030201beef</span>
+</span><span class="ln">
+</span><span class="ln"># Replay a capture file through the whole pipeline.
+</span><span class="ln">cargo run <span class="w">-p</span> mind <span class="w">--</span> <span class="w">--pcap-file</span> <span class="w">examples/weather-station.pcap</span> \
+</span><span class="ln"><span class="w">    --dictionary</span> <span class="w">dictionaries/weather-station</span> <span class="w">--output</span></span></code></pre>
     <p>To decode traffic your own network already carries, capture the Network Time Protocol with the <a href="https://github.com/USAREUR-AF/first-bite/tree/main/dictionaries/ntp#try-it-on-your-own-network"><code>ntp</code> dictionary</a>: <code>sudo ./target/debug/mind eth0 --dictionary dictionaries/ntp --filter "udp port 123"</code>.</p>
   </section>
 
