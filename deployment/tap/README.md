@@ -61,3 +61,11 @@ and copies finished files to an S3-compatible bucket on a timer. The tap is
 run, and publishes each finished slice to a Zenoh key as it closes. Use the
 capture node where the only way out is a bucket; use the tap where a Zenoh
 router (a local island) is the way out, or where `mind` already runs.
+
+## When the machine has to sit in the link
+
+The tap reads an interface it is given and never transmits. To build the
+machine itself, with two ports bridged inline or a listen port behind a passive
+tap or mirror port, use [goatrope](https://github.com/USAREUR-AF/goatrope). It
+prepares the ports, the bridge and the recording ring, and can run a pinned
+first-bite as one of its components.
