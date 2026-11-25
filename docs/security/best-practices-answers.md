@@ -120,7 +120,7 @@ Scorecard counts as 2; passing counts as 5.
 
 | Criterion | Answer | Evidence to paste |
 |---|---|---|
-| `static_analysis` | Met | CodeQL on Rust, Python and the workflows (`R/.github/workflows/codeql.yml`); Clippy. |
+| `static_analysis` | Met | CodeQL on Rust, Python, the JavaScript of the site and the workflows (`R/.github/workflows/codeql.yml`); Clippy. |
 | `static_analysis_common_vulnerabilities` | Met | CodeQL's `security-and-quality` query suite. |
 | `static_analysis_fixed` | Met after the first CodeQL run | `https://github.com/USAREUR-AF/first-bite/security/code-scanning`: answer once the first run on the public repository shows no open finding of medium or higher severity. |
 | `static_analysis_often` | Met | CodeQL runs on every pull request and every push to `main`. |
