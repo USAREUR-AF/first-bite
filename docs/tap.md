@@ -10,6 +10,10 @@ link, and a decoder that stalls or crashes costs the link nothing.
   <img src="img/tap-placement.svg" width="100%" alt="Four ways to give first-bite a copy of a link. A breakout tap has one monitor port per direction, so first-bite uses two capture interfaces; the link is not affected and nothing is lost at the tap; built and measured. An aggregating tap merges both directions into one port, with the same effect and loss; built and measured. A switch mirror port (SPAN) does not affect forwarding, carries both directions on one port, and the switch drops mirrored frames first when it is busy; built. A remote mirror sends each frame in a GRE, ERSPAN or VXLAN tunnel across a routed network to first-bite on any host the session can route to, which unwraps it; it behaves as a mirror port, adds the tunnel's traffic to that network and can also lose what the path drops; built, not yet run against a switch.">
 </picture>
 
+To check what a port receives before relying on it, `mind lan hub` tells a hub
+or mirror port from a switch port, and `mind lan follow` turns one server's TCP
+stream into a local stand-in for that server ([lan.md](lan.md)).
+
 ## Where the copy comes from
 
 first-bite reads a copy of the traffic. Four ways of making that copy are
