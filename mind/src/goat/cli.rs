@@ -84,6 +84,10 @@ enum Command {
         /// Print each payload after its key.
         #[arg(long)]
         payload: bool,
+        /// Save each sample's payload, unchanged, as one file in this
+        /// directory: a tap's capture slice becomes a .pcap file.
+        #[arg(long, value_name = "DIR")]
+        save: Option<PathBuf>,
     },
 }
 
@@ -177,6 +181,7 @@ fn execute(command: Command) -> Result<ExitCode, GoatError> {
             seconds,
             count,
             payload,
+            save,
         } => {
             let (config, _) = load(config)?;
             validate(&config, now_unix())?;
@@ -185,6 +190,8 @@ fn execute(command: Command) -> Result<ExitCode, GoatError> {
                 None => KeyLayout::new(&config)?.own_pattern(),
             };
             let read = if stored { Read::Stored } else { Read::Live };
+            let mut index = 0;
+            let mut save_failed: Option<std::io::Error> = None;
             let seen = session::watch(
                 &config,
                 &key_expression,
@@ -201,8 +208,30 @@ fn execute(command: Command) -> Result<ExitCode, GoatError> {
                     if payload {
                         println!("{}", String::from_utf8_lossy(&sample.payload));
                     }
+                    if let (Some(dir), None) = (&save, &save_failed) {
+                        index += 1;
+                        let received = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .map(|d| d.as_millis())
+                            .unwrap_or_default();
+                        match crate::save::save(
+                            dir,
+                            &sample.key,
+                            &sample.encoding,
+                            &sample.payload,
+                            received,
+                            index,
+                        ) {
+                            Ok(path) => println!("  saved {}", path.display()),
+                            Err(e) => save_failed = Some(e),
+                        }
+                    }
                 },
             )?;
+            if let (Some(dir), Some(e)) = (&save, save_failed) {
+                eprintln!("mind goat: could not save to {}: {e}", dir.display());
+                return Ok(ExitCode::FAILURE);
+            }
             println!("{seen} sample(s) on {key_expression}");
             Ok(if seen > 0 {
                 ExitCode::SUCCESS
