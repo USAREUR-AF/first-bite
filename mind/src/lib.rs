@@ -9,6 +9,7 @@ pub mod error;
 pub mod goat;
 pub mod pipeline;
 pub mod run;
+pub mod save;
 pub mod security;
 pub mod slices;
 pub mod source;
