@@ -37,6 +37,9 @@ fn main() -> ExitCode {
     if let Some(Command::Discover(discover)) = &opt.command {
         return mind::discover::run(discover);
     }
+    if let Some(Command::Lan(lan)) = &opt.command {
+        return mind::lan::run(lan);
+    }
     // The env file may set values the logger reads, so it is loaded first and
     // its outcome reported once the logger exists.
     let env_file = opt.env_file.as_deref().map(load_environment_file);

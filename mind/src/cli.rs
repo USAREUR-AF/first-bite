@@ -140,6 +140,120 @@ pub enum Command {
     /// Survey an unknown sensor's traffic from a capture file or, for a set
     /// time, an interface: talkers, ARP, flows, payload shapes. Sends nothing.
     Discover(DiscoverOpt),
+    /// Read-only checks of the link: is it a hub, which hosts are clients of a
+    /// server port, and follow a server's stream off the wire. Sends nothing.
+    Lan(LanOpt),
+}
+
+#[derive(Args, Debug)]
+pub struct LanOpt {
+    #[command(subcommand)]
+    pub action: LanAction,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum LanAction {
+    /// Does this port receive unicast between other hosts (a hub or a mirror
+    /// port), so other hosts' traffic can be captured here?
+    Hub(LanHubOpt),
+    /// The TCP clients of one server endpoint: connects, who ended each
+    /// connection, bytes. Shows clients taking turns on a server.
+    Clients(LanClientsOpt),
+    /// Copy one server's TCP stream to its client off the wire, in order, and
+    /// serve it on a local port as a stand-in for the server, never connecting
+    /// to the server.
+    Follow(LanFollowOpt),
+}
+
+#[derive(Args, Debug)]
+pub struct LanSource {
+    /// A pcap or pcapng file to read.
+    #[arg(
+        value_name = "FILE",
+        required_unless_present = "iface",
+        conflicts_with = "iface"
+    )]
+    pub pcap: Option<PathBuf>,
+
+    /// Capture on this interface instead (needs capture privileges).
+    #[arg(long, value_name = "NAME")]
+    pub iface: Option<String>,
+
+    /// How long to capture on --iface; 0 runs until stopped.
+    #[arg(long, value_name = "SECONDS", default_value_t = 30)]
+    pub seconds: u64,
+
+    /// BPF filter applied in the kernel.
+    #[arg(long, value_name = "EXPR")]
+    pub filter: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct LanHubOpt {
+    #[command(flatten)]
+    pub source: LanSource,
+
+    /// The capturing port's MAC address; read from --iface when not given.
+    #[arg(long, value_name = "MAC")]
+    pub local_mac: Option<String>,
+
+    /// Below this many frames, with no other hosts' unicast seen, the verdict
+    /// is undetermined rather than switch.
+    #[arg(long, value_name = "N", default_value_t = 50)]
+    pub min_frames: u64,
+
+    /// Print the report as JSON.
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct LanClientsOpt {
+    #[command(flatten)]
+    pub source: LanSource,
+
+    /// The server endpoint, IPv4:PORT.
+    #[arg(long, value_name = "ADDR:PORT")]
+    pub server: std::net::SocketAddrV4,
+
+    /// Print the report as JSON.
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct LanFollowOpt {
+    #[command(flatten)]
+    pub source: LanSource,
+
+    /// The server endpoint whose stream to follow, IPv4:PORT.
+    #[arg(long, value_name = "ADDR:PORT")]
+    pub server: std::net::SocketAddrV4,
+
+    /// Serve the stream on this TCP address, for example 127.0.0.1:17003.
+    #[arg(long, value_name = "ADDR:PORT")]
+    pub listen: Option<String>,
+
+    /// Also write the stream to this file.
+    #[arg(long, value_name = "FILE")]
+    pub output: Option<PathBuf>,
+
+    /// Client addresses never followed; this interface's own are added.
+    #[arg(long, value_name = "IPV4")]
+    pub ignore: Vec<std::net::Ipv4Addr>,
+
+    /// Wait this long for a missing segment before skipping the gap.
+    #[arg(long, value_name = "MS", default_value_t = 1000)]
+    pub gap_wait_ms: u64,
+
+    /// Follow another client's stream once the current one has been quiet
+    /// this long.
+    #[arg(long, value_name = "MS", default_value_t = 5000)]
+    pub switch_idle_ms: u64,
+
+    /// Print the counters as JSON at the end.
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]

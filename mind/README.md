@@ -64,6 +64,16 @@ JSON, `--dictionary` to decode flows on a dictionary's ports. The root
 [README](../README.md#discovering-an-unknown-sensor) lists what it reports;
 the code is [`src/discover.rs`](src/discover.rs).
 
+## Lan
+
+`mind lan hub`, `mind lan clients --server <addr:port>` and
+`mind lan follow --server <addr:port> --listen <addr:port>` check the link
+without sending anything: whether this port sees other hosts' traffic (a hub
+or a mirror port), which hosts are clients of one TCP server and how often they
+reconnect, and a server's stream to its client copied off the wire and served
+locally as a stand-in for the server. [docs/lan.md](../docs/lan.md) has the
+details; the code is [`src/lan.rs`](src/lan.rs).
+
 ## Frame sources
 
 | Source | Selected by | Reads |

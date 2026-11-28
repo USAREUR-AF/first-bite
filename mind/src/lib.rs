@@ -7,6 +7,7 @@ pub mod dictionary;
 pub mod discover;
 pub mod error;
 pub mod goat;
+pub mod lan;
 pub mod pipeline;
 pub mod run;
 pub mod security;
