@@ -1,11 +1,14 @@
-# CodeQL static analysis of the Rust and Python sources and of the workflows.
-# All three are extracted from source; nothing is built.
+# CodeQL static analysis of the Rust, Python and JavaScript sources and of the
+# workflows. All four are extracted from source; nothing is built. The
+# JavaScript is the two scripts of the published site: site/assets/landing.js
+# and site/decoder/decoder.js. Both are written by hand and run in the
+# visitor's browser.
 name: codeql
 
 on:
   # Every pull request and every push to main, whatever it changes: each
   # commit that reaches main then has an analysis, which is also what OpenSSF
-  # Scorecard's SAST check counts. The three extractions take a few minutes.
+  # Scorecard's SAST check counts. The four extractions take a few minutes.
   pull_request:
   # main keeps its own analysis: code scanning compares a pull request's alerts
   # against the default branch's.
@@ -36,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [rust, python, actions]
+        language: [rust, python, javascript-typescript, actions]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

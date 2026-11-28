@@ -266,10 +266,11 @@ image. Scorecard counts none of these.
 ### SAST
 
 Looks for CodeQL or another static analyser, and at whether each merged pull
-request was analysed. `codeql.yml` analyses the Rust and Python sources and
-the workflows. It ran only on pull requests that changed one of those; it now
-runs on every pull request and every push to `main`, so that every merged
-change has an analysis. `clippy` with warnings as errors runs in `ci.yml`.
+request was analysed. `codeql.yml` analyses the Rust and Python sources, the
+JavaScript of the site and the workflows. It ran only on pull requests that
+changed one of those; it now runs on every pull request and every push to
+`main`, so that every merged change has an analysis. `clippy` with warnings
+as errors runs in `ci.yml`.
 
 ### Security-Policy
 
