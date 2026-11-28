@@ -18,7 +18,9 @@ subpubs:
       topics:
         - "WX/Position" # <interface>/<message type>
       xf:
-        to: "cot-xml" # the format to write; `geojson` is built in too
+        to: "cot-xml" # the format to write; also built in: geojson,
+        # canonical-track-v2, asterix-cat062, sapient (flow/README.md, "Targets")
+        # kind: "detection_report" # for a target with several kinds of message
         context: # values the payload does not carry
           type: "a-f-G" # CoT type; "a-u-X" when left out
           how: "m-g"

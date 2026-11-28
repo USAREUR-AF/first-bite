@@ -16,7 +16,7 @@ cd "$(dirname "$0")/../.."
 
 pinned=$(sed -n 's/^goat-transformers = .*rev = "\([0-9a-f]\{40\}\)".*/\1/p' Cargo.toml)
 [ -n "$pinned" ] || { echo "refresh: Cargo.toml pins no goat-transformers commit" >&2; exit 1; }
-upstream_packs="packs/cot-xml/pack.def packs/geojson/pack.def"
+upstream_packs="packs/asterix-cat062/pack.def packs/canonical-track-v2/pack.def packs/cot-xml/pack.def packs/geojson/pack.def packs/sapient/pack.def"
 
 generate() {
     python3 tools/bite2pack/bite2pack.py --out flow/xf --bindings flow/xf/bindings.json \

@@ -4,9 +4,11 @@
 //!
 //! The engine reads a format from a data file, a pack. `tools/bite2pack`
 //! writes a pack for each interface of a dictionary; the target formats
-//! (Cursor-on-Target XML, GeoJSON) have packs of their own. A conversion
-//! decodes the payload with the dictionary's pack and encodes what it holds
-//! with the target's.
+//! have packs of their own, copied from goat-transformers: Cursor-on-Target
+//! XML (`cot-xml`), GeoJSON (`geojson`), the shared model as a track
+//! (`canonical-track-v2`), ASTERIX category 062 (`asterix-cat062`) and SAPIENT
+//! (`sapient`). A conversion decodes the payload with the dictionary's pack
+//! and encodes what it holds with the target's.
 //!
 //! The configuration ([`XfConfig`]) is always parsed. The transform itself is
 //! compiled with the cargo feature `goat-transformers`; without it a
@@ -19,12 +21,14 @@ use std::collections::BTreeMap;
 ///
 /// ```yaml
 /// xf:
-///   to: cot-xml            # the format to write
+///   to: cot-xml            # the format to write: cot-xml, geojson,
+///                          # canonical-track-v2, asterix-cat062, sapient, ...
 ///   context:               # values the payload does not carry
 ///     type: "a-f-G"
 ///     how: "m-g"
 ///   stale_minutes: 60
 ///   require: [uid, lat, lon]   # a record that gives none of these is not converted
+///   # kind: detection_report   # for a target with several kinds of message
 ///   # from: bite-weather-station-wx   # default: by the record's dictionary and interface
 ///   # packs: /etc/first-bite/packs    # packs of your own dictionaries
 /// ```
@@ -49,6 +53,11 @@ pub struct XfConfig {
     /// transform refuses a record without a field its mapping names.
     #[serde(default)]
     pub require: Vec<String>,
+    /// The kind of message to write, for a target that has several: SAPIENT
+    /// `detection_report`, say. Unset, the engine writes the first kind whose
+    /// required keys the record gives. Set, a record that lacks a key the
+    /// kind requires is refused and the key is named.
+    pub kind: Option<String>,
     /// A directory of further packs, as `tools/bite2pack` writes one:
     /// `model/`, `packs/` and `index.json`. Loaded after the packs built in.
     pub packs: Option<String>,
@@ -74,7 +83,7 @@ impl std::fmt::Display for Scalar {
 }
 
 #[cfg(feature = "goat-transformers")]
-pub use engine::{Converted, Xf, XfError, COT_XML};
+pub use engine::{Carriage, Converted, Xf, XfError, COT_XML};
 /// The engine's crate, for a caller that reads a pack or an entity.
 #[cfg(feature = "goat-transformers")]
 pub use goat_transformers;
@@ -87,8 +96,9 @@ mod engine {
     use base64::engine::general_purpose::STANDARD;
     use base64::Engine as _;
     use chrono::{DateTime, Utc};
-    use goat_transformers::{Engine, Value};
+    use goat_transformers::{Engine, Pack, Value, Wire};
     use serde::{Deserialize, Serialize};
+    use std::collections::BTreeMap;
     use std::path::Path;
     use std::sync::Arc;
 
@@ -123,10 +133,27 @@ mod engine {
              not carry"
         )]
         FrameId { format: String },
-        #[error("the payload gives no `{key}`, which `xf.require` names")]
-        Missing { key: String },
+        #[error("the payload gives no {}, which `xf.require` names", quoted(.keys))]
+        Missing { keys: Vec<String> },
+        #[error(
+            "format {format} needs {} for its kind {kind}, which neither the payload nor \
+             `xf.context` gives",
+            .keys.join(", ")
+        )]
+        Needs {
+            format: String,
+            kind: String,
+            keys: Vec<String>,
+        },
         #[error("{0}")]
         Convert(String),
+    }
+
+    fn quoted(keys: &[String]) -> String {
+        keys.iter()
+            .map(|key| format!("`{key}`"))
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
     fn name(value: &Option<String>) -> String {
@@ -146,6 +173,119 @@ mod engine {
         frame_id_bytes: usize,
     }
 
+    /// How the output of a target format is carried.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Carriage {
+        /// Text that says where it ends: XML, or a line of a text format.
+        Text,
+        /// A JSON object. On a stream it ends in a newline: JSON lines.
+        Json,
+        /// Bytes that say where they end, such as an ASTERIX data block.
+        Binary,
+        /// A protobuf message. On a stream it follows its length, four bytes
+        /// little-endian, the framing of SAPIENT (BSI Flex 335).
+        Protobuf,
+    }
+
+    impl Carriage {
+        fn of(wire: Wire) -> Carriage {
+            match wire {
+                Wire::Xml | Wire::Text => Carriage::Text,
+                Wire::GeoJson | Wire::Json => Carriage::Json,
+                Wire::Bits | Wire::Tlv => Carriage::Binary,
+                Wire::Protobuf => Carriage::Protobuf,
+            }
+        }
+
+        /// Whether the engine writes the format as hexadecimal text.
+        pub fn is_binary(self) -> bool {
+            matches!(self, Carriage::Binary | Carriage::Protobuf)
+        }
+    }
+
+    /// The `requires` terms of one kind: (key, the values listed after `=`).
+    type Requires = Vec<(String, Vec<String>)>;
+
+    /// What `xf` keeps of a loaded pack: how its output is carried, and the
+    /// keys each of its kinds requires, to name what a refused record lacks.
+    #[derive(Debug, Clone)]
+    struct Target {
+        carriage: Carriage,
+        kinds: Vec<(String, Requires)>,
+    }
+
+    impl Target {
+        fn of(pack: &Pack) -> Target {
+            let terms = |requires: &[goat_transformers::ReqDef]| -> Requires {
+                requires
+                    .iter()
+                    .map(|r| (r.key.clone(), r.values.clone().unwrap_or_default()))
+                    .collect()
+            };
+            // A sequential layout keeps its kinds apart from the fixed ones.
+            let sequential = pack.seq.iter().flat_map(|seq| &seq.kinds);
+            Target {
+                carriage: Carriage::of(pack.wire),
+                kinds: pack
+                    .kinds
+                    .iter()
+                    .map(|kind| (kind.name.clone(), terms(&kind.requires)))
+                    .chain(sequential.map(|kind| (kind.name.clone(), terms(&kind.requires))))
+                    .collect(),
+            }
+        }
+
+        fn names(&self) -> Vec<&str> {
+            self.kinds.iter().map(|(name, _)| name.as_str()).collect()
+        }
+
+        /// What the entity lacks for a kind: a key it does not hold, or
+        /// `key=a|b` for a key it holds with none of the listed values.
+        fn lacks(requires: &Requires, entity: &goat_transformers::Entity) -> Vec<String> {
+            let listed = |values: &[String], value: &Value| {
+                let text = value.as_display();
+                values.iter().any(|v| {
+                    *v == text
+                        || matches!((v.parse::<f64>(), text.parse::<f64>()), (Ok(a), Ok(b)) if a == b)
+                })
+            };
+            requires
+                .iter()
+                .filter_map(|(key, values)| {
+                    let held = entity.fields.get(key);
+                    let in_list = entity.lists.get(key).is_some_and(|items| !items.is_empty());
+                    match held {
+                        None if in_list && values.is_empty() => None,
+                        None if values.is_empty() => Some(key.clone()),
+                        Some(value) if !values.is_empty() && !listed(values, value) => {
+                            Some(format!("{key}={}", values.join("|")))
+                        }
+                        None => Some(format!("{key}={}", values.join("|"))),
+                        Some(_) => None,
+                    }
+                })
+                .collect()
+        }
+
+        /// What the entity lacks for the named kind.
+        fn lacks_for(&self, kind: &str, entity: &goat_transformers::Entity) -> Vec<String> {
+            self.kinds
+                .iter()
+                .find(|(name, _)| name == kind)
+                .map(|(_, requires)| Target::lacks(requires, entity))
+                .unwrap_or_default()
+        }
+
+        /// The kind the entity lacks fewest keys of, and what it lacks.
+        fn nearest(&self, entity: &goat_transformers::Entity) -> Option<(String, Vec<String>)> {
+            self.kinds
+                .iter()
+                .map(|(kind, requires)| (kind.clone(), Target::lacks(requires, entity)))
+                .filter(|(_, lacks)| !lacks.is_empty())
+                .min_by_key(|(_, lacks)| lacks.len())
+        }
+    }
+
     /// The output of one conversion.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Converted {
@@ -154,6 +294,9 @@ mod engine {
         /// The target format's text: XML, JSON, or hexadecimal for a binary
         /// format.
         pub text: String,
+        /// What goes on the wire: the text, or for a binary format the bytes
+        /// the hexadecimal spells.
+        pub bytes: Vec<u8>,
     }
 
     /// What is published for a Cursor-on-Target target: the object the `cot`
@@ -170,6 +313,9 @@ mod engine {
         xf_datetime: &'a str,
         xf_format: &'a str,
         xf_string: &'a str,
+        /// `hex` for a binary format, whose bytes `xf_string` spells.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        xf_encoding: Option<&'a str>,
     }
 
     /// A configured conversion: the packs, the target and the context.
@@ -178,6 +324,8 @@ mod engine {
         engine: Arc<Engine>,
         generated: Arc<Vec<Generated>>,
         to: String,
+        target: Arc<Target>,
+        kind: Option<String>,
         from: Option<String>,
         context: Vec<(String, Value)>,
         require: Vec<String>,
@@ -188,6 +336,7 @@ mod engine {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("Xf")
                 .field("to", &self.to)
+                .field("kind", &self.kind)
                 .field("from", &self.from)
                 .field("context", &self.context)
                 .field("require", &self.require)
@@ -221,18 +370,26 @@ mod engine {
     }
 
     /// The packs built in, then those of the `packs` directory.
-    fn load(packs: Option<&str>) -> Result<(Engine, Vec<Generated>), Problem> {
+    type Loaded = (Engine, Vec<Generated>, BTreeMap<String, Target>);
+
+    fn load(packs: Option<&str>) -> Result<Loaded, Problem> {
         let mut engine = Engine::new();
+        let mut targets = BTreeMap::new();
+        let mut add = |engine: &mut Engine, text: &str| -> Result<(), goat_transformers::Error> {
+            let pack = Pack::parse(text)?;
+            targets.insert(pack.format.clone(), Target::of(&pack));
+            engine.load(pack)
+        };
         let mut generated: Vec<Generated> =
             serde_json::from_str(xf_embedded::INDEX).map_err(invalid)?;
         for text in xf_embedded::MODELS {
             engine.load_model(text).map_err(invalid)?;
         }
         for text in xf_embedded::PACKS {
-            engine.load_def(text).map_err(invalid)?;
+            add(&mut engine, text).map_err(invalid)?;
         }
         let Some(dir) = packs.map(Path::new) else {
-            return Ok((engine, generated));
+            return Ok((engine, generated, targets));
         };
         let from = |path: &Path, e: goat_transformers::Error| {
             invalid(format!("`packs`: {}: {e}", path.display()))
@@ -249,7 +406,7 @@ mod engine {
         for path in entries(&dir.join("packs"))? {
             let def = path.join("pack.def");
             if def.is_file() {
-                engine.load_def(&read(&def)?).map_err(|e| from(&def, e))?;
+                add(&mut engine, &read(&def)?).map_err(|e| from(&def, e))?;
             }
         }
         let index = dir.join("index.json");
@@ -257,14 +414,14 @@ mod engine {
             .map_err(|e| invalid(format!("`packs`: {}: {e}", index.display())))?;
         // A pack of the directory is found before one built in.
         generated.splice(0..0, more);
-        Ok((engine, generated))
+        Ok((engine, generated, targets))
     }
 
     impl Xf {
         /// Load the packs and check the configuration against them: the
         /// formats exist and every context key is one a pack can hold.
         pub fn from_config(config: &XfConfig) -> Result<Self, Problem> {
-            let (engine, generated) = load(config.packs.as_deref())?;
+            let (engine, generated, mut targets) = load(config.packs.as_deref())?;
             let formats = engine.formats();
             for (key, format) in [("to", Some(&config.to)), ("from", config.from.as_ref())] {
                 if format.is_some_and(|format| !formats.contains(format)) {
@@ -295,7 +452,22 @@ mod engine {
                     return Err(invalid(format!("`require`: {e}")));
                 }
             }
+            let target = targets.remove(&config.to).expect("a loaded format");
+            if let Some(kind) = &config.kind {
+                if !target.names().contains(&kind.as_str()) {
+                    return Err(invalid(format!(
+                        "`kind`: format {} has no kind {kind:?}; its kinds are {}",
+                        config.to,
+                        match target.names() {
+                            names if names.is_empty() => "none".to_string(),
+                            names => names.join(", "),
+                        }
+                    )));
+                }
+            }
             Ok(Xf {
+                target: Arc::new(target),
+                kind: config.kind.clone(),
                 require: config.require.clone(),
                 engine: Arc::new(engine),
                 generated: Arc::new(generated),
@@ -309,6 +481,11 @@ mod engine {
         /// The format the output is written in.
         pub fn target(&self) -> &str {
             &self.to
+        }
+
+        /// How the output is carried.
+        pub fn carriage(&self) -> Carriage {
+            self.target.carriage
         }
 
         /// The engine and its packs, for a caller that decodes without
@@ -382,17 +559,45 @@ mod engine {
             }
             self.engine.fill(&mut entity, &context).map_err(failed)?;
             self.engine.complete(&mut entity);
-            if let Some(key) = self
+            let keys: Vec<String> = self
                 .require
                 .iter()
-                .find(|key| !entity.fields.contains_key(*key))
-            {
-                return Err(XfError::Missing { key: key.clone() });
+                .filter(|key| !entity.fields.contains_key(*key))
+                .cloned()
+                .collect();
+            if !keys.is_empty() {
+                return Err(XfError::Missing { keys });
             }
-            let text = self.engine.encode(&self.to, &entity).map_err(failed)?;
+            if let Some(kind) = &self.kind {
+                let keys = self.target.lacks_for(kind, &entity);
+                if !keys.is_empty() {
+                    return Err(XfError::Needs {
+                        format: self.to.clone(),
+                        kind: kind.clone(),
+                        keys,
+                    });
+                }
+                entity.kind = Some((self.to.clone(), kind.clone()));
+            }
+            let text = self.engine.encode(&self.to, &entity).map_err(|e| {
+                match self.target.nearest(&entity) {
+                    Some((kind, keys)) if e.msg.starts_with("no-kind") => XfError::Needs {
+                        format: self.to.clone(),
+                        kind,
+                        keys,
+                    },
+                    _ => failed(e),
+                }
+            })?;
+            let bytes = if self.target.carriage.is_binary() {
+                hex::decode(&text).map_err(|e| XfError::Convert(e.to_string()))?
+            } else {
+                text.clone().into_bytes()
+            };
             Ok(Converted {
                 datetime: now.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(),
                 text,
+                bytes,
             })
         }
 
@@ -412,6 +617,7 @@ mod engine {
                     xf_datetime: &converted.datetime,
                     xf_format: &self.to,
                     xf_string: &converted.text,
+                    xf_encoding: self.target.carriage.is_binary().then_some("hex"),
                 })
             };
             Ok(json?)
@@ -559,7 +765,7 @@ mod engine {
             let strict = xf("to: cot-xml\nrequire: [uid, lat, lon]\n");
             assert_eq!(
                 strict.apply_at(heartbeat, noon()).unwrap_err().to_string(),
-                "the payload gives no `uid`, which `xf.require` names"
+                "the payload gives no `uid`, `lat`, `lon`, which `xf.require` names"
             );
             assert!(strict.apply_at(POSITION, noon()).is_ok());
             let unknown = refusal("to: cot-xml\nrequire: [colour]\n");

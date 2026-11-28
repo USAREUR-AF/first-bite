@@ -982,3 +982,67 @@ async fn udp_resolves_again_after_a_name_could_not_be_resolved() {
     let stats = sink.stats()[0];
     assert_eq!((stats.sent, stats.failed), (1, 1));
 }
+
+/// A weather-station Position record with its payload, for the `xf` sinks.
+#[cfg(feature = "goat-transformers")]
+const POSITION_PAYLOAD: &str = r#"{"data_encoded_inner":"AwAbS1g3AEBQNZ6D5CWvwGJ27L+xW1dDCIAA","subsystem":"WX","message_type":"Position","dictionary":"weather-station"}"#;
+
+/// The latitude and longitude a target's pack decodes from `bytes`.
+#[cfg(feature = "goat-transformers")]
+fn position_in(to: &str, bytes: &[u8]) -> (f64, f64) {
+    let config: flow::xf::XfConfig =
+        serde_json::from_value(serde_json::json!({ "to": to })).unwrap();
+    let xf = flow::xf::Xf::from_config(&config).unwrap();
+    let entity = xf.engine().decode(to, &hex::encode(bytes)).unwrap();
+    let number = |key: &str| entity.fields[key].as_display().parse::<f64>().unwrap();
+    (number("lat"), number("lon"))
+}
+
+/// A binary target goes out as its bytes, not as hexadecimal: one ASTERIX
+/// data block per datagram.
+#[cfg(feature = "goat-transformers")]
+#[tokio::test]
+async fn udp_sends_an_xf_binary_target_as_bytes() {
+    let (listener, port) = udp_listener();
+    let sink = sink(&format!(
+        "    subscriber_type: udp\n    destinations:\n      - address: \"127.0.0.1:{port}\"\n    xf:\n      to: asterix-cat062\n      kind: track\n      context: {{ cat062.sac: 25, cat062.sic: 4, cat062.track_number: 7, track.confirmed: 1 }}\n"
+    ));
+    sink.send("WX/Position", POSITION_PAYLOAD).await.unwrap();
+    let datagram = receive(&listener).0;
+    assert_eq!(datagram[0], 62, "an ASTERIX category 062 block");
+    assert_eq!(
+        usize::from(u16::from_be_bytes([datagram[1], datagram[2]])),
+        datagram.len()
+    );
+    let (lat, lon) = position_in("asterix-cat062", &datagram);
+    assert!((lat - 64.8378).abs() < 6e-6 && (lon + 147.7164).abs() < 6e-6);
+}
+
+/// On a stream each SAPIENT message follows its length, four bytes
+/// little-endian.
+#[cfg(feature = "goat-transformers")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn tcp_streams_sapient_messages_each_after_its_length() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let sink = sink(&format!(
+        "    subscriber_type: tcp\n    destinations:\n      - address: \"127.0.0.1:{port}\"\n    xf:\n      to: sapient\n      kind: detection_report\n"
+    ));
+    sink.send("WX/Position", POSITION_PAYLOAD).await.unwrap();
+    sink.send("WX/Position", POSITION_PAYLOAD).await.unwrap();
+    let mut stream = accept(&listener).await;
+    for _ in 0..2 {
+        let mut length = [0u8; 4];
+        tokio::time::timeout(WAIT, stream.read_exact(&mut length))
+            .await
+            .expect("a length arrives")
+            .unwrap();
+        let mut message = vec![0u8; u32::from_le_bytes(length) as usize];
+        tokio::time::timeout(WAIT, stream.read_exact(&mut message))
+            .await
+            .expect("the message arrives")
+            .unwrap();
+        let (lat, lon) = position_in("sapient", &message);
+        assert_eq!((lat, lon), (64.8378, -147.7164));
+    }
+}
