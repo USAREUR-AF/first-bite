@@ -363,7 +363,7 @@ not built. [docs/architecture.md](docs/architecture.md#beyond-ip) has the table.
 | [hello-galaxy-first-bite](https://github.com/USAREUR-AF/hello-galaxy-first-bite) | five runnable steps: decode a capture, tap a link, write a dictionary from an interface document, publish onto a goat fabric, make Cursor-on-Target |
 | [hello-galaxy-record-consumers](https://github.com/USAREUR-AF/hello-galaxy-record-consumers) | consumers of first-bite's records on Kubernetes: a receiver that makes its tables from a dictionary, a latest-status board, who may post and who may read |
 | [first-bite-env](https://github.com/USAREUR-AF/first-bite-env) | a template for the private overlay a deployment keeps its dictionaries and configuration in |
-| [open-entity-gateway](https://github.com/USAREUR-AF/open-entity-gateway) | bridges between the goat fabric and vendor systems, one package per vendor; for SAPIENT and ASTERIX see [docs/cot-to-tak.md](docs/cot-to-tak.md#other-interfaces-sapient-asterix-and-vendor-systems) |
+| [vendor-bridges](https://github.com/USAREUR-AF/vendor-bridges) | bridges between the goat fabric and vendor systems, one package per vendor; for SAPIENT and ASTERIX see [docs/cot-to-tak.md](docs/cot-to-tak.md#other-interfaces-sapient-asterix-and-vendor-systems) |
 
 Every public goat repository is listed in the [goat documentation](https://usareur-af.github.io/goatdocs/reference/repositories/).
 
