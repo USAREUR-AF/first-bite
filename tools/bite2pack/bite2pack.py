@@ -74,9 +74,15 @@ CORE_KEYS = OrderedDict([
     ("callsign", "string"), ("course", "float"), ("speed_ms", "float"), ("how", "string"),
     ("stale_ms", "int"),
 ])
-# the unit a dictionary field must state to carry a shared key
+# the unit a dictionary field must state to carry a shared key; "bool" for a flag of
+# goat-transformers model/track.def, carried by a dictionary `bool` field as 0 or 1
 BINDABLE = OrderedDict([("uid", ("string", None)), ("lat", ("float", "deg")), ("lon", ("float", "deg")),
-                        ("hae", ("float", "m")), ("callsign", ("string", None))])
+                        ("hae", ("float", "m")), ("callsign", ("string", None)),
+                        ("track.confirmed", ("int", "bool")), ("track.simulated", ("int", "bool")),
+                        ("track.test_data", ("int", "bool"))])
+# model/track.def of goat-transformers, the flags a binding can name; the track.def
+# next to --core-def is read instead when there is one
+TRACK_KEYS = OrderedDict([("confirmed", "int"), ("simulated", "int"), ("test_data", "int")])
 YIELDS = {"uint": "int", "twos": "int", "uscale": "float", "sscale": "float",
           "f32": "float", "f64": "float", "ascii": "string", "hex": "string"}
 OPTIONS = ("swap", "trim", "optional")
@@ -294,6 +300,8 @@ def load_dictionary(root):
     if os.path.isfile(p):
         d["spec"] = load_json(p)
         d["files"].append("dictionary.json")
+        # the name the dictionary gives itself, for a dictionary kept in a directory of another name
+        d["name"] = d["spec"].get("name") or d["name"]
     for iname in sorted(os.listdir(root)):
         meta_path = os.path.join(root, iname, "metadata.json")
         if not os.path.isfile(meta_path):
@@ -339,7 +347,8 @@ def load_dictionary(root):
 
 def read_bindings(path):
     """{dictionary: {"<INTERFACE>/<message>": {shared key: field name}}}. A shared key
-    is one of the `core` keys a field can carry: uid, lat, lon, hae, callsign."""
+    is one of the keys a field can carry: uid, lat, lon, hae, callsign, and the track
+    flags track.confirmed, track.simulated, track.test_data."""
     if not path:
         return {}
     data = load_json(path)
@@ -469,7 +478,7 @@ def discriminator_whens(iface, code):
     return out
 
 
-def plan_dictionary(d, bindings, core_keys):
+def plan_dictionary(d, bindings, core_keys, track_keys=TRACK_KEYS):
     """Kinds, fields and keys for every interface of one dictionary."""
     module = slug(d["name"])
     uses = {}                # field name -> list of (signature, iface, message)
@@ -545,6 +554,7 @@ def plan_dictionary(d, bindings, core_keys):
     # shared keys, as the bindings file states them
     bound = bindings.get(d["name"], {})
     topics = set()
+    derived = OrderedDict()      # module key -> the topics that bind `uid` to it
     for iname, pl in plans.items():
         for kind in pl["kinds"]:
             topic = "%s/%s" % (iname, kind["message"])
@@ -553,38 +563,67 @@ def plan_dictionary(d, bindings, core_keys):
             for core, fname in bound.get(topic, {}).items():
                 p = byname.get(fname)
                 want_type, want_unit = BINDABLE[core]
-                if core not in core_keys or core_keys[core] != want_type:
-                    die("the core module does not declare `%s` as a %s" % (core, want_type))
+                declared = track_keys.get(core[len("track."):]) if core.startswith("track.") else core_keys.get(core)
+                if declared != want_type:
+                    die("the %s module does not declare `%s` as a %s" % (
+                        "track" if core.startswith("track.") else "core", core, want_type))
                 if p is None or not p["transform"]:
                     die("bindings: %s %s: `%s` names field `%s`, which the pack does not map" % (d["name"], topic, core, fname))
-                if p["model"] != want_type:
+                if want_unit == "bool":
+                    # a flag: the field's bit, 0 or 1, not the label its table gives
+                    if p["field"].kind != "bool":
+                        die("bindings: %s %s: `%s` is a flag; field `%s` is a %s, not a bool" % (
+                            d["name"], topic, core, fname, p["field"].kind))
+                    add_core(kind, core, p, "field `%s`, a bool" % fname)
+                    continue
+                if core == "uid" and p["model"] == "int" and not p["table"]:
+                    # a number: the module derives the identifier as its decimal text
+                    derived.setdefault(p["key"], []).append(topic)
+                    kind.setdefault("derived", []).append(OrderedDict(core=core, plan=p, evidence=[
+                        "field `%s`, an integer, as its decimal text (`derive uid text_of`)" % fname]))
+                    continue
+                widen = None
+                if want_type == "float" and p["model"] == "int" and not p["table"]:
+                    # a whole number of the unit: read as a number scaled by 1
+                    widen = ("sscale:1" if p["transform"] == "twos" else "uscale:1")
+                elif p["model"] != want_type:
                     die("bindings: %s %s: `%s` is a %s; field `%s` gives a %s" % (d["name"], topic, core, want_type, fname, p["model"]))
                 if want_unit and p["field"].unit != want_unit:
                     die("bindings: %s %s: `%s` is in %s; field `%s` states unit %r" % (
                         d["name"], topic, core, want_unit, fname, p["field"].unit))
-                add_core(kind, core, p, "field `%s`%s" % (fname, ", unit %s" % want_unit if want_unit else ""))
+                add_core(kind, core, p, "field `%s`%s%s" % (fname, ", unit %s" % want_unit if want_unit else "",
+                                                              ", an integer read as a number" if widen else ""), widen)
     for topic in bound:
         if topic not in topics:
             die("bindings: %s has no message %s" % (d["name"], topic))
-    return OrderedDict(module=module, keys=keys, plans=plans)
+    # a derive holds for every message of the module, so every message with the key binds it
+    for key, bound_in in derived.items():
+        everywhere = keys[key.split(".", 1)[1]]["where"]
+        unbound = [t for t in everywhere if t not in bound_in]
+        if unbound:
+            die("bindings: %s: `uid` is derived from %s for every message that has it; bind it in %s too" % (
+                d["name"], key, ", ".join(unbound)))
+    return OrderedDict(module=module, keys=keys, plans=plans, derived=list(derived))
 
 
-def add_core(kind, core, p, evidence):
+def add_core(kind, core, p, evidence, transform=None):
     for c in kind["core"]:
         if c["core"] == core:
             if c["plan"] is not p:
                 die("kind %s: two fields for core key %s" % (kind["name"], core))
             c["evidence"].append(evidence)
             return
-    kind["core"].append(OrderedDict(core=core, plan=p, evidence=[evidence]))
+    kind["core"].append(OrderedDict(core=core, plan=p, evidence=[evidence], transform=transform))
 
 
 # ---------------------------------------------------------------- emitting
 
 def source_lines(d, files):
     version = d["spec"].get("version") or "unversioned"
-    out = ["source        %s" % q("first-bite dictionary %s, version %s: %s (Apache License 2.0)" % (d["name"], version, rel))
-           for rel in files]
+    # the licence of a dictionary in this repository; a dictionary elsewhere states its own or none
+    licence = d["spec"].get("license") or ("Apache License 2.0" if d.get("distribution", "public") == "public" else None)
+    out = ["source        %s" % q("first-bite dictionary %s, version %s: %s%s" % (
+        d["name"], version, rel, " (%s)" % licence if licence else "")) for rel in files]
     src = d["spec"].get("source") or {}
     if src.get("document"):
         out.append("source        %s" % q("the dictionary states it transcribes %s%s" % (
@@ -595,6 +634,7 @@ def source_lines(d, files):
 
 
 def emit_module(d, plan):
+    """The module of a dictionary's keys, with a `derive` line for each `uid` bound to a number."""
     L = ["# The %s module: the fields of the first-bite dictionary `%s`, in its units and in" % (plan["module"], d["name"]),
          "# the form first-bite writes them: a field with value labels is the label, a `bool`",
          "# field is `true` or `false`. A `bytes` field of one byte is two hexadecimal digits; a",
@@ -602,7 +642,7 @@ def emit_module(d, plan):
          "# GENERATED by tools/bite2pack/bite2pack.py. Do not edit.",
          "module        %s" % plan["module"],
          "version       %s" % (d["spec"].get("version") or "0.1.0"),
-         "distribution  public"]
+         "distribution  %s" % d.get("distribution", "public")]
     L += source_lines(d, d["files"])
     width = max(len(k) for k in plan["keys"]) + 2
     for k in plan["keys"].values():
@@ -622,12 +662,14 @@ def emit_module(d, plan):
             meaning = "; ".join(parts)
         unit = re.sub(r"\s+", "", k["unit"]) or "-"
         L.append("key  %-*s %-7s %-9s %s" % (width, k["name"], k["type"], unit, q(meaning)))
+    for key in plan.get("derived", []):
+        L.append("derive  uid  text_of  %s" % key)
     return "\n".join(L) + "\n"
 
 
-def field_line(kw, key, p):
-    parts = ["field     %-*s %-12s %s" % (kw, key, p["locator"], p["transform"])]
-    if p["table"]:
+def field_line(kw, key, p, transform=None):
+    parts = ["field     %-*s %-12s %s" % (kw, key, p["locator"], transform or p["transform"])]
+    if p["table"] and not key.startswith("track."):    # a track flag is the bit itself
         parts.append("via %s" % p["table_name"])
     parts += p["options"]
     return " ".join(parts)
@@ -647,8 +689,10 @@ def emit_pack(d, plan, pl):
     L += ["# GENERATED by tools/bite2pack/bite2pack.py. Do not edit.",
           "format        %s" % pl["format"],
           "version       %s" % (d["spec"].get("version") or "0.1.0"),
-          "distribution  public"]
+          "distribution  %s" % d.get("distribution", "public")]
     L += source_lines(d, files)
+    if any(c["core"].startswith("track.") for kind in pl["kinds"] for c in kind["core"]):
+        L.append("uses          track")
     L += ["uses          %s" % plan["module"], "wire          bits",
           "bit_order     %s" % ("lsb" if iface["bit_order"] == "lsb0" else "msb"), "word_bytes    1"]
     tables = OrderedDict()
@@ -681,7 +725,7 @@ def emit_pack(d, plan, pl):
                 continue
             for c in kind["core"]:
                 if c["plan"] is p:     # the shared key first: a consumer that changes it sees it on the wire
-                    L.append(field_line(kw, c["core"], p))
+                    L.append(field_line(kw, c["core"], p, c.get("transform")))
             L.append(field_line(kw, p["key"], p))
     L += ["", "# an identifier the dictionary does not name: bite gives a record with no fields",
           "kind      %s" % pl["catch"],
@@ -737,6 +781,8 @@ def parse_module(text):
             if t[1] in m["keys"]:
                 die("duplicate-key: %s" % t[1])
             m["keys"][t[1]] = t[2]
+        elif t[0] == "derive" and len(t) >= 4:
+            m.setdefault("derives", []).append(t[1:])
         else:
             die("module: bad directive: %s" % line)
     if not m["name"] or not m["distribution"] or not m["sources"]:
@@ -1394,6 +1440,9 @@ def check_dictionary_vectors(d, plan, pl, pack):
                     equal += 1
                 else:
                     diffs.append((v["_name"], fname, "codec %r, dictionary %r" % (got, want)))
+            elif p["repr"] == "label-as-integer" and any(t == want and raw == got for raw, t in f.labels.items()):
+                # a labelled field too wide for a table: the codec gives the value the label names
+                value_only += 1
             elif f.kind == "bytes" and p["table"]:
                 if got == want:
                     equal += 1
@@ -1424,12 +1473,16 @@ def check_dictionary_vectors(d, plan, pl, pack):
     return compared, equal, value_only, diffs
 
 
-def self_check(out_dir, d, plan, core_keys):
-    modules = {"core": OrderedDict(name="core", distribution="public", keys=core_keys)}
+def self_check(out_dir, d, plan, core_keys, track_keys=TRACK_KEYS):
+    distribution = d.get("distribution", "public")
+    modules = {"core": OrderedDict(name="core", distribution="public", keys=core_keys),
+               "track": OrderedDict(name="track", distribution="public", keys=track_keys)}
     with open(os.path.join(out_dir, "model", "%s.def" % plan["module"]), encoding="utf-8") as fh:
         mod = parse_module(fh.read())
-    if mod["name"] != plan["module"] or mod["distribution"] != "public":
-        die("module file does not declare %s public" % plan["module"])
+    if mod["name"] != plan["module"] or mod["distribution"] != distribution:
+        die("module file does not declare %s %s" % (plan["module"], distribution))
+    if [x for x in mod.get("derives", [])] != [["uid", "text_of", k] for k in plan.get("derived", [])]:
+        die("module %s: the derive lines are not the uid bindings" % plan["module"])
     modules[mod["name"]] = mod
     used = set()
     result = OrderedDict()
@@ -1437,12 +1490,13 @@ def self_check(out_dir, d, plan, core_keys):
         pdir = os.path.join(out_dir, "packs", pl["format"])
         with open(os.path.join(pdir, "pack.def"), encoding="utf-8") as fh:
             pack = parse_pack(fh.read(), modules)
-        if pack["format"] != pl["format"] or pack["distribution"] != "public":
-            die("%s: pack file does not declare the format public" % pl["format"])
+        if pack["format"] != pl["format"] or pack["distribution"] != distribution:
+            die("%s: pack file does not declare the format %s" % (pl["format"], distribution))
         if len(pack["kinds"]) != len(pl["kinds"]) + 1:
             die("%s: %d kinds on disk, %d planned" % (pl["format"], len(pack["kinds"]), len(pl["kinds"]) + 1))
         for k in pack["kinds"]:
-            used.update(f["key"].split(".", 1)[1] for f in k["fields"] if "." in f["key"])
+            used.update(f["key"].split(".", 1)[1] for f in k["fields"]
+                        if f["key"].startswith(plan["module"] + "."))
         nvec = 0
         for vpath in sorted(glob.glob(os.path.join(pdir, "vectors", "*.json"))):
             v = load_json(vpath)
@@ -1481,13 +1535,15 @@ def self_check(out_dir, d, plan, core_keys):
 
 # ---------------------------------------------------------------- main
 
-def convert(root, out, bindings, core_keys, report):
+def convert(root, out, bindings, core_keys, report, track_keys=TRACK_KEYS, distribution="public"):
     d = load_dictionary(root)
-    plan = plan_dictionary(d, bindings, core_keys)
+    d["distribution"] = distribution
+    plan = plan_dictionary(d, bindings, core_keys, track_keys)
     scale_rows = measure_scales(plan)
     module_text = emit_module(d, plan)
     write(os.path.join(out, "model", "%s.def" % plan["module"]), module_text)
     modules = {"core": OrderedDict(name="core", distribution="public", keys=core_keys),
+               "track": OrderedDict(name="track", distribution="public", keys=track_keys),
                plan["module"]: parse_module(module_text)}
     summary = OrderedDict()
     for iname, pl in plan["plans"].items():
@@ -1497,7 +1553,7 @@ def convert(root, out, bindings, core_keys, report):
         counts = write_vectors(out, d, plan, pl, parse_pack(text, modules))
         write(os.path.join(pdir, "pack.md"), emit_pack_md(d, plan, pl, counts, scale_rows))
         summary[iname] = counts
-    checked = self_check(out, d, plan, core_keys)
+    checked = self_check(out, d, plan, core_keys, track_keys)
     m = build_map(d, plan)
     m["scale_arithmetic"] = [OrderedDict((k, v) for k, v in r.items() if k != "sig") for r in scale_rows]
     lines = []
@@ -1516,14 +1572,19 @@ def convert(root, out, bindings, core_keys, report):
 
 
 def generate(args, out):
-    core_keys = CORE_KEYS
+    core_keys, track_keys = CORE_KEYS, TRACK_KEYS
     if args.core_def:
         with open(args.core_def, encoding="utf-8") as fh:
             core_keys = parse_module(fh.read())["keys"]
+        track_def = os.path.join(os.path.dirname(args.core_def), "track.def")
+        if os.path.isfile(track_def):
+            with open(track_def, encoding="utf-8") as fh:     # its key lines; the rest is not read
+                track_keys = OrderedDict((t[1], t[2]) for t in map(tokenize, fh.read().splitlines())
+                                         if len(t) in (4, 5) and t[0] == "key")
     bindings = read_bindings(args.bindings)
     index, lines, seen = [], [], set()
     for root in sorted(args.dictionary, key=lambda r: os.path.basename(os.path.normpath(r))):
-        rows, ls = convert(root, out, bindings, core_keys, args.report)
+        rows, ls = convert(root, out, bindings, core_keys, args.report, track_keys, args.distribution)
         for r in rows:
             if r["format"] in seen:
                 die("two interfaces give the format %s" % r["format"])
@@ -1582,6 +1643,8 @@ def main():
     ap.add_argument("--bindings", help="JSON file: which fields carry the shared keys")
     ap.add_argument("--core-def", help="model/core.def of goat-transformers, read for the shared keys and their types")
     ap.add_argument("--report", help="directory that receives <dictionary>.map.json")
+    ap.add_argument("--distribution", choices=("public", "controlled"), default="public",
+                    help="the distribution the modules and packs declare: controlled for a dictionary that is not public")
     ap.add_argument("--check", action="store_true", help="write nothing; exit 1 when --out is out of date")
     args = ap.parse_args()
     try:
