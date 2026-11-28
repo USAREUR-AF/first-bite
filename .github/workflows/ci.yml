@@ -84,7 +84,9 @@ jobs:
           python3 tools/check-pins.py
       # flow/xf is generated from dictionaries/; it must be what they give.
       - name: generated packs are current
-        run: tools/bite2pack/refresh.sh --check
+        run: |
+          python3 -m unittest discover -s tools/bite2pack -p 'test_*.py'
+          tools/bite2pack/refresh.sh --check
 
   fmt:
     needs: changes

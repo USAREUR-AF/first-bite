@@ -8,13 +8,15 @@
 #
 # <checkout> is a clone of https://github.com/USAREUR-AF/goat-transformers at
 # the commit Cargo.toml pins. The files copied from it are listed in
-# flow/xf/UPSTREAM with that commit; --check compares the two commits.
+# flow/xf/UPSTREAM with that commit; --check compares the two commits. They are
+# the packs below and the model modules those packs use, read from the checkout
+# (embed.py --used-models), so a pack that begins to use a new module brings it.
 set -eu
 cd "$(dirname "$0")/../.."
 
 pinned=$(sed -n 's/^goat-transformers = .*rev = "\([0-9a-f]\{40\}\)".*/\1/p' Cargo.toml)
 [ -n "$pinned" ] || { echo "refresh: Cargo.toml pins no goat-transformers commit" >&2; exit 1; }
-copied="model/core.def model/track.def packs/cot-xml/pack.def packs/geojson/pack.def"
+upstream_packs="packs/asterix-cat062/pack.def packs/canonical-track-v2/pack.def packs/cot-xml/pack.def packs/geojson/pack.def packs/sapient/pack.def"
 
 generate() {
     python3 tools/bite2pack/bite2pack.py --out flow/xf --bindings flow/xf/bindings.json \
@@ -40,6 +42,9 @@ case "${1:-}" in
         echo "refresh: $upstream is at $head; Cargo.toml pins $pinned" >&2
         exit 1
     fi
+    # shellcheck disable=SC2086 # the pack paths are words
+    models=$(python3 tools/bite2pack/embed.py --used-models "$upstream" $upstream_packs)
+    copied="$models $upstream_packs"
     for file in $copied; do
         mkdir -p "flow/xf/$(dirname "$file")"
         cp "$upstream/$file" "flow/xf/$file"

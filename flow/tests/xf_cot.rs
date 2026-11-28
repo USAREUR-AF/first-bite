@@ -234,6 +234,6 @@ fn a_message_with_no_position_is_refused_by_both() {
     assert!(cotify::record_to_cot(&cot, heartbeat).is_err());
     assert_eq!(
         xf.apply_at(heartbeat, Utc::now()).unwrap_err().to_string(),
-        "the payload gives no `uid`, which `xf.require` names"
+        "the payload gives no `uid`, `lat`, `lon`, which `xf.require` names"
     );
 }

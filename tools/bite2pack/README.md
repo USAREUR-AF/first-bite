@@ -39,6 +39,7 @@ record.
 | `--bindings FILE` | which fields carry the shared keys; see below |
 | `--core-def FILE` | the engine's `model/core.def`, read for the shared keys and their types; without it the tool uses the keys it was written against |
 | `--report DIR` | also write `<dictionary>.map.json`: every field with its key, transform and options |
+| `--distribution NAME` | `public` (the default) or `controlled`: what the modules and packs declare. A dictionary that is not public is `controlled`, and its packs claim no licence unless `dictionary.json` states one (`license`) |
 | `--check` | write nothing; exit 1 when `--out` is not what the dictionaries give |
 
 ## Bindings
@@ -57,9 +58,11 @@ Cursor-on-Target needs to know. The bindings file states it, per message:
 
 | Shared key | A field can carry it when it is |
 |---|---|
-| `uid`, `callsign` | text |
+| `uid` | text, or an integer: the module derives the identifier as its decimal text (`derive uid text_of`), so every message with the field must bind it |
+| `callsign` | text |
 | `lat`, `lon` | a number with unit `deg` |
-| `hae` | a number with unit `m` |
+| `hae` | a number with unit `m`; an integer is read as a number |
+| `track.confirmed`, `track.simulated`, `track.test_data` | a `bool`: the bit, 0 or 1, of goat-transformers `model/track.def` |
 
 A binding the dictionary does not support (no such field, the wrong type, the
 wrong unit) stops the run with the reason. A message with no binding still

@@ -63,3 +63,8 @@ bite.workspace = true
 ciborium.workspace = true
 quick-xml.workspace = true
 rcgen.workspace = true
+
+# Every vector of a directory of packs to every `xf` target (flow/README.md).
+[[example]]
+name = "xf_targets"
+required-features = ["goat-transformers"]

@@ -122,7 +122,10 @@ enum Payload {
 impl Payload {
     /// The bytes for one record. On a stream a JSON record ends in a newline,
     /// so the stream is JSON lines; a CoT event and a CBOR item say where
-    /// they end themselves.
+    /// they end themselves. An `xf` target is sent as its format is written:
+    /// a binary format as bytes, not hexadecimal. On a stream a JSON target
+    /// ends in a newline and a protobuf message follows its length (SAPIENT's
+    /// framing); an ASTERIX data block states its own length.
     fn bytes(&self, record: &str, stream: bool) -> Result<Vec<u8>, SinkError> {
         match self {
             Payload::Record(encoding) => {
@@ -144,7 +147,22 @@ impl Payload {
                     .into_bytes())
             }
             #[cfg(feature = "goat-transformers")]
-            Payload::Xf(xf) => Ok(xf.convert_at(record, Utc::now())?.text.into_bytes()),
+            Payload::Xf(xf) => {
+                let mut bytes = xf.convert_at(record, Utc::now())?.bytes;
+                match xf.carriage() {
+                    crate::xf::Carriage::Json if stream => bytes.push(b'\n'),
+                    crate::xf::Carriage::Protobuf if stream => {
+                        let length = u32::try_from(bytes.len()).map_err(|_| {
+                            SinkError::Xf(crate::xf::XfError::Convert(
+                                "a protobuf message over 4 GiB".to_string(),
+                            ))
+                        })?;
+                        bytes.splice(0..0, length.to_le_bytes());
+                    }
+                    _ => {}
+                }
+                Ok(bytes)
+            }
         }
     }
 }
